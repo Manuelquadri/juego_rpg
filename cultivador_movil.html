@@ -65,9 +65,94 @@
             /* El width y height del div se controlan por JS con updatePlayerVisualSize */
             /* La posición se controla por JS con updatePlayerSpriteVisual */
         }
+        /* === ESTILOS PARA BARRAS SOBRE EL JUGADOR EN EL MAPA === */
+        #playerOnMapBarsContainer {
+            position: absolute; /* Se posicionará relativo a la ubicación calculada del jugador en pantalla */
+            width: 48px; /* Ancho de las barras (ajusta según el tamaño de tu sprite) */
+            display: flex;
+            flex-direction: column;
+            gap: 1px; /* Pequeño espacio entre barras */
+            z-index: 15; /* Encima del jugador, pero debajo de modales y UI principal */
+            pointer-events: none; /* Para que no interfieran con clics al mapa */
+            /* El top y left se ajustarán por JS. Inicialmente pueden estar ocultas o fuera de pantalla */
+            transform: translateX(-50%); /* Ayuda a centrar si left es el centro del jugador */
+            display: none; /* Inicialmente ocultas, JS las mostrará */
+        }
+
+        .on-map-stat-bar {
+            width: 100%;
+            height: 6px; /* Altura de cada barra */
+            background-color: rgba(50, 50, 50, 0.7); /* Fondo oscuro para la parte vacía */
+            border: 1px solid rgba(0,0,0,0.5);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .on-map-stat-fill {
+            height: 100%;
+            transition: width 0.2s linear; /* Transición suave para cambios de valor */
+        }
+
+        #playerOnMapHpFill {
+            background-color: #f44336; /* Rojo para HP */
+        }
+
+        #playerOnMapManaFill {
+            background-color: #2196F3; /* Azul para Mana */
+        }
+        .stat-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+        .hp-fill { background: linear-gradient(90deg, #ff4444, #ff6666); }
+        .mana-fill { background: linear-gradient(90deg, #4444ff, #6666ff); }
+        .exp-fill { background: linear-gradient(90deg, #44ff44, #66ff66); }
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
+        }
+
+
+
+        /* === ESTILOS PARA BARRAS SOBRE EL SPRITE DEL JUGADOR EN BATALLA === */
+        #playerInBattleSpriteBarsContainer {
+            position: absolute; /* Relativo al div.character que lo contiene */
+            width: 60px; /* Un poco menos que el sprite (80px) para que no sobresalga mucho */
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            z-index: 5; /* Encima del sprite, pero no necesariamente de otros elementos del modal */
+            pointer-events: none;
+            /* top y left se ajustarán por JS. Inicialmente pueden estar ocultas o fuera de pantalla */
+            transform: translateX(-50%); /* Ayuda a centrar horizontalmente */
+            /* Se mostrarán/ocultarán con la pantalla de batalla */
+        }
+
+        .in-battle-sprite-stat-bar {
+            width: 100%;
+            height: 5px; /* Más delgadas que las del mapa quizás */
+            background-color: rgba(50, 50, 50, 0.8);
+            border: 1px solid rgba(0,0,0,0.6);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .in-battle-sprite-stat-fill {
+            height: 100%;
+            transition: width 0.2s linear;
+        }
+
+        #playerInBattleSpriteHpFill {
+            background-color: #e53935; /* Rojo más intenso para batalla */
+        }
+
+        #playerInBattleSpriteManaFill {
+            background-color: #1E88E5; /* Azul más intenso para batalla */
+        }
+
+        /* Ajuste para que .character sea el contexto de posicionamiento */
+        .battle-area .character {
+            position: relative; /* Necesario para que position:absolute de las barras funcione correctamente */
         }
         .character-sprite { /* Sprite del jugador en batalla */
             width: 80px; 
@@ -94,6 +179,18 @@
             border-radius: 8px;
             padding: 15px;
             margin-bottom: 20px;
+        }
+        /* === CORRECCIÓN/ADICIÓN PARA BARRAS EN EL SIDEBAR === */
+        .stats-panel .stat-bar { /* Asegúrate de que este selector sea específico si es necesario */
+            width: 100%;
+            height: 15px; 
+            background-color: rgba(0,0,0,0.3); 
+            border-radius: 7px; 
+            margin-top: 3px; 
+            margin-bottom: 12px; 
+            overflow: hidden; 
+            border: 1px solid rgba(212, 175, 55, 0.3); 
+            position: relative; 
         }
         .inventory-grid {
             display: grid;
@@ -502,6 +599,7 @@
         }
 
         .search-box::placeholder { color: #a99a7a; }
+
         .filter-group { margin-bottom: 20px; }
         .filter-title { margin-bottom: 10px; font-weight: bold; }
         .category-list { list-style: none; }
@@ -558,6 +656,14 @@
         <div class="map-container">
             <div class="map" id="gameMap"></div>
             <div class="tile player" id="player">🧘</div>
+            <div id="playerOnMapBarsContainer">
+                <div class="on-map-stat-bar"> <!-- Barra de Vida -->
+                    <div class="on-map-stat-fill" id="playerOnMapHpFill"></div>
+                </div>
+                <div class="on-map-stat-bar"> <!-- Barra de Maná -->
+                    <div class="on-map-stat-fill" id="playerOnMapManaFill"></div>
+                </div>
+            </div>
         </div>
         <div id="joystick-container">
             <div id="joystick-pad">
@@ -628,6 +734,16 @@
     <div class="battle-screen" id="battleScreen">
         <div class="battle-area">
             <div class="character">
+                <!-- NUEVO: Contenedor para barras SOBRE el sprite en batalla -->
+                <div id="playerInBattleSpriteBarsContainer">
+                    <div class="in-battle-sprite-stat-bar"> <!-- Barra de Vida -->
+                        <div class="in-battle-sprite-stat-fill" id="playerInBattleSpriteHpFill"></div>
+                    </div>
+                    <div class="in-battle-sprite-stat-bar"> <!-- Barra de Maná -->
+                        <div class="in-battle-sprite-stat-fill" id="playerInBattleSpriteManaFill"></div>
+                    </div>
+                </div>
+                <!-- FIN NUEVO -->
                 <div class="character-sprite">🧘</div>
                 <h3 id="playerBattleName">Cultivador</h3>
                 <div>Vida: <span id="playerBattleHp">100/100</span></div>
@@ -675,19 +791,19 @@
                 </div>
                 <p><span id="recoveryCycleText"></span></p>
                 
-                <!-- NUEVAS BARRAS DE HP Y MANÁ PARA RECUPERACIÓN -->
+                <!-- SECCIÓN DE BARRAS DE HP Y MANÁ PARA RECUPERACIÓN (ya existente, la usaremos) -->
                 <div style="margin-top: 15px; font-size: 0.9em;">
                     <div>Vida: <span id="modalHpText">100/100</span></div>
-                    <div class="stat-bar">
+                    <div class="stat-bar"> <!-- Barra de HP en Modal -->
                         <div class="stat-fill hp-fill" id="modalHpBar" style="width: 100%"></div>
                     </div>
                     
                     <div>Maná: <span id="modalManaText">50/50</span></div>
-                    <div class="stat-bar">
+                    <div class="stat-bar"> <!-- Barra de Maná en Modal -->
                         <div class="stat-fill mana-fill" id="modalManaBar" style="width: 100%"></div>
                     </div>
                 </div>
-                <!-- FIN NUEVAS BARRAS -->
+                <!-- FIN SECCIÓN BARRAS -->
             </div>
             <!-- NUEVA SECCIÓN PARA ACELERACIÓN -->
             <div id="cultivationBoostSection" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #555;">
@@ -1555,7 +1671,7 @@
     // <!-- FIN CAMBIO TAMAÑO MAPA MÓVIL -->
 
     function isAnyModalOpen() {
-        const modals = ['interactionModal', 'activeCultivationModal', 'shopModal', 'sectHallModal', 'skillTreeModal', 'cultivationChoiceModal', 'techniqueModal'];
+        const modals = ['interactionModal', 'activeCultivationModal', 'shopModal', 'sectHallModal', 'cultivationChoiceModal', 'techniqueModal'];
         for (const modalId of modals) {
             const modalElement = document.getElementById(modalId);
             if (modalElement && modalElement.style.display === 'flex') {
@@ -1654,6 +1770,7 @@
         if (modalElement) {
             modalElement.style.display = 'none';
         }
+        updatePlayerBarsOnMap();
         showTouchControls(); // Restaurar controles táctiles (si aplica)
     }
 
@@ -2423,7 +2540,6 @@
     
 
     function updatePlayerPosition(callerId = 'unknown') {
-        // ... (cálculos de scroll y movimiento del mapa) ...
         const playerElement = document.getElementById('player');
         const mapElement = document.getElementById('gameMap');
         const mapContainerElement = document.querySelector('.map-container');
@@ -2432,17 +2548,9 @@
             console.error("UpdatePlayerPosition: Elemento(s) clave no encontrado(s).");
             return;
         }
-        // El div del jugador (.player) se centra en la pantalla con CSS o JS
-        // Si el .game-container es flex y .map-container es flex-grow,
-        // el .player (que está DENTRO de .map-container pero posicionado absoluto respecto a él o a .map)
-        // se moverá CON el .map si su 'left' y 'top' son relativos al .map.
-        // Pero tú quieres que el JUGADOR esté CENTRADO en el .map-container, y el MAPA se mueva DETRÁS.
 
-        // Centrar el JUGADOR en el MAP_CONTAINER
-        // Asegúrate que G_TILE_SIZE coincida con PLAYER_SPRITE_FRAME_WIDTH/HEIGHT para que el centrado sea preciso
-        // o usa PLAYER_SPRITE_FRAME_WIDTH/HEIGHT para el cálculo del jugador.
-        const playerVisualWidth = PLAYER_SPRITE_FRAME_WIDTH;  // Usar el tamaño real del sprite
-        const playerVisualHeight = PLAYER_SPRITE_FRAME_HEIGHT;
+        const playerVisualWidth = gameState.player.frameWidth; // Usar el tamaño real del frame del sprite
+        const playerVisualHeight = gameState.player.frameHeight;
 
         const playerScreenX = (mapContainerElement.clientWidth / 2) - (playerVisualWidth / 2);
         const playerScreenY = (mapContainerElement.clientHeight / 2) - (playerVisualHeight / 2);
@@ -2450,14 +2558,11 @@
         playerElement.style.left = `${playerScreenX}px`;
         playerElement.style.top = `${playerScreenY}px`;
 
-        // Mover el MAPA para que el jugador APARENTE estar en gameState.player.x, gameState.player.y
-        // Aquí currentTileSize es el tamaño de cada celda del mapa.
         const mapScrollX = - (gameState.player.x * currentTileSize) + playerScreenX;
         const mapScrollY = - (gameState.player.y * currentTileSize) + playerScreenY;
         
         mapElement.style.transform = `translate(${mapScrollX}px, ${mapScrollY}px)`;
         
-        // Descubrir entidades
         gameState.map.entities.forEach(entity => {
             const distance = Math.abs(entity.x - gameState.player.x) + Math.abs(entity.y - gameState.player.y);
             if (distance <= G_PLAYER_DISCOVERY_RANGE) {
@@ -2465,10 +2570,12 @@
             }
         });
         
-        renderMap(callerId);    // Renderiza el mapa y las entidades
-        updatePlayerSpriteVisual();   // Actualiza el frame del sprite del jugador
-        updatePlayerVisualSize(); // Asegura el tamaño correcto del div del jugador
+        renderMap(callerId);    
+        updatePlayerSpriteVisual();   
+        updatePlayerVisualSize(); 
+        updatePlayerBarsOnMap(); // <--- LLAMADA AÑADIDA
     }
+
     
     // ... (el resto de tus funciones JS, como updateUI, movePlayer, interact, etc. SIN CAMBIOS IMPORTANTES aquí,
     //      ya que los cambios principales son en el renderizado y tamaño de tiles)
@@ -2480,13 +2587,22 @@
         document.getElementById('manaText').textContent = `${Math.floor(player.mana)}/${player.maxMana}`;
         document.getElementById('expText').textContent = `${Math.floor(player.exp)}/${player.expToNext}`;
 
-        document.getElementById('hpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
-        document.getElementById('manaBar').style.width = `${(player.mana / player.maxMana) * 100}%`;
-        document.getElementById('expBar').style.width = `${(player.exp / player.expToNext) * 100}%`;
+        // Barras del Sidebar
+        const hpBarSidebar = document.getElementById('hpBar');
+        const manaBarSidebar = document.getElementById('manaBar');
+        const expBarSidebar = document.getElementById('expBar');
+
+        if (hpBarSidebar) hpBarSidebar.style.width = `${(player.hp / player.maxHp) * 100}%`;
+        if (manaBarSidebar) manaBarSidebar.style.width = `${(player.mana / player.maxMana) * 100}%`;
+        if (expBarSidebar) expBarSidebar.style.width = `${(player.exp / player.expToNext) * 100}%`;
+        
         document.getElementById('playerCoords').textContent = `X: ${player.x}, Y: ${player.y}`;
-        updateToggleQiConversionButtonVisibility();
-        updateInventoryUI();
-        updateSectUI(); 
+        
+        updateToggleQiConversionButtonVisibility(); // Asumo que esta función existe y es correcta
+        updateInventoryUI(); // Asumo que esta función existe y es correcta
+        updateSectUI(); // Asumo que esta función existe y es correcta
+
+        updatePlayerBarsOnMap(); // <--- LLAMADA AÑADIDA para las barras sobre el jugador
     }
 
     function updateInventoryUI() {
@@ -3054,6 +3170,7 @@
 
     function closeCultivationChoiceModal() {
         document.getElementById('cultivationChoiceModal').style.display = 'none';
+        updatePlayerBarsOnMap();
         showTouchControls(); 
     }
       
@@ -3108,6 +3225,7 @@
     function showActiveCultivationModal() {
         const player = gameState.player;
         const mode = player.cultivationMode;
+        
         const modal = document.getElementById('activeCultivationModal');
         const title = document.getElementById('activeCultivationTitle');
         const description = document.getElementById('activeCultivationDescription');
@@ -3115,25 +3233,33 @@
         const techniqueProgressUIDiv = document.getElementById('activeCultivationProgressUI');
         const recoveryProgressUIDiv = document.getElementById('recoveryCultivationProgressUI');
         const cultivationBoostSection = document.getElementById('cultivationBoostSection'); // Nueva referencia
-
         if (!player.isCultivating) {
             closeActiveCultivationModal();
             return;
         }
 
-        // Ocultar todas las UIs de progreso y la sección de boost primero
+        // Ocultar barras sobre el jugador en el mapa mientras el modal está abierto
+        const playerBarsOnMap = document.getElementById('playerOnMapBarsContainer');
+        if (playerBarsOnMap) playerBarsOnMap.style.display = 'none';
+        
+        // Ocultar barras sobre el sprite en batalla (aunque no debería estar en batalla y cultivando)
+        const playerBarsInBattle = document.getElementById('playerInBattleSpriteBarsContainer');
+        if (playerBarsInBattle) playerBarsInBattle.style.display = 'none';
+
         if (techniqueProgressUIDiv) techniqueProgressUIDiv.style.display = 'none';
         if (recoveryProgressUIDiv) recoveryProgressUIDiv.style.display = 'none';
-        if (cultivationBoostSection) cultivationBoostSection.style.display = 'none'; // Ocultar por defecto
+        if (cultivationBoostSection) cultivationBoostSection.style.display = 'none'; 
 
         if (mode.type === 'recovery') {
             title.textContent = "Meditación Restauradora";
             description.textContent = "Recuperando energía vital, Qi y absorbiendo experiencia del entorno.";
-            
+                
             if (recoveryProgressUIDiv) {
                 recoveryProgressUIDiv.style.display = 'block'; 
                 const recoveryProgressBar = document.getElementById('recoveryProgressBar'); 
                 const recoveryCycleText = document.getElementById('recoveryCycleText'); 
+                
+                // Referencias a los elementos de HP y Maná del modal
                 const modalHpText = document.getElementById('modalHpText');
                 const modalHpBar = document.getElementById('modalHpBar');
                 const modalManaText = document.getElementById('modalManaText');
@@ -3141,6 +3267,8 @@
 
                 if (recoveryProgressBar) recoveryProgressBar.style.width = `${recoveryProgress}%`;
                 if (recoveryCycleText) recoveryCycleText.textContent = recoveryDirection === 1 ? "Inhalando Qi..." : "Exhalando impurezas...";
+                
+                // Actualizar texto y barras de HP/Maná en el modal
                 if (modalHpText) modalHpText.textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
                 if (modalHpBar) modalHpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
                 if (modalManaText) modalManaText.textContent = `${Math.floor(player.mana)}/${player.maxMana}`;
@@ -3210,19 +3338,21 @@
 
 
         if (modal) modal.style.display = 'flex';
+        
         hideTouchControls();
     }
 
 
     function closeActiveCultivationModal() {
         document.getElementById('activeCultivationModal').style.display = 'none';
+        updatePlayerBarsOnMap();
         showTouchControls(); 
     }
 
     function processCultivationTick() {
         const player = gameState.player;
         if (!player.isCultivating) {
-            clearInterval(gameState.cultivationInterval);
+            if (gameState.cultivationInterval) clearInterval(gameState.cultivationInterval);
             gameState.cultivationInterval = null;
             return;
         }
@@ -3236,7 +3366,6 @@
             
             let manaGainThisTick = player.qiPerSecondBase;
             if (player.canUseQiConversion && player.isQiConversionActive && player.learnedTechniques["qi_to_hp_conversion_1"]) {
-                // ... (lógica de conversión Qi a HP sin cambios) ...
                 const conversionTechInfo = techniqueData["qi_to_hp_conversion_1"];
                 const playerConversionTech = player.learnedTechniques["qi_to_hp_conversion_1"];
                 if (conversionTechInfo?.effect && playerConversionTech.level > 0) {
@@ -3257,23 +3386,23 @@
             }
             gainExperience(player.expPerSecondBase);
 
-            // --- Lógica para la barra de progreso de recuperación ---
-            const increment = 100 / RECOVERY_CYCLE_DURATION; // % a cambiar por segundo
+            // --- Lógica para la barra de progreso de ciclo de recuperación ---
+            const increment = 100 / RECOVERY_CYCLE_DURATION; 
             recoveryProgress += recoveryDirection * increment;
-
-            if (recoveryProgress >= 100) {
-                recoveryProgress = 100;
-                recoveryDirection = -1; // Cambiar a vaciar
-                 document.getElementById('recoveryCycleText').textContent = "Exhalando impurezas...";
-            } else if (recoveryProgress <= 0) {
-                recoveryProgress = 0;
-                recoveryDirection = 1; // Cambiar a llenar
-                 document.getElementById('recoveryCycleText').textContent = "Inhalando Qi...";
+            if (recoveryProgress >= 100) { recoveryProgress = 100; recoveryDirection = -1; } 
+            else if (recoveryProgress <= 0) { recoveryProgress = 0; recoveryDirection = 1; }
+            
+            // Actualizar UI del ciclo de recuperación si el modal está abierto
+            if (document.getElementById('activeCultivationModal').style.display === 'flex') {
+                const recoveryProgressBar = document.getElementById('recoveryProgressBar');
+                const recoveryCycleText = document.getElementById('recoveryCycleText');
+                if(recoveryProgressBar) recoveryProgressBar.style.width = `${recoveryProgress}%`;
+                if(recoveryCycleText) recoveryCycleText.textContent = recoveryDirection === 1 ? "Inhalando Qi..." : "Exhalando impurezas...";
             }
-            document.getElementById('recoveryProgressBar').style.width = `${recoveryProgress}%`;
 
         } else if (mode === 'technique' && targetId) {
-            // ... (lógica de cultivo de técnica sin cambios) ...
+            // ... (lógica de cultivo de técnica sin cambios aquí para las barras del modal,
+            //      ya que esas barras son principalmente para 'recovery')
             const playerTech = player.learnedTechniques[targetId];
             const techData = techniqueData[targetId];
             if (playerTech && techData && techData.cultivationSettings && playerTech.level < techData.maxLevel) {
@@ -3296,21 +3425,14 @@
                     if (playerTech.level >= techData.maxLevel) {
                         message += " (¡Nivel Máximo alcanzado!)";
                     }
-                    
-                    // Detener el cultivo DESPUÉS de aplicar efectos y mostrar el mensaje.
-                    stopCultivation(); // <--- ¡AQUÍ SE DETIENE EL CULTIVO!
-                    showModal("¡Técnica Mejorada!", message + "\n\nEl cultivo se ha detenido. Puedes reiniciarlo si lo deseas."); // Mensaje modificado
-                    
-                    if (document.getElementById('techniqueModal').style.display === 'flex') { showTechniquePanel(); }
-                    // No necesitamos cambiar a 'recovery' aquí a menos que se alcance el nivel máximo Y se quiera automatizar.
-                    // Pero la petición es detenerlo siempre que suba de nivel.
+                    stopCultivation();
+                    showModal("¡Técnica Mejorada!", message + "\n\nEl cultivo se ha detenido. Puedes reiniciarlo si lo deseas.");
+                    if (document.getElementById('techniqueModal').style.display === 'flex') showTechniquePanel();
                 }
             } else if (playerTech && techData && playerTech.level >= techData.maxLevel) {
-                // Si ya estaba en nivel máximo y se intenta cultivar (no debería pasar si se detiene antes)
                 stopCultivation(); 
-                // Opcionalmente, iniciar modo recuperación si ya estaba al máximo
-                // startCultivationMode('recovery'); 
             }
+     
         } else if (mode === 'skill' && targetId) {
             // ...
         }
@@ -3565,6 +3687,7 @@
         populateBattleActionButtons();
         updateBattleUI();
         logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
+        updatePlayerBarsOnMap();
     }
 
     function populateBattleActionButtons() {
@@ -3618,6 +3741,7 @@
             document.getElementById('enemyHp').textContent = `${Math.floor(enemy.hp)}/${enemy.maxHp}`;
             document.getElementById('enemyHpBar').style.width = `${(enemy.hp / enemy.maxHp) * 100}%`;
         }
+        updatePlayerBarsInBattle();
     }
 
     function battleAction(action, abilityDetails = null) {
@@ -4481,6 +4605,11 @@
         gameState.battle.active = false;
         document.getElementById('battleScreen').style.display = 'none';
         document.getElementById('battleLog').innerHTML = '';
+        // Ocultar las barras sobre el sprite en batalla explícitamente al finalizar
+        const barsInBattleContainer = document.getElementById('playerInBattleSpriteBarsContainer');
+        if (barsInBattleContainer) {
+            barsInBattleContainer.style.display = 'none';
+        }
         if (victory && gameState.battle.enemy?.entityRef) {
             removeEntity(gameState.battle.enemy.entityRef);
         }
@@ -4495,6 +4624,7 @@
         recalculatePlayerStats();
         updateUI();
         showTouchControls();
+        updatePlayerBarsOnMap();
     }
 
 
@@ -4588,6 +4718,7 @@
 
     function closeTechniqueModal() {
         document.getElementById('techniqueModal').style.display = 'none';
+        updatePlayerBarsOnMap();
         showTouchControls(); 
     }
 
@@ -4726,6 +4857,7 @@
 
     function closeShopModal() {
         document.getElementById('shopModal').style.display = 'none';
+        updatePlayerBarsOnMap();
         showTouchControls(); 
     }
 
@@ -4843,6 +4975,94 @@
             '  Joystick: Moverse\n' +
             '  Botón "Acción": Interactuar');
     }
+    //ACTUALIZAR BARRAS DEL JUGADOR
+    function updatePlayerBarsOnMap() {
+        const player = gameState.player;
+        const barsContainer = document.getElementById('playerOnMapBarsContainer');
+        const hpFill = document.getElementById('playerOnMapHpFill');
+        const manaFill = document.getElementById('playerOnMapManaFill');
+        const playerElement = document.getElementById('player'); // El sprite del jugador
+
+        if (!barsContainer || !hpFill || !manaFill || !playerElement) {
+            // console.warn("Elementos de barras sobre el jugador no encontrados en el DOM.");
+            return;
+        }
+
+        // Ocultar barras si el jugador está en batalla o si algún modal principal está abierto.
+        if (gameState.battle.active || isAnyModalOpen()) {
+            barsContainer.style.display = 'none';
+            return;
+        }
+        barsContainer.style.display = 'flex';
+
+        // La posición del playerElement (sprite) ya está calculada y centrada en updatePlayerPosition.
+        // Usamos su 'top' y 'left' (que son relativos al map-container) como referencia.
+        const playerVisualTop = parseFloat(playerElement.style.top) || 0;
+        const playerVisualLeft = parseFloat(playerElement.style.left) || 0;
+        const playerVisualWidth = playerElement.offsetWidth;
+
+        // Posicionar las barras ligeramente encima del sprite del jugador.
+        const barHeightWithGap = barsContainer.offsetHeight || 13; // Alto total aprox. de las 2 barras + gap
+        barsContainer.style.top = `${playerVisualTop - barHeightWithGap - 5}px`; // 5px de espacio sobre el sprite
+
+        // Centrar horizontalmente con el sprite del jugador.
+        // El 'transform: translateX(-50%)' en el CSS ayuda con esto si 'left' es el centro.
+        barsContainer.style.left = `${playerVisualLeft + (playerVisualWidth / 2)}px`;
+
+        // Actualizar el relleno de las barras.
+        const hpPercent = Math.max(0, (player.hp / player.maxHp) * 100);
+        const manaPercent = Math.max(0, (player.mana / player.maxMana) * 100);
+
+        hpFill.style.width = `${hpPercent}%`;
+        manaFill.style.width = `${manaPercent}%`;
+    }
+    
+    function updatePlayerBarsInBattle() {
+        const player = gameState.player;
+        const barsContainer = document.getElementById('playerInBattleSpriteBarsContainer');
+        const hpFill = document.getElementById('playerInBattleSpriteHpFill');
+        const manaFill = document.getElementById('playerInBattleSpriteManaFill');
+        const playerSpriteInBattle = document.querySelector('.battle-area .character .character-sprite');
+
+        if (!barsContainer || !hpFill || !manaFill || !playerSpriteInBattle) {
+            // console.warn("Elementos de barras sobre el sprite del jugador en batalla no encontrados.");
+            if(barsContainer) barsContainer.style.display = 'none'; // Ocultar si faltan elementos
+            return;
+        }
+
+        // Solo mostrar si la pantalla de batalla está activa
+        if (!gameState.battle.active || document.getElementById('battleScreen').style.display !== 'flex') {
+            barsContainer.style.display = 'none';
+            return;
+        }
+        barsContainer.style.display = 'flex';
+
+        // Posicionar las barras ligeramente encima del sprite del jugador en batalla.
+        // El sprite (.character-sprite) es un div, necesitamos su offsetTop y offsetLeft
+        // relativo a su padre (.character) que ahora es 'position: relative'.
+        
+        const spriteTop = playerSpriteInBattle.offsetTop; // Distancia desde el borde superior del .character
+        const spriteLeft = playerSpriteInBattle.offsetLeft; // Distancia desde el borde izquierdo del .character
+        const spriteWidth = playerSpriteInBattle.offsetWidth;
+
+        const barHeightWithGap = barsContainer.offsetHeight || 12; // Alto total aprox. de las 2 barras + gap
+        
+        // El 'top' de las barras será el 'top' del sprite menos la altura de las barras y un pequeño margen.
+        barsContainer.style.top = `${spriteTop - barHeightWithGap - 3}px`; // 3px de espacio sobre el sprite
+
+        // Centrar horizontalmente con el sprite del jugador.
+        // 'left' será el 'left' del sprite más la mitad del ancho del sprite.
+        // El 'transform: translateX(-50%)' en CSS centra el contenedor de barras.
+        barsContainer.style.left = `${spriteLeft + (spriteWidth / 2)}px`;
+
+        // Actualizar el relleno de las barras.
+        const hpPercent = Math.max(0, (player.hp / player.maxHp) * 100);
+        const manaPercent = Math.max(0, (player.mana / player.maxMana) * 100);
+
+        hpFill.style.width = `${hpPercent}%`;
+        manaFill.style.width = `${manaPercent}%`;
+    }
+
 
     const joystickContainer = document.getElementById('joystick-container');
     const joystickPad = document.getElementById('joystick-pad');
@@ -5201,7 +5421,12 @@
         hideTouchControls();
     }
     function acceptMissionFromSectHall(misionId) { acceptMission(misionId); if (document.getElementById('sectHallModal').style.display === 'flex') { openSectHallInterface(); } }
-    function closeSectHallModal() { document.getElementById('sectHallModal').style.display = 'none'; showTouchControls(); }
+    function closeSectHallModal() { 
+        document.getElementById('sectHallModal').style.display = 'none'; showTouchControls();
+        updatePlayerBarsOnMap();
+        showTouchControls();
+    
+    }
     function openSectShop() { showModal("Tienda de Secta", "El Depósito aún está siendo abastecido."); }
 
 
