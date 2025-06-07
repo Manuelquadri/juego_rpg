@@ -247,79 +247,80 @@
         background: linear-gradient(90deg, #44ff44, #66ff66);
       }
 
-      .battle-screen {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #1a1a2e, #16213e);
-        display: none;
-        flex-direction: column;
-        z-index: 200;
-      }
+      /* === PANTALLA DE BATALLA === */
+        .battle-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            display: none; /* Se cambia a flex por JS */
+            flex-direction: column;
+            z-index: 200;
+            overflow: hidden; /* IMPORTANTE: Evitar que el contenido desborde la pantalla */
+        }
 
-      .battle-area {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 50px;
-      }
+        .battle-area {
+            flex: 1; /* Que ocupe el espacio vertical disponible */
+            display: flex;
+            align-items: center;
+            justify-content: space-around; /* O space-evenly */
+            padding: 20px 10px; /* Reducir padding horizontal en general, especialmente para móvil */
+            gap: 10px; /* Espacio entre personaje y enemigo */
+            overflow-y: auto; /* Si el contenido vertical es demasiado, permitir scroll DENTRO del área */
+        }
 
-      .character,
-      .enemy {
-        padding: 200px;
-        border: 3px solid #d4af37;
-        border-radius: 15px;
-        background: rgba(212, 175, 55, 0.1);
-        position: relative;
+        .character,
+        .enemy {
 
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+            padding-top: 60px;
+            padding-bottom: 60px;
 
-        /* === MODIFICACIÓN AQUÍ === */
-        /* flex: 1; */ /* ¡Quitamos esto! */
-        width: 320px; /* Dales un ancho fijo. Ajusta este valor (ej. 280px, 300px, 350px)
-                         hasta que el tamaño del contenedor del personaje y enemigo sea el que te guste.
-                         Esto es crucial para que no se expandan indefinidamente. */
-        /* Opcionalmente, para que sean algo responsivos pero con un límite:
-           width: 40%;
-           max-width: 350px; 
-           min-width: 250px; /* Para asegurar que no se hagan demasiado pequeños en pantallas estrechas */
-      }
+           /* border: 2px solid #d4af37; /* Borde más delgado */
+           /* border-radius: 10px;*/
+            /*background: rgba(212, 175, 55, 0.1);*/
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
 
-      .character-sprite,
-      .enemy-sprite {
-        font-size: 80px;
-        margin-bottom: 20px;
-        width: 80px;
-        height: 80px;
-        /* line-height: 80px; */ /* Comentado temporalmente */
-        text-align: center;
+            /* MODIFICACIÓN CLAVE: Hacerlos flexibles y con tamaño máximo */
+            flex-basis: 45%; /* Que cada uno intente ocupar cerca de la mitad del espacio disponible */
+            max-width: 280px; /* Pero no más de este ancho, incluso en escritorio si se prefiere */
+            min-width: 120px; /* Un mínimo para que no se colapsen demasiado */
+            box-sizing: border-box; /* Asegurar que padding y border estén dentro del width/height */
+        }
 
-        /* Añadir esto para centrar con flexbox DENTRO del .enemy-sprite */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
 
-      .battle-actions {
-        background: rgba(0, 0, 0, 0.8);
-        padding: 20px;
-        border-top: 3px solid #d4af37;
-      }
+        .character-sprite,
+        .enemy-sprite {
+            font-size: 60px; /* Reducir tamaño del sprite por defecto */
+            margin-bottom: 10px; /* Reducir margen */
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-      .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(
-          auto-fill,
-          minmax(120px, 1fr)
-        ); /* Para más botones */
-        gap: 10px;
-        margin-bottom: 15px;
-      }
+        .battle-actions {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px; /* Reducir padding */
+            border-top: 2px solid #d4af37;
+            flex-shrink: 0; /* Evitar que se encoja si el contenido del battle-area es grande */
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); /* Botones más pequeños */
+            gap: 5px; /* Menos espacio entre botones */
+            margin-bottom: 10px;
+        }
+        .battle-actions button { /* Estilos para los botones de acción específicos */
+            padding: 8px 10px; /* Botones más pequeños */
+            font-size: 0.8em;
+        }
 
       button {
         background: linear-gradient(135deg, #d4af37, #b8941f);
@@ -344,14 +345,16 @@
         cursor: not-allowed;
         transform: none;
       }
-
+      #toggleMapControlsBtn.hidden-during-battle {
+        display: none !important; /* !important para asegurar que sobreescriba el display: block de la media query */
+        }
       .log {
         background: rgba(0, 0, 0, 0.7);
-        padding: 15px;
+        padding: 8px;
         border-radius: 8px;
-        max-height: 150px;
+        max-height: 100px;
         overflow-y: auto;
-        font-size: 14px;
+        font-size: 0.8rem;
         line-height: 1.4;
       }
 
@@ -430,6 +433,8 @@
           grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         }
         .battle-area {
+            padding: 15px 5px;
+            gap: 5px;
           flex: 1;
           display: flex;
           align-items: center; /* Para centrar verticalmente los contenedores .character y .enemy */
@@ -437,7 +442,7 @@
                                             uniformemente alrededor de los elementos.
                                             Prueba también con 'space-evenly' si el resultado no te gusta.
                                             'space-between' los pegará a los bordes y dejará todo el espacio solo en el medio. */
-          padding: 50px; /* Mantenemos el padding general del área de batalla */
+       /*    padding: 50px; Mantenemos el padding general del área de batalla */
         }
       }
       @media (max-width: 768px) {
@@ -468,6 +473,57 @@
           padding: 10px 15px;
           font-size: 0.9em;
         } /* Botones más pequeños */
+
+        .battle-area {
+            padding: 10px 5px;
+            /* Considerar seriamente apilarlos verticalmente aquí si no caben */
+            /* flex-direction: column; */
+            /* align-items: center; Si se apilan, centrarlos */
+        }
+
+        .character, .enemy {
+            flex-basis: 48%; /* Si se mantienen lado a lado, darles un poco más de espacio */
+            min-width: 100px; /* Mínimo aún más pequeño */
+            padding: 5px;
+        }
+        /* Si se apilan verticalmente con flex-direction: column en .battle-area: */
+        /*
+        .character, .enemy {
+            width: 90%;
+            max-width: 280px;
+            margin-bottom: 10px;
+        }
+        */
+
+        .character-sprite, .enemy-sprite {
+            font-size: 50px; /* Sprites más pequeños */
+            width: 50px;
+            height: 50px;
+        }
+    
+
+
+        .character h3, .enemy h3 {
+            font-size: 0.1rem;
+        }
+        .character div, .enemy div {
+            font-size: 50px;
+        }
+        .character .stat-bar, .enemy .stat-bar {
+            height: 8px;
+        }
+
+        .action-buttons {
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Botones aún más adaptables */
+        }
+        .battle-actions button {
+            padding: 6px 8px;
+            font-size: 0.75em;
+        }
+        .log {
+            max-height: 80px;
+            font-size: 0.75rem;
+        }
       }
 
       #joystick-container {
@@ -614,6 +670,32 @@
 
         #shopModal .modal-content > div:last-child {
           padding-top: 15px;
+        }
+        .character, .enemy {
+            /* Aquí podrías necesitar ajustar flex-basis si quieres que uno sea más pequeño,
+            o si decides ponerlos uno encima del otro. Por ahora, se mantiene el 45% */
+            padding: 8px;
+        }
+
+        /* Los sprites y sus barras sobre ellos ya tienen estilos para móvil, pero podemos revisar */
+        #playerInBattleSpriteBarsContainer { /* Barras SOBRE el sprite del jugador */
+            width: 50px; /* Ajustar al tamaño del sprite móvil */
+            /* top y left se ajustan por JS, pero el width es importante */
+        }
+        .in-battle-sprite-stat-bar { /* Barras individuales SOBRE sprites */
+            height: 4px;
+        }
+
+        #enemyInBattleInfoContainer { /* Info SOBRE el sprite del enemigo */
+            min-width: 50px;
+            max-width: 100px; /* Reducir el ancho máximo */
+        }
+        #enemyInBattleInfoContainer .enemy-battle-name-level {
+            font-size: 0.1em;
+        }
+        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar { /* Barra de vida SOBRE sprite enemigo */
+            max-width: 50px; /* Ajustar al sprite */
+            height: 4px;
         }
       }
       .shop-header {
@@ -853,7 +935,7 @@
       }
 
       .enemy-battle-name-level {
-        font-size: 0.75em; /* Más pequeño que el H3 principal */
+        font-size: 0.5em; /* Más pequeño que el H3 principal */
         color: #f4e4bc;
         font-weight: bold;
         text-align: center;
@@ -959,6 +1041,63 @@
           padding: 10px 5px;
         }
       }
+      /* === AJUSTES ESPECÍFICOS PARA MÓVILES EN BATALLA (REVISIÓN) === */
+        @media (max-width: 768px) {
+        /* Sprites en tablet */
+        .character-sprite, .enemy-sprite {
+            font-size: 55px; /* Ligeramente más pequeño que el default de 60px */
+            width: 55px;
+            height: 55px;
+            margin-bottom: 8px;
+        }
+
+        #playerInBattleSpriteBarsContainer {
+            width: 50px; /* Coincidir o ser un poco menor que el sprite */
+        }
+        .in-battle-sprite-stat-bar {
+            height: 4px;
+        }
+        #enemyInBattleInfoContainer {
+            min-width: 50px;
+            max-width: 100px;
+        }
+        #enemyInBattleInfoContainer .enemy-battle-name-level {
+            font-size: 0.7em;
+        }
+        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar {
+            max-width: 45px; /* Un poco menor que el width de playerInBattleSpriteBarsContainer */
+            height: 4px;
+        }
+        }
+
+        @media (max-width: 480px) { /* Pantallas muy pequeñas */
+        .character-sprite, .enemy-sprite {
+            font-size: 50px;
+            width: 50px;
+            height: 50px;
+            margin-bottom: 6px;
+        }
+
+        #playerInBattleSpriteBarsContainer {
+            width: 45px; /* Ajustar al tamaño del sprite */
+        }
+        .in-battle-sprite-stat-bar {
+            height: 3px; /* Barras más delgadas */
+        }
+
+        #enemyInBattleInfoContainer {
+            min-width: 45px;
+            max-width: 90px;
+            padding: 1px 3px;
+        }
+        #enemyInBattleInfoContainer .enemy-battle-name-level {
+            font-size: 0.65em;
+        }
+        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar {
+            max-width: 40px;
+            height: 3px;
+        }
+        }
     </style>
   </head>
   <body>
@@ -3810,8 +3949,8 @@
 
           // Decidir cuántos tiles queremos ver en pantalla en móvil (aproximado)
           // Ajusta estos valores según tus preferencias visuales.
-          const TILES_VISIBLE_X_MOBILE = 10; // Por ejemplo, queremos ver unos 15 tiles de ancho
-          const TILES_VISIBLE_Y_MOBILE = 5; // Y unos 10 de alto
+          const TILES_VISIBLE_X_MOBILE = 5; // Por ejemplo, queremos ver unos 15 tiles de ancho
+          const TILES_VISIBLE_Y_MOBILE = 3; // Y unos 10 de alto
 
           const tileSizeBasedOnWidth = availableWidth / TILES_VISIBLE_X_MOBILE;
           const tileSizeBasedOnHeight =
@@ -6900,6 +7039,10 @@
       }
 
       function startBattle(mapEntity) {
+        const toggleBtn = document.getElementById('toggleMapControlsBtn');
+        if (toggleBtn) {
+            toggleBtn.classList.add('hidden-during-battle');
+        }
         const player = gameState.player;
         if (player.isCultivating) stopCultivation();
         hideTouchControls();
@@ -7004,103 +7147,91 @@
       function updateBattleUI() {
         const player = gameState.player;
         const enemy = gameState.battle.enemy;
-        const battleScreenActive =
-          document.getElementById("battleScreen").style.display === "flex";
+        const battleScreenActive = document.getElementById('battleScreen').style.display === 'flex';
 
-        // --- Actualización del Jugador ---
-        document.getElementById(
-          "playerBattleName"
-        ).textContent = `Cultivador (Nv.${player.level})`;
-        document.getElementById("playerBattleHp").textContent = `${Math.floor(
-          player.hp
-        )}/${player.maxHp}`;
-        document.getElementById("playerBattleHpBar").style.width = `${
-          (player.hp / player.maxHp) * 100
-        }%`;
-        updatePlayerBarsInBattle();
+        // --- Actualización del Jugador (Barras sobre el sprite) ---
+        const playerBarsContainer = document.getElementById("playerInBattleSpriteBarsContainer");
+        const playerSpriteInBattle = document.querySelector(".battle-area .character .character-sprite");
 
-        // --- Actualización del Enemigo ---
-        const enemyInfoContainer = document.getElementById(
-          "enemyInBattleInfoContainer"
-        );
-        const enemyNameLevelEl = document.getElementById(
-          "enemyBattleNameLevel"
-        );
-        const enemySpriteHpFill = document.getElementById(
-          "enemyInBattleSpriteHpFill"
-        );
-        const enemySpriteEl = document.getElementById("enemySprite"); // El div que CONTIENE el sprite/emoji
+        if (playerBarsContainer && playerSpriteInBattle && battleScreenActive) {
+            playerBarsContainer.style.display = 'flex';
+            const spriteTop = playerSpriteInBattle.offsetTop;
+            const spriteLeft = playerSpriteInBattle.offsetLeft;
+            const spriteWidth = playerSpriteInBattle.offsetWidth;
+            const barContainerHeight = playerBarsContainer.offsetHeight;
 
-        let enemyHpPercent = 0;
-        if (enemy) {
-          enemyHpPercent = Math.max(
-            0,
-            (enemy.hp / (enemy.maxHp || enemy.hp)) * 100
-          );
+            playerBarsContainer.style.top = `${spriteTop - barContainerHeight - 3}px`;
+            playerBarsContainer.style.left = `${spriteLeft + (spriteWidth / 2)}px`;
+
+            const playerHpFill = document.getElementById("playerInBattleSpriteHpFill");
+            const playerManaFill = document.getElementById("playerInBattleSpriteManaFill");
+            if(playerHpFill) playerHpFill.style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+            if(playerManaFill) playerManaFill.style.width = `${Math.max(0, (player.mana / player.maxMana) * 100)}%`;
+
+        } else if (playerBarsContainer) {
+            playerBarsContainer.style.display = 'none';
         }
 
-        if (
-          enemy &&
-          enemyInfoContainer &&
-          enemyNameLevelEl &&
-          enemySpriteHpFill &&
-          enemySpriteEl
-        ) {
-          if (battleScreenActive) {
-            enemyInfoContainer.style.display = "flex";
+        // --- Actualización del Enemigo (Info y barras sobre el sprite) ---
+        const enemyInfoContainer = document.getElementById('enemyInBattleInfoContainer');
+        const enemySpriteEl = document.getElementById('enemySprite');
+        
+        // MOVER LA DECLARACIÓN DE enemyHpPercent AQUÍ ARRIBA
+        let enemyHpPercent = 0;
+        if (enemy) { // Asegurarse que enemy exista antes de calcular
+            enemyHpPercent = Math.max(0, (enemy.hp / (enemy.maxHp || enemy.hp)) * 100);
+        }
 
-            let enemyDisplayName = enemy.name;
-            if (enemy.level) {
-              // Asumiendo que 'enemy' podría tener una propiedad 'level'
-              enemyDisplayName += ` (Nv.${enemy.level})`;
-            } else if (enemy.isBoss) {
-              enemyDisplayName += ` (Jefe)`;
-            } else if (enemy.isMiniBoss) {
-              enemyDisplayName += ` (Élite)`;
-            }
-            enemyNameLevelEl.textContent = enemyDisplayName;
+        if (enemy && enemyInfoContainer && enemySpriteEl && battleScreenActive) {
+            enemyInfoContainer.style.display = 'flex';
 
-            enemySpriteHpFill.style.width = `${enemyHpPercent}%`;
-
-            // === CAMBIO PRINCIPAL PARA EL POSICIONAMIENTO ===
-            const spriteContainerTop = enemySpriteEl.offsetTop; // Posición Y del div.enemy-sprite relativa a div.enemy
-            const spriteContainerLeft = enemySpriteEl.offsetLeft; // Posición X del div.enemy-sprite relativa a div.enemy
-            const spriteContainerWidth = enemySpriteEl.offsetWidth; // Ancho total del div.enemy-sprite
-
+            const spriteTop = enemySpriteEl.offsetTop;
+            const spriteLeft = enemySpriteEl.offsetLeft;
+            const spriteWidth = enemySpriteEl.offsetWidth;
             const infoContainerHeight = enemyInfoContainer.offsetHeight;
 
-            // Posicionar el InfoContainer encima del div.enemy-sprite
-            enemyInfoContainer.style.top = `${
-              spriteContainerTop - infoContainerHeight - 5
-            }px`; // 5px de espacio por encima
+            if (isMobileView()) {
+                console.log("[Mobile Battle UI] Enemy Sprite - offsetTop:", spriteTop, "offsetLeft:", spriteLeft, "offsetWidth:", spriteWidth);
+                console.log("[Mobile Battle UI] Enemy InfoContainer - offsetHeight:", infoContainerHeight);
+                console.log("[Mobile Battle UI] Calculated top:", `${spriteTop - infoContainerHeight - 5}px`, "Calculated left:", `${spriteLeft + (spriteWidth / 2)}px`);
+            }
 
-            // Centrar horizontalmente el InfoContainer respecto al div.enemy-sprite
-            // El 'left' es el punto medio del div.enemy-sprite.
-            // transform: translateX(-50%) en CSS centrará el InfoContainer sobre este punto.
-            enemyInfoContainer.style.left = `${
-              spriteContainerLeft + spriteContainerWidth / 2
-            }px`;
-            // === FIN DEL CAMBIO PRINCIPAL ===
-          } else {
-            enemyInfoContainer.style.display = "none";
-          }
+            enemyInfoContainer.style.top = `${spriteTop - infoContainerHeight - 5}px`;
+            enemyInfoContainer.style.left = `${spriteLeft + (spriteWidth / 2)}px`;
 
-          // Actualizar la info principal del enemigo (debajo del sprite)
-          // Si el enemySpriteEl es solo para el emoji, y el emoji es texto, asegúrate que se actualice.
-          // Si enemy.symbol es el emoji, entonces:
-          enemySpriteEl.textContent = enemy.symbol || "?";
-          document.getElementById("enemyName").textContent = enemy.name;
-          document.getElementById("enemyHp").textContent = `${Math.floor(
-            enemy.hp
-          )}/${enemy.maxHp || enemy.hp}`;
-          document.getElementById(
-            "enemyHpBar"
-          ).style.width = `${enemyHpPercent}%`;
+            const enemyNameLevelEl = document.getElementById('enemyBattleNameLevel');
+            const enemySpriteHpFill = document.getElementById('enemyInBattleSpriteHpFill'); // Barra SOBRE el sprite
+
+            if (enemyNameLevelEl) {
+                let enemyDisplayName = enemy.name;
+                if (enemy.level) enemyDisplayName += ` (Nv.${enemy.level})`;
+                else if (enemy.isBoss) enemyDisplayName += ` (Jefe)`;
+                else if (enemy.isMiniBoss) enemyDisplayName += ` (Élite)`;
+                enemyNameLevelEl.textContent = enemyDisplayName;
+            }
+            if (enemySpriteHpFill) enemySpriteHpFill.style.width = `${enemyHpPercent}%`; // Usa la variable ya calculada
+
         } else if (enemyInfoContainer) {
-          enemyInfoContainer.style.display = "none";
+            enemyInfoContainer.style.display = 'none';
         }
-      }
 
+        // --- Actualización del resto de la UI de batalla (nombres debajo, barras principales, etc.) ---
+        if (battleScreenActive) {
+            document.getElementById('playerBattleName').textContent = `Cultivador (Nv.${player.level})`;
+            document.getElementById('playerBattleHp').textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
+            document.getElementById('playerBattleHpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
+            
+            // updatePlayerBarsInBattle(); // Esta llamada podría ser redundante si ya actualizamos las barras del jugador arriba.
+                                        // Mantenla si hace algo más o si la lógica de arriba se mueve.
+
+            if (enemy && enemySpriteEl) { // Añadir chequeo para enemySpriteEl aquí también
+                enemySpriteEl.textContent = enemy.symbol || '?';
+                document.getElementById('enemyName').textContent = enemy.name;
+                document.getElementById('enemyHp').textContent = `${Math.floor(enemy.hp)}/${enemy.maxHp || enemy.hp}`;
+                document.getElementById('enemyHpBar').style.width = `${enemyHpPercent}%`; // Usa la variable ya calculada
+            }
+        }
+    }
       function battleAction(action, abilityDetails = null) {
         if (!gameState.battle.playerTurn || !gameState.battle.active) return;
         const player = gameState.player;
