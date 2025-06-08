@@ -203,6 +203,33 @@
         color: #f4e4bc;
         opacity: 0.7;
       }
+      .cultivate-slot {
+            font-size: 28px; /* Hacemos el emoji un poco más grande */
+            border-style: solid; /* Para que no se vea punteado como un slot vacío */
+        }
+
+        /* Estilo para cuando el cultivo está activo */
+        .cultivate-slot.active-cultivation {
+            background-color: rgba(139, 69, 19, 0.5); /* Un brillo sutil de color del tema */
+            border-color: #f4d03f;
+            box-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
+            animation: pulse-cultivation 2s infinite;
+        }
+
+        @keyframes pulse-cultivation {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(244, 208, 63, 0.8);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
+            }
+        }
 
       /* --- Botones de Control Superpuestos (Móvil) --- */
       #mobileMenuBtn {
@@ -1648,22 +1675,22 @@ let lastSuccessfulMoveTime = 0;
           npcInicio: "guia_lin",
         },
         mision_eliminar_demonios_1: {
-          titulo: "Limpiando el Bosque Periférico",
-          descripcion:
-            "Pequeños demonios han estado merodeando el bosque cercano a la secta. Elimina 5 Demonios Menores para asegurar el área.",
-          objetivo: {
-            tipo: "eliminar_enemigo",
-            enemigoTipo: "monster",
-            cantidad: 5,
-            nombreDisplay: "Demonio Menor",
-          },
-          recompensa: {
-            pcs: 75,
-            exp: 150,
-            items: { "Piedras Espirituales": 30 },
-          },
-          progreso: 0,
-          npcInicio: "guia_lin",
+            titulo: "Limpiando el Bosque Periférico",
+            descripcion:
+            "Pequeños demonios han estado merodeando el bosque cercano a la secta. Elimina 5 Demonios Menores para asegurar el área y reporta tu éxito al Guía Lin.",
+            objetivo: {
+                tipo: "eliminar_enemigo",
+                enemigoTipo: "monster",
+                cantidad: 5,
+                nombreDisplay: "Demonio Menor",
+                npcEntrega: "guia_lin",
+            },
+            recompensa: {
+                pcs: 75,
+                exp: 150,
+                items: { "Piedras Espirituales": 30 },
+            },
+            npcInicio: "guia_lin", // Ahora esta es la última propiedad
         },
         mision_componentes_alquimia_1: {
           titulo: "Medicina Urgente",
@@ -3748,21 +3775,21 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function closeModal() {
-    const modalElement = document.getElementById("interactionModal");
-    if (modalElement) {
-      modalElement.style.display = "none";
-    }
+        const modalElement = document.getElementById("interactionModal");
+        if (modalElement) {
+        modalElement.style.display = "none";
+        }
 
-    
-    if (!gameState.battle.active) {
-        document.querySelector('.stats-panel').style.display = 'block';
+        
+        if (!gameState.battle.active) {
+            document.querySelector('.stats-panel').style.display = 'block';
+        }
+        
+        
+        updatePlayerBarsOnMap();
+        showTouchControls();
+        updateTopNavVisibility();
     }
-    
-    
-    updatePlayerBarsOnMap();
-    showTouchControls();
-    updateTopNavVisibility();
-}
 
       function ensureFixedEntities() {
         const player = gameState.player;
@@ -5866,6 +5893,7 @@ let lastSuccessfulMoveTime = 0;
         );
 
         showActiveCultivationModal();
+        renderQuickSlotBar(); 
       }
 
       function stopCultivation() {
@@ -5896,6 +5924,7 @@ let lastSuccessfulMoveTime = 0;
         ) {
           showTechniquePanel();
         }
+        renderQuickSlotBar(); 
       }
 
       function showActiveCultivationModal() {
@@ -8711,216 +8740,156 @@ function closeBattleReviewModal() {
       function loadGameFromFile(event) {
         const file = event.target.files[0];
         if (!file) {
-          showModal("Carga Cancelada", "No se seleccionó archivo.");
-          return;
+        showModal("Carga Cancelada", "No se seleccionó archivo.");
+        return;
         }
         if (file.type !== "application/json") {
-          showModal("Error de Archivo", "Selecciona un JSON válido.");
-          event.target.value = null;
-          return;
+        showModal("Error de Archivo", "Selecciona un JSON válido.");
+        event.target.value = null;
+        return;
         }
 
         const reader = new FileReader();
         reader.onload = function (e) {
-          try {
+        try {
             // 0. DETENER PROCESOS EN CURSO Y LIMPIAR ESTADO ANTERIOR PARCIALMENTE
             if (gameState.player.isCultivating) {
-              stopCultivation(); // Asegúrate que esta función limpie gameState.cultivationInterval
+            stopCultivation();
             }
             if (gameState.battle.active) {
-              endBattle(false); // false indica que no es una victoria
+            endBattle(false);
             }
-            // Limpiar el intervalo de cultivo explícitamente si stopCultivation no lo hace o por si acaso
             if (gameState.cultivationInterval) {
-              clearInterval(gameState.cultivationInterval);
-              gameState.cultivationInterval = null;
+            clearInterval(gameState.cultivationInterval);
+            gameState.cultivationInterval = null;
             }
 
             const loadedGameState = JSON.parse(e.target.result);
 
             // Validación básica del formato del archivo cargado
             if (
-              typeof loadedGameState !== "object" ||
-              loadedGameState === null ||
-              !loadedGameState.player ||
-              !loadedGameState.map ||
-              !loadedGameState.inventory
+            typeof loadedGameState !== "object" ||
+            loadedGameState === null ||
+            !loadedGameState.player ||
+            !loadedGameState.map ||
+            !loadedGameState.inventory
             ) {
-              throw new Error(
+            throw new Error(
                 "Formato de guardado incorrecto o datos esenciales (jugador, mapa, inventario) faltantes."
-              );
+            );
             }
 
             // 1. CARGAR DATOS DEL JUGADOR (PLAYER DATA)
-            // Primero, copia las propiedades primitivas y luego maneja los objetos anidados.
             for (const key in loadedGameState.player) {
-              if (loadedGameState.player.hasOwnProperty(key)) {
+            if (loadedGameState.player.hasOwnProperty(key)) {
                 if (
-                  typeof loadedGameState.player[key] !== "object" ||
-                  loadedGameState.player[key] === null
+                typeof loadedGameState.player[key] !== "object" ||
+                loadedGameState.player[key] === null
                 ) {
-                  gameState.player[key] = loadedGameState.player[key];
+                gameState.player[key] = loadedGameState.player[key];
                 }
-              }
             }
+            }
+            
+            // Copia profunda de objetos anidados dentro de 'player'
+            gameState.player.learnedTechniques = loadedGameState.player.learnedTechniques ? JSON.parse(JSON.stringify(loadedGameState.player.learnedTechniques)) : {};
+            gameState.player.secta = loadedGameState.player.secta ? JSON.parse(JSON.stringify(loadedGameState.player.secta)) : { nombre: "Secta del Viento Azure", rango: "Discípulo Externo", puntosContribucion: 0, misionesActivas: [], misionesCompletadas: {}, rivalesDerrotadosClave: {} };
+            gameState.player.worldState = loadedGameState.player.worldState ? JSON.parse(JSON.stringify(loadedGameState.player.worldState)) : { defeatedBosses: {}, currentBossToSpawn: "boss_demon_general" };
+            gameState.player.cultivationMode = loadedGameState.player.cultivationMode ? JSON.parse(JSON.stringify(loadedGameState.player.cultivationMode)) : { type: null, targetId: null, startTime: 0 };
+            gameState.player.directionRowMap = loadedGameState.player.directionRowMap ? JSON.parse(JSON.stringify(loadedGameState.player.directionRowMap)) : { down: 0, left: 1, right: 2, up: 3 };
+            gameState.player.sprites = loadedGameState.player.sprites ? JSON.parse(JSON.stringify(loadedGameState.player.sprites)) : { idle: "img/personaje_cultivador_idle.png", up: "img/personaje_cultivador_up.png", down: "img/personaje_cultivador_down.png", left: "img/personaje_cultivador_left.png", right: "img/personaje_cultivador_right.png" };
+            gameState.player.quickSlots = loadedGameState.player.quickSlots ? JSON.parse(JSON.stringify(loadedGameState.player.quickSlots)) : [null, null, null, null, null];
 
-            // Objetos anidados dentro de player (copia profunda para evitar problemas de referencia)
-            gameState.player.learnedTechniques = loadedGameState.player
-              .learnedTechniques
-              ? JSON.parse(
-                  JSON.stringify(loadedGameState.player.learnedTechniques)
-                )
-              : {};
-            gameState.player.secta = loadedGameState.player.secta
-              ? JSON.parse(JSON.stringify(loadedGameState.player.secta))
-              : {
-                  nombre: "Secta del Viento Azure",
-                  rango: "Discípulo Externo",
-                  puntosContribucion: 0,
-                  misionesActivas: [],
-                  misionesCompletadas: {},
-                  rivalesDerrotadosClave: {},
-                };
-            gameState.player.worldState = loadedGameState.player.worldState
-              ? JSON.parse(JSON.stringify(loadedGameState.player.worldState))
-              : {
-                  defeatedBosses: {},
-                  currentBossToSpawn: "boss_demon_general",
-                };
-            gameState.player.cultivationMode = loadedGameState.player
-              .cultivationMode
-              ? JSON.parse(
-                  JSON.stringify(loadedGameState.player.cultivationMode)
-                )
-              : { type: null, targetId: null, startTime: 0 };
-            gameState.player.directionRowMap = loadedGameState.player
-              .directionRowMap
-              ? JSON.parse(
-                  JSON.stringify(loadedGameState.player.directionRowMap)
-                )
-              : { down: 0, left: 1, right: 2, up: 3 };
-            gameState.player.sprites = loadedGameState.player.sprites
-              ? JSON.parse(JSON.stringify(loadedGameState.player.sprites))
-              : {
-                  idle: "img/personaje_cultivador_idle.png",
-                  up: "img/personaje_cultivador_up.png",
-                  down: "img/personaje_cultivador_down.png",
-                  left: "img/personaje_cultivador_left.png",
-                  right: "img/personaje_cultivador_right.png",
-                };
 
-            // Asegurar propiedades del sprite (valores por defecto si no están en el guardado)
-            gameState.player.spriteSheetUrl =
-              loadedGameState.player.spriteSheetUrl ||
-              gameState.player.spriteSheetUrl ||
-              "img/personaje_cultivador_spritesheet.png";
-            gameState.player.frameWidth =
-              loadedGameState.player.frameWidth ||
-              gameState.player.frameWidth ||
-              64;
-            gameState.player.frameHeight =
-              loadedGameState.player.frameHeight ||
-              gameState.player.frameHeight ||
-              64;
-            gameState.player.animationFrames =
-              loadedGameState.player.animationFrames ||
-              gameState.player.animationFrames ||
-              4;
-            gameState.player.currentFrame = 0; // Siempre resetear frame al cargar
-            gameState.player.currentDirection =
-              loadedGameState.player.currentDirection ||
-              gameState.player.currentDirection ||
-              "down";
-            gameState.player.animationSpeed =
-              loadedGameState.player.animationSpeed ||
-              gameState.player.animationSpeed ||
-              150;
+            // === INICIO DEL CÓDIGO DE REPARACIÓN DE MISIONES ===
+            if (gameState.player.secta && gameState.player.secta.misionesActivas) {
+                console.log("Ejecutando rutina de reparación de misiones al cargar partida...");
+                gameState.player.secta.misionesActivas.forEach(misionActiva => {
+                    const misionDataOriginal = MISIONES_DATA[misionActiva.id];
+                    if (misionDataOriginal && misionDataOriginal.objetivo && misionActiva.objetivoOriginal) {
+                        // Si a la misión activa guardada le falta la propiedad npcEntrega,
+                        // pero la definición actual en el código SÍ la tiene, la añadimos.
+                        if (!misionActiva.objetivoOriginal.npcEntrega && misionDataOriginal.objetivo.npcEntrega) {
+                            console.log(`Reparando misión '${misionActiva.id}': Añadiendo npcEntrega '${misionDataOriginal.objetivo.npcEntrega}'.`);
+                            misionActiva.objetivoOriginal.npcEntrega = misionDataOriginal.objetivo.npcEntrega;
+                        }
+                    }
+                });
+            }
+            // === FIN DEL CÓDIGO DE REPARACIÓN DE MISIONES ===
 
-            // Resetear estados transitorios del jugador
+
+            // Asegurar propiedades del sprite
+            gameState.player.spriteSheetUrl = loadedGameState.player.spriteSheetUrl || "img/personaje_cultivador_spritesheet.png";
+            gameState.player.frameWidth = loadedGameState.player.frameWidth || 64;
+            gameState.player.frameHeight = loadedGameState.player.frameHeight || 64;
+            gameState.player.animationFrames = loadedGameState.player.animationFrames || 4;
+            gameState.player.currentFrame = 0;
+            gameState.player.currentDirection = loadedGameState.player.currentDirection || "down";
+            gameState.player.animationSpeed = loadedGameState.player.animationSpeed || 150;
+
+            // Resetear estados transitorios
             gameState.player.isMoving = false;
-            if (gameState.player.animationTimer)
-              clearInterval(gameState.player.animationTimer);
+            if (gameState.player.animationTimer) clearInterval(gameState.player.animationTimer);
             gameState.player.animationTimer = null;
-            if (gameState.player.idleTimeout)
-              clearTimeout(gameState.player.idleTimeout);
+            if (gameState.player.idleTimeout) clearTimeout(gameState.player.idleTimeout);
             gameState.player.idleTimeout = null;
-            gameState.player.isCultivating = false; // El cultivo no se reanuda automáticamente
+            gameState.player.isCultivating = false;
 
-            // 2. CARGAR INVENTARIO (CRUCIAL)
-            gameState.inventory = loadedGameState.inventory
-              ? JSON.parse(JSON.stringify(loadedGameState.inventory))
-              : { "Piedras Espirituales": 0 };
+            // 2. CARGAR INVENTARIO
+            gameState.inventory = loadedGameState.inventory ? JSON.parse(JSON.stringify(loadedGameState.inventory)) : { "Piedras Espirituales": 0 };
 
-            // 3. CARGAR DATOS DEL MAPA (MAP DATA)
-            // Las entidades del mapa (gameState.map.entities) serán reconstruidas por generateMap(true).
-            // Lo importante es cargar las dimensiones y las definiciones de zona si se guardan.
+            // 3. CARGAR DATOS DEL MAPA
             gameState.map.width = loadedGameState.map.width || 200;
             gameState.map.height = loadedGameState.map.height || 200;
-            gameState.map.defaultTerrain =
-              loadedGameState.map.defaultTerrain || "GRASSLAND";
+            gameState.map.defaultTerrain = loadedGameState.map.defaultTerrain || "GRASSLAND";
             if (loadedGameState.map.terrainZones) {
-              // Si guardas las terrainZones (suelen ser estáticas pero por si acaso)
-              gameState.map.terrainZones = JSON.parse(
-                JSON.stringify(loadedGameState.map.terrainZones)
-              );
+            gameState.map.terrainZones = JSON.parse(JSON.stringify(loadedGameState.map.terrainZones));
             }
-            // La rejilla de terreno (terrainGrid) se suele generar, así que no es necesario cargarla.
-            gameState.map.terrainGrid = null; // Para forzar su regeneración si es necesario.
-            // Las entidades (monstruos, recursos no fijos) se regenerarán. Las entidades fijas (tienda, NPCs de secta)
-            // serán gestionadas por ensureFixedEntities dentro de generateMap.
-
-            // 4. CARGAR OTROS ESTADOS GLOBALES DEL JUEGO
+            gameState.map.terrainGrid = null;
+            
+            // 4. CARGAR OTROS ESTADOS GLOBALES
             gameState.gameTime = loadedGameState.gameTime || 0;
-            gameState.lastGameTimeUpdate = Date.now(); // Resetear al momento de carga
-            gameState.activeCombatAbilities = []; // Se recalculará después
+            gameState.lastGameTimeUpdate = Date.now();
+            gameState.activeCombatAbilities = [];
 
             // 5. RECONSTRUIR EL MUNDO DEL JUEGO Y ACTUALIZAR ESTADOS
-            // generateMap(true) se encarga de:
-            // - Limpiar entidades no fijas.
-            // - Repoblar zonas con entidades (monstruos, recursos) según spawnSettings (currentCount se resetea).
-            // - Añadir elementos decorativos.
-            // - Llamar a ensureFixedEntities() para asegurar la presencia de entidades fijas (tienda, secta, NPCs).
-            // - initializeTerrainGrid() (si está implementado dentro o es llamado por funciones que usa generateMap).
             generateMap(true);
+            recalculatePlayerStats();
+            calculateAndSetTileSize();
+            updatePlayerVisualSize();
+            updatePlayerSpriteVisual();
+            updatePlayerPosition("loadGameFromFile_end");
+            renderQuickSlotBar(); // Asegurarse de renderizar la barra rápida al cargar
 
-            recalculatePlayerStats(); // Recalcula stats derivados y habilidades de combate activas.
-
-            // Actualizar la interfaz gráfica y la posición del jugador.
-            // La posición del jugador (X, Y) ya fue cargada en gameState.player.
-            calculateAndSetTileSize(); // Ajustar tamaño de tiles si la ventana cambió.
-            updatePlayerVisualSize(); // Ajustar tamaño del sprite del jugador.
-            updatePlayerSpriteVisual(); // Configurar el frame y dirección correctos del sprite.
-            updatePlayerPosition("loadGameFromFile_end"); // Mueve el mapa y renderiza. Esto también llama a updateUI().
-
-            // Estado de batalla generalmente no se guarda en medio de una.
+            // Limpiar estado de batalla
             gameState.battle.active = false;
             document.getElementById("battleScreen").style.display = "none";
             if (document.getElementById("playerInBattleSpriteBarsContainer")) {
-              document.getElementById(
-                "playerInBattleSpriteBarsContainer"
-              ).style.display = "none";
+                document.getElementById("playerInBattleSpriteBarsContainer").style.display = "none";
             }
 
             showModal("Partida Cargada", "¡Partida restaurada con éxito!");
-          } catch (error) {
+
+        } catch (error) {
             showModal(
-              "Error al Cargar",
-              `Hubo un problema al leer o procesar el archivo: ${error.message}`
+            "Error al Cargar",
+            `Hubo un problema al leer o procesar el archivo: ${error.message}`
             );
             console.error("Error loading game:", error);
-          } finally {
-            event.target.value = null; // Resetear el input de archivo para permitir cargar el mismo archivo de nuevo.
-          }
+        } finally {
+            event.target.value = null; 
+        }
         };
         reader.onerror = () => {
-          showModal(
+        showModal(
             "Error de Lectura",
             "No se pudo leer el archivo de guardado."
-          );
-          event.target.value = null;
+        );
+        event.target.value = null;
         };
         reader.readAsText(file);
-      }
+    }
 
       // Asegúrate de que tu función initializeTerrainGrid (si la tienes separada) se llame
       // al inicio del juego (en DOMContentLoaded antes de generateMap) y, si es necesario,
@@ -8937,53 +8906,75 @@ function closeBattleReviewModal() {
         });
     */
     function renderQuickSlotBar() {
-        const bar = document.getElementById("quickSlotBar");
-        if (!bar) return;
-        bar.innerHTML = ""; // Limpiar la barra
+    const bar = document.getElementById("quickSlotBar");
+    if (!bar) return;
+    bar.innerHTML = ""; // Limpiar la barra
 
-        gameState.player.quickSlots.forEach((itemName, index) => {
-            const slot = document.createElement("div");
-            slot.className = "quick-slot";
+    // Renderizar los 5 slots de ítems como antes
+    gameState.player.quickSlots.forEach((itemName, index) => {
+        const slot = document.createElement("div");
+        slot.className = "quick-slot";
+        
+        const keyHint = document.createElement("span");
+        keyHint.className = "slot-key-hint";
+        keyHint.textContent = index + 1;
+        slot.appendChild(keyHint);
+
+        if (itemName && itemData[itemName]) {
+            const item = itemData[itemName];
+            const itemCount = gameState.inventory[itemName] || 0;
+
+            slot.innerHTML += getItemIcon(itemName);
             
-            const keyHint = document.createElement("span");
-            keyHint.className = "slot-key-hint";
-            keyHint.textContent = index + 1;
-            slot.appendChild(keyHint);
+            const countDisplay = document.createElement("span");
+            countDisplay.className = "slot-item-count";
+            countDisplay.textContent = itemCount;
+            slot.appendChild(countDisplay);
 
-            if (itemName && itemData[itemName]) {
-                const item = itemData[itemName];
-                const itemCount = gameState.inventory[itemName] || 0;
-
-                slot.innerHTML += getItemIcon(itemName); // Reutilizamos tu función de iconos
-                
-                const countDisplay = document.createElement("span");
-                countDisplay.className = "slot-item-count";
-                countDisplay.textContent = itemCount;
-                slot.appendChild(countDisplay);
-
-                if (itemCount === 0) {
-                    slot.style.opacity = 0.5;
-                    slot.title = `${itemName} (Agotado)`;
-                } else {
-                    slot.title = `Usar ${itemName} (x${itemCount})`;
-                    slot.onclick = () => useQuickSlotItem(index);
-                }
-
+            if (itemCount === 0) {
+                slot.style.opacity = 0.5;
+                slot.title = `${itemName} (Agotado)`;
             } else {
-                slot.classList.add("empty");
-                // === NUEVA LÓGICA AQUÍ ===
-                slot.title = "Haz clic para asignar un objeto";
-                slot.onclick = () => openItemAssignmentModal(index); // Llama a una nueva función
-                // === FIN NUEVA LÓGICA ===
+                slot.title = `Usar ${itemName} (x${itemCount})`;
+                slot.onclick = () => useQuickSlotItem(index);
             }
-            bar.appendChild(slot);
-        });
+
+        } else {
+            slot.classList.add("empty");
+            slot.title = "Haz clic para asignar un objeto";
+            slot.onclick = () => openItemAssignmentModal(index);
+        }
+        bar.appendChild(slot);
+    });
+
+    // === INICIO DE LA NUEVA LÓGICA ===
+    // Añadir el botón de Cultivar como un sexto slot
+    const cultivateSlot = document.createElement("div");
+    cultivateSlot.className = "quick-slot cultivate-slot"; // Añadimos una clase extra para estilos específicos
+    cultivateSlot.title = "Cultivar (🧘)";
+    
+    // El contenido del botón será el emoji de cultivar
+    cultivateSlot.innerHTML = '🧘';
+
+    // Asignar la función de cultivo al hacer clic
+    cultivateSlot.onclick = () => toggleCultivation();
+
+    // Si el jugador ya está cultivando, podemos darle un estilo diferente
+    if (gameState.player.isCultivating) {
+        cultivateSlot.classList.add('active-cultivation');
+        cultivateSlot.title = "Ver/Detener Cultivo";
     }
+
+    bar.appendChild(cultivateSlot);
+    // === FIN DE LA NUEVA LÓGICA ===
+}
 
     function useQuickSlotItem(slotIndex) {
         const itemName = gameState.player.quickSlots[slotIndex];
         if (!itemName) {
             console.log(`Slot ${slotIndex + 1} está vacío.`);
+            // Si el slot está vacío, podríamos abrir el modal de asignación. ¡Es una buena mejora!
+            openItemAssignmentModal(slotIndex);
             return;
         }
 
@@ -8992,6 +8983,9 @@ function closeBattleReviewModal() {
 
         if (itemCount <= 0) {
             showModal("Agotado", `No te quedan más ${itemName}.`);
+            // Si el inventario dice 0 pero el slot aún tiene el ítem, lo limpiamos por seguridad.
+            gameState.player.quickSlots[slotIndex] = null;
+            renderQuickSlotBar(); // Actualizar la UI
             return;
         }
 
@@ -9006,8 +9000,19 @@ function closeBattleReviewModal() {
         if (message && !message.toLowerCase().includes("error") && !message.toLowerCase().includes("al máximo")) {
             gameState.inventory[itemName]--;
             showModal("Objeto Usado", message);
-            updateUI(); // Actualiza los stats y el inventario del sidebar
-            renderQuickSlotBar(); // Vuelve a renderizar la barra para actualizar la cantidad
+            updateUI(); 
+
+            // === INICIO DE LA CORRECCIÓN CLAVE ===
+            // Después de usar el ítem, verificamos si se agotó.
+            const newCount = gameState.inventory[itemName] || 0;
+            if (newCount <= 0) {
+                // Si la cantidad es 0, vaciamos el slot.
+                gameState.player.quickSlots[slotIndex] = null;
+                console.log(`Ítem ${itemName} agotado. Vaciando slot ${slotIndex + 1}.`);
+            }
+            // === FIN DE LA CORRECCIÓN CLAVE ===
+
+            renderQuickSlotBar(); // Vuelve a renderizar la barra para actualizar la cantidad o mostrar el slot vacío.
         } else {
             showModal("Acción no posible", message);
         }
@@ -9903,21 +9908,15 @@ function closeBattleReviewModal() {
         }
 
         if (navBtnMenu) {
-          navBtnMenu.addEventListener("click", () => {
-            // Decide qué hace este botón. ¿Abre el sidebar? ¿Un menú de pausa?
-            // Ejemplo: si quieres que muestre el sidebar en vista móvil donde está colapsado.
-            const sidebar = document.querySelector(".sidebar");
-            if (sidebar && isMobileView()) {
-              // Podrías implementar una lógica para alternar la visibilidad del sidebar
-              // o scrollear a él si es parte del layout principal.
-              // Por ahora, un placeholder:
-              sidebar.scrollIntoView({ behavior: "smooth" });
-            } else {
-              // showModal("Menú Principal", "Opciones del juego / Guardar / Cargar / Ayuda.");
-              // O si tienes una función para abrir un modal de menú:
-              openMainMenuModal(); // Tendrías que crear esta función
-            }
-          });
+            navBtnMenu.addEventListener("click", () => {
+                // Siempre abre el modal del menú principal.
+                openMainMenuModal(); 
+                
+                // Adicional: En móvil, cierra el menú desplegable después de hacer clic.
+                if (isMobileView() && topNavBar.classList.contains('open')) {
+                    topNavBar.classList.remove('open');
+                }
+            });
         }
 
         // Llamada inicial para asegurar el estado correcto de la barra
