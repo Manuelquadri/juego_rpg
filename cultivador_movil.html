@@ -9596,9 +9596,9 @@ let lastSuccessfulMoveTime = 0;
         }
       }
 
-      function updateJoystickHandlePosition(touch, isStart = false) {
+      function updateJoystickHandlePosition(touch) {
         const padRect = joystickPad.getBoundingClientRect();
-        if (padRect.width === 0 || padRect.height === 0) return;
+        if (padRect.width === 0) return;
 
         const joystickCenterX = padRect.left + padRect.width / 2;
         const joystickCenterY = padRect.top + padRect.height / 2;
@@ -9607,62 +9607,47 @@ let lastSuccessfulMoveTime = 0;
         const currentY = touch.clientY - joystickCenterY;
 
         const angle = Math.atan2(currentY, currentX);
-        const maxDistance =
-          joystickPad.offsetWidth / 2 - joystickHandle.offsetWidth / 2;
+        const maxDistance = joystickPad.offsetWidth / 2 - joystickHandle.offsetWidth / 2;
         if (maxDistance <= 0) return;
 
         const distance = Math.min(maxDistance, Math.hypot(currentX, currentY));
         const limitedX = distance * Math.cos(angle);
         const limitedY = distance * Math.sin(angle);
-        if (joystickHandle)
-          joystickHandle.style.transform = `translate(${limitedX}px, ${limitedY}px)`;
+        if (joystickHandle) {
+            joystickHandle.style.transform = `translate(${limitedX}px, ${limitedY}px)`;
+        }
 
-        let newJoystickDx = 0;
-        let newJoystickDy = 0;
-        let newDirection = null;
+        // --- LÓGICA DE CONTROL SIMPLIFICADA ---
+        // Primero, reseteamos todas las direcciones del joystick.
+        playerMovementKeysDown.up = false;
+        playerMovementKeysDown.down = false;
+        playerMovementKeysDown.left = false;
+        playerMovementKeysDown.right = false;
 
+        // Ahora, activamos la dirección correcta si el joystick está lo suficientemente inclinado.
         const magnitude = Math.hypot(currentX, currentY);
         if (magnitude > JOYSTICK_THRESHOLD) {
-          if (Math.abs(currentX) > Math.abs(currentY)) {
-            newJoystickDx = currentX > 0 ? 1 : -1;
-            newDirection = currentX > 0 ? "right" : "left";
-          } else {
-            newJoystickDy = currentY > 0 ? 1 : -1;
-            newDirection = currentY > 0 ? "down" : "up";
-          }
+            if (Math.abs(currentX) > Math.abs(currentY)) {
+                // Movimiento horizontal (izquierda o derecha)
+                if (currentX > 0) {
+                    playerMovementKeysDown.right = true;
+                } else {
+                    playerMovementKeysDown.left = true;
+                }
+            } else {
+                // Movimiento vertical (arriba o abajo)
+                if (currentY > 0) {
+                    playerMovementKeysDown.down = true;
+                } else {
+                    playerMovementKeysDown.up = true;
+                }
+            }
         }
-
-        if (
-          newDirection &&
-          (newDirection !== gameState.player.currentDirection ||
-            isStart ||
-            !gameState.player.isMoving)
-        ) {
-          // Si la dirección cambia o si estábamos parados, actualizamos
-          // Primero, "soltamos" la dirección anterior si la hay y estábamos moviéndonos
-          if (
-            gameState.player.isMoving &&
-            gameState.player.currentDirection &&
-            gameState.player.currentDirection !== newDirection
-          ) {
-            handlePlayerMovementInput(gameState.player.currentDirection, false);
-          }
-          // Luego, "presionamos" la nueva dirección
-          handlePlayerMovementInput(newDirection, true);
-          // Y movemos lógicamente
-          movePlayer(newJoystickDx, newJoystickDy);
-        } else if (!newDirection && gameState.player.isMoving) {
-          // Si no hay nueva dirección (el dedo volvió al centro) y estábamos moviéndonos
-          handlePlayerMovementInput(gameState.player.currentDirection, false);
-        }
-        // Guardar para referencia en processJoystickGameMove si lo vuelves a usar
-        joystickCurrentDx = newJoystickDx;
-        joystickCurrentDy = newJoystickDy;
       }
 
       function handleJoystickEnd(event) {
-        // Simplificado
         if (!joystickActive) return;
+        
         let touchEndedIsOurs = false;
         for (let i = 0; i < event.changedTouches.length; i++) {
           if (event.changedTouches[i].identifier === joystickTouchIdentifier) {
@@ -9670,20 +9655,22 @@ let lastSuccessfulMoveTime = 0;
             break;
           }
         }
+
         if (touchEndedIsOurs) {
           joystickActive = false;
           joystickTouchIdentifier = null;
           resetJoystickHandle();
+          
+          // --- LIMPIEZA DE BANDERAS ---
+          // Al soltar el joystick, nos aseguramos de que ninguna tecla de movimiento quede "presionada"
+          playerMovementKeysDown.up = false;
+          playerMovementKeysDown.down = false;
+          playerMovementKeysDown.left = false;
+          playerMovementKeysDown.right = false;
+
           document.removeEventListener("touchmove", handleJoystickMove);
           document.removeEventListener("touchend", handleJoystickEnd);
           document.removeEventListener("touchcancel", handleJoystickEnd);
-
-          // "Soltar" la tecla de movimiento actual
-          if (gameState.player.isMoving) {
-            handlePlayerMovementInput(gameState.player.currentDirection, false);
-          }
-          joystickCurrentDx = 0;
-          joystickCurrentDy = 0;
         }
       }
       // processJoystickGameMove se mantiene igual
