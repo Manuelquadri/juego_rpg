@@ -429,7 +429,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        z-index: 400; /* Más alto que la batalla */
+        z-index: 500; /* Más alto que la batalla */
         padding: 10px;
       }
 
@@ -460,7 +460,7 @@
         left: 20px;
         width: 120px;
         height: 120px;
-        z-index: 160;
+        z-index: 200;
         display: none;
         opacity: 0.7;
       }
@@ -491,7 +491,7 @@
         width: 70px;
         height: 70px;
         border-radius: 50%;
-        z-index: 160;
+        z-index: 200;
         display: none;
         font-size: 0.8em;
       }
@@ -3709,6 +3709,7 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function showModal(title, text, nonInteractive = false) {
+        document.querySelector('.stats-panel').style.display = 'none';
         const modalElement = document.getElementById("interactionModal");
         const modalTitleEl = document.getElementById("modalTitle");
         const modalTextEl = document.getElementById("modalText");
@@ -3747,14 +3748,21 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function closeModal() {
-        const modalElement = document.getElementById("interactionModal");
-        if (modalElement) {
-          modalElement.style.display = "none";
-        }
-        updatePlayerBarsOnMap();
-        showTouchControls(); // Restaurar controles táctiles (si aplica)
-        updateTopNavVisibility();
-      }
+    const modalElement = document.getElementById("interactionModal");
+    if (modalElement) {
+      modalElement.style.display = "none";
+    }
+
+    
+    if (!gameState.battle.active) {
+        document.querySelector('.stats-panel').style.display = 'block';
+    }
+    
+    
+    updatePlayerBarsOnMap();
+    showTouchControls();
+    updateTopNavVisibility();
+}
 
       function ensureFixedEntities() {
         const player = gameState.player;
