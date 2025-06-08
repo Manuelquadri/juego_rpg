@@ -503,11 +503,25 @@
     
 
 
-        .character h3, .enemy h3 {
-            font-size: 0.1rem;
+        .character h3 {
+            font-size: 15px;
         }
-        .character div, .enemy div {
-            font-size: 50px;
+
+        .enemy h3 {
+            font-size: 13px;
+        }
+        #enemyHp {
+            font-size: 13px;
+        }
+        .character div {
+            font-size: 13px;
+        }
+        #enemySprite {
+            font-size: 48px;
+        }
+        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar{
+            max-width: 180px;
+            height: 5px;
         }
         .character .stat-bar, .enemy .stat-bar {
             height: 8px;
@@ -688,7 +702,7 @@
 
         #enemyInBattleInfoContainer { /* Info SOBRE el sprite del enemigo */
             min-width: 50px;
-            max-width: 100px; /* Reducir el ancho máximo */
+            max-width: 190px; /* Reducir el ancho máximo */
         }
         #enemyInBattleInfoContainer .enemy-battle-name-level {
             font-size: 0.1em;
@@ -913,7 +927,7 @@
         left: 0;
         width: auto; /* Se ajustará al contenido, o puedes fijarlo como las del jugador */
         min-width: 70px; /* Ancho mínimo para que quepa algo de texto */
-        max-width: 150px; /* Evitar que sea demasiado ancho para nombres largos */
+        max-width: 190px; /* Evitar que sea demasiado ancho para nombres largos */
         display: flex;
         flex-direction: column;
         align-items: center; /* Centrar la barra de vida si el texto es más ancho */
@@ -1055,14 +1069,14 @@
             width: 50px; /* Coincidir o ser un poco menor que el sprite */
         }
         .in-battle-sprite-stat-bar {
-            height: 4px;
+            height: 5px;
         }
         #enemyInBattleInfoContainer {
             min-width: 50px;
-            max-width: 100px;
+            max-width: 190px;
         }
         #enemyInBattleInfoContainer .enemy-battle-name-level {
-            font-size: 0.7em;
+            font-size: 0.6em;
         }
         #enemyInBattleInfoContainer .in-battle-sprite-stat-bar {
             max-width: 45px; /* Un poco menor que el width de playerInBattleSpriteBarsContainer */
@@ -1087,16 +1101,13 @@
 
         #enemyInBattleInfoContainer {
             min-width: 45px;
-            max-width: 90px;
+            max-width: 190px;
             padding: 1px 3px;
         }
         #enemyInBattleInfoContainer .enemy-battle-name-level {
-            font-size: 0.65em;
+            font-size: 0.5em;
         }
-        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar {
-            max-width: 40px;
-            height: 3px;
-        }
+      
         }
     </style>
   </head>
@@ -1584,6 +1595,9 @@
       </button>
     </nav>
     <script>
+
+let lastSuccessfulMoveTime = 0;
+        const PLAYER_MOVE_COOLDOWN = 250;  // <-- ¡ESTE ES EL NÚMERO QUE AJUSTARÁS! (en milisegundos)
       const bottomNavBar = document.getElementById("bottomNavBar");
       const navBtnInventory = document.getElementById('navBtnInventory');
         console.log("Botón de Inventario (navBtnInventory):", navBtnInventory);     
@@ -1591,7 +1605,7 @@
       const navBtnCultivate = document.getElementById("navBtnCultivate");
       const navBtnTechniques = document.getElementById("navBtnTechniques");
       const navBtnMenu = document.getElementById("navBtnMenu");
-      // --- ESTADO DEL JUEGO ---
+      let movePlayerCallCount = 0;
       // --- ESTADO DEL JUEGO ---
       let gameState = {
         /* ... (tu gameState existente sin cambios) ... */
@@ -4753,163 +4767,104 @@
       function movePlayer(dx, dy) {
         movePlayerCallCount++;
         const callId = movePlayerCallCount;
-        // console.log(`[MovePlayer CALL #${callId}] dx:${dx}, dy:${dy}. Current Player: (${gameState.player.x}, ${gameState.player.y})`);
+        console.log(`[MovePlayer CALL #${callId}] Intento de mover dx:${dx}, dy:${dy}. Posición actual: (${gameState.player.x}, ${gameState.player.y})`);
 
-        if (gameState.player.isCultivating || gameState.battle.active) return;
-
-        const newX = gameState.player.x + dx;
-        const newY = gameState.player.y + dy;
-        // console.log(`[MovePlayer CALL #${callId}] Calculated New Pos: (${newX},${newY})`);
-
-        // 1. Comprobar límites del MUNDO
-        if (
-          newX < 0 ||
-          newX >= gameState.map.width ||
-          newY < 0 ||
-          newY >= gameState.map.height
-        ) {
-          console.log(
-            `[MovePlayer CALL #${callId}] Movimiento bloqueado: Fuera de límites.`
-          );
-          return;
+        // Cooldown
+        const now = Date.now();
+        if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
+            // console.log(`[MovePlayer CALL #${callId}] Cooldown activo. Movimiento ignorado.`); // Descomentar si quieres ver esto
+            return; 
         }
 
-        // 2. Comprobar si el TERRENO en newX, newY es transitable
-        const targetTerrainId = getTerrainTypeAt(newX, newY);
-        const targetTerrainData = G_TERRAIN_TYPES[targetTerrainId];
-        if (targetTerrainData && targetTerrainData.walkable === false) {
-          console.log(
-            `[MovePlayer CALL #${callId}] Movimiento bloqueado: Terreno no transitable (${targetTerrainData.name}).`
-          );
-          showModal(
-            "Camino Bloqueado",
-            `No puedes moverte sobre ${targetTerrainData.name}.`
-          );
-          return;
-        }
-
-        // 3. Comprobar ENTIDADES en newX, newY
-        const entityAtNewPosition = gameState.map.entities.find(
-          (e) => e.x === newX && e.y === newY
-        );
-
-        if (entityAtNewPosition) {
-          console.log(
-            `[MovePlayer CALL #${callId}] Entidad encontrada en (${newX},${newY}):`,
-            JSON.parse(JSON.stringify(entityAtNewPosition))
-          ); // Log profundo de la entidad
-
-          const entityTypeToCheck =
-            entityAtNewPosition.originalEntityTypeId ||
-            entityAtNewPosition.type;
-          console.log(
-            `[MovePlayer CALL #${callId}] Tipo de entidad a verificar para bloqueo: '${entityTypeToCheck}'`
-          );
-
-          const entityDef = entityTypes[entityTypeToCheck]; // Usar el tipo correcto para buscar la definición
-          if (entityDef) {
-            console.log(
-              `[MovePlayer CALL #${callId}] Definición de entidad encontrada:`,
-              JSON.parse(JSON.stringify(entityDef))
-            );
-          } else {
-            console.log(
-              `[MovePlayer CALL #${callId}] ADVERTENCIA: No se encontró definición para el tipo '${entityTypeToCheck}'.`
-            );
-          }
-
-          // 3.1. Si es una entidad de combate, iniciar batalla
-          if (
-            G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) ||
-            entityAtNewPosition.isBoss ||
-            entityAtNewPosition.isSectChallengeRival
-          ) {
-            console.log(
-              `[MovePlayer CALL #${callId}] Movimiento resulta en batalla con: ${entityAtNewPosition.name}`
-            );
-            startBattle(entityAtNewPosition);
+        const playerState = gameState.player;
+        if (playerState.isCultivating || gameState.battle.active) {
+            console.log(`[MovePlayer CALL #${callId}] Acción bloqueada por cultivo/batalla.`);
             return;
-          }
-
-          // 3.2. NUEVA LÓGICA: Comprobar si es una entidad que bloquea el paso
-          let isBlockingByType =
-            G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck);
-          let isBlockingByNpcId = entityDef && entityDef.npcId;
-
-          console.log(
-            `[MovePlayer CALL #${callId}] Verificando bloqueo: isBlockingByType (${entityTypeToCheck} en G_BLOCKING_ENTITY_TYPES) -> ${isBlockingByType}`
-          );
-          console.log(
-            `[MovePlayer CALL #${callId}] Verificando bloqueo: isBlockingByNpcId (entidadDef tiene npcId) -> ${isBlockingByNpcId}`
-          );
-
-          if (isBlockingByType || isBlockingByNpcId) {
-            console.log(
-              `[MovePlayer CALL #${callId}] MOVIMIENTO BLOQUEADO por entidad: ${entityAtNewPosition.name}`
-            );
-            // showModal("Camino Bloqueado", `No puedes caminar sobre ${entityAtNewPosition.name}.`); // Opcional
-            return;
-          }
-
-          console.log(
-            `[MovePlayer CALL #${callId}] Entidad ${entityAtNewPosition.name} no es de combate ni bloqueante por tipo/npcId. Se permite pasar (interacción con Espacio).`
-          );
-        } else {
-          console.log(
-            `[MovePlayer CALL #${callId}] No hay entidad en (${newX},${newY}).`
-          );
         }
 
-        // Si llegamos aquí, la celda es transitable
-        console.log(
-          `[MovePlayer CALL #${callId}] Movimiento permitido a (${newX},${newY}).`
-        );
-        gameState.player.x = newX;
-        gameState.player.y = newY;
-        updatePlayerPosition(`movePlayer_call_${callId}`);
-        // Lógica de emboscada (sin cambios)
-        const adjacentOffsets = [
-          { dx: 0, dy: -1 },
-          { dx: 0, dy: 1 },
-          { dx: -1, dy: 0 },
-          { dx: 1, dy: 0 },
-        ];
-        for (const offset of adjacentOffsets) {
-          const adjX = newX + offset.dx;
-          const adjY = newY + offset.dy;
-          if (
-            adjX >= 0 &&
-            adjX < gameState.map.width &&
-            adjY >= 0 &&
-            adjY < gameState.map.height
-          ) {
-            const adjEntity = gameState.map.entities.find(
-              (e) => e.x === adjX && e.y === adjY
-            );
-            if (
-              adjEntity &&
-              (G_COMBAT_ENTITY_TYPES.includes(adjEntity.type) ||
-                adjEntity.isBoss ||
-                adjEntity.isSectChallengeRival)
-            ) {
-              if (!adjEntity.discovered) {
-                adjEntity.discovered = true;
-                renderMap();
-              }
-              showModal(
-                "¡Emboscada!",
-                `¡Un ${adjEntity.name} te ha visto y ataca!`,
-                true
-              );
-              setTimeout(() => {
-                closeModal();
-                startBattle(adjEntity);
-              }, 1500);
-              return;
+        const newX = playerState.x + dx;
+        const newY = playerState.y + dy;
+        console.log(`[MovePlayer CALL #${callId}] Posición de destino calculada: (${newX}, ${newY}).`);
+        let canMove = true; 
+
+        // 1. Límites del mapa
+        if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) {
+            canMove = false;
+            console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Límites del mapa.`);
+        }
+
+        // 2. Terreno
+        if (canMove) {
+            const targetTerrainId = getTerrainTypeAt(newX, newY);
+            const targetTerrainData = G_TERRAIN_TYPES[targetTerrainId];
+            if (targetTerrainData && targetTerrainData.walkable === false) {
+                canMove = false;
+                console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Terreno no caminable ('${targetTerrainId}').`);
             }
-          }
         }
-        updateUI();
+        
+        // 3. Entidades
+        if (canMove) {
+            const entityAtNewPosition = gameState.map.entities.find(e => e.x === newX && e.y === newY);
+            
+            if (entityAtNewPosition) {
+                console.log(`[MovePlayer CALL #${callId}] Entidad encontrada en destino:`, JSON.parse(JSON.stringify(entityAtNewPosition)));
+                const entityTypeToCheck = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
+                console.log(`[MovePlayer CALL #${callId}] Tipo de entidad a verificar: '${entityTypeToCheck}'`);
+                
+                if (G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) || entityAtNewPosition.isBoss || entityAtNewPosition.isSectChallengeRival) {
+                    console.log(`[MovePlayer CALL #${callId}] La entidad es hostil. Iniciando batalla...`);
+                    startBattle(entityAtNewPosition);
+                    return; 
+                }
+                
+                const isBlocking = G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck);
+                console.log(`[MovePlayer CALL #${callId}] ¿Está en la lista de bloqueo (G_BLOCKING_ENTITY_TYPES)? -> ${isBlocking}`);
+                
+                if (isBlocking) {
+                    canMove = false;
+                    console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Entidad Bloqueadora.`);
+                }
+            } else {
+                console.log(`[MovePlayer CALL #${callId}] Celda de destino vacía.`);
+            }
+        }
+
+        console.log(`[MovePlayer CALL #${callId}] Decisión final. canMove: ${canMove}`);
+
+        if (canMove) {
+            console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) PERMITIDO.`);
+            playerState.x = newX;
+            playerState.y = newY;
+            updatePlayerPosition(`movePlayer_success_call_${callId}`);
+            updateUI();
+            lastSuccessfulMoveTime = now;
+        } else {
+            console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) BLOQUEADO.`);
+        }
+        console.log(`--- Fin de la llamada a movePlayer #${callId} ---`);
+      }
+
+      //FIN FUNCION MOVE PLAYER
+
+      function gameLoop() {
+        if (isAnyModalOpen() || gameState.battle.active || gameState.player.isCultivating) {
+            gameState.player.isMoving = false; // Detener animación si el juego está pausado
+            return;
+        }
+
+        handleMovement(); // Maneja la lógica de movimiento
+
+        // Actualiza el frame de la animación basado en el estado
+        if (gameState.player.isMoving) {
+            // Cicla entre los frames 1, 2, 3...
+            const frameCount = gameState.player.animationFrames - 1; // e.g., si hay 4 frames, cicla entre 1,2,3
+            gameState.player.currentFrame = (gameState.player.currentFrame % frameCount) + 1;
+        } else {
+            gameState.player.currentFrame = 0; // Frame 0 es quieto
+        }
+        
+        updatePlayerSpriteVisual(); // Actualiza el sprite visualmente
       }
 
       // Ajuste menor en window.addEventListener('resize')
@@ -5365,111 +5320,84 @@
 
       function updateRefinementUI() {}
 
-      let movePlayerCallCount = 0;
+      
 
       let lastPlayerAnimationUpdateTime = 0; // Renombrado para claridad
 
       function movePlayer(dx, dy) {
-        const playerState = gameState.player; // Acceso más corto
+        movePlayerCallCount++;
+        const callId = movePlayerCallCount;
+        console.log(`[MovePlayer CALL #${callId}] Intento de mover dx:${dx}, dy:${dy}. Posición actual: (${gameState.player.x}, ${gameState.player.y})`);
 
-        if (playerState.isCultivating || gameState.battle.active) {
-          if (playerState.isMoving) {
-            // Si se estaba moviendo y se interrumpe
-            playerState.isMoving = false;
-            updatePlayerSpriteVisual();
-          }
-          return;
-        }
-
-        const prevDirection = playerState.spriteFacingDirection;
-        let newDirection = prevDirection;
-
-        if (dx > 0) newDirection = "right";
-        else if (dx < 0) newDirection = "left";
-        else if (dy > 0) newDirection = "down";
-        else if (dy < 0) newDirection = "up";
-
-        // console.log(`[MovePlayer] Attempt move. dx:${dx}, dy:${dy}. NewDir: ${newDirection}`);
-
-        playerState.isMoving = true; // Intención de moverse
-
-        if (prevDirection !== newDirection) {
-          playerState.spriteFacingDirection = newDirection;
-          animationFrameIndex = 0; // Reiniciar animación al cambiar de dirección
-          playerState.spriteWalkFrame = PLAYER_WALK_CYCLE[animationFrameIndex];
-          // console.log(`[MovePlayer] Direction changed to ${newDirection}. Reset animFrameIdx to 0.`);
-        }
-
+        // Cooldown
         const now = Date.now();
-        if (now - lastPlayerAnimationUpdateTime > PLAYER_ANIMATION_SPEED) {
-          animationFrameIndex =
-            (animationFrameIndex + 1) % PLAYER_WALK_CYCLE.length;
-          playerState.spriteWalkFrame = PLAYER_WALK_CYCLE[animationFrameIndex];
-          lastPlayerAnimationUpdateTime = now;
-          // console.log(`[MovePlayer] Animation tick. animFrameIdx: ${animationFrameIndex}, spriteWalkFrame set to col: ${playerState.spriteWalkFrame}`);
+        if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
+            // console.log(`[MovePlayer CALL #${callId}] Cooldown activo. Movimiento ignorado.`);
+            return; 
         }
 
-        const newX = playerState.x + dx;
-        const newY = playerState.y + dy;
-        let canMove = true;
+        const newX = gameState.player.x + dx;
+        const newY = gameState.player.y + dy;
+        console.log(`[MovePlayer CALL #${callId}] Posición de destino calculada: (${newX}, ${newY}).`);
+        let canMove = true; 
 
-        if (
-          newX < 0 ||
-          newX >= gameState.map.width ||
-          newY < 0 ||
-          newY >= gameState.map.height
-        ) {
-          canMove = false;
-        } else {
-          const targetTerrainId = getTerrainTypeAt(newX, newY);
-          const targetTerrainData = G_TERRAIN_TYPES[targetTerrainId];
-          if (targetTerrainData && targetTerrainData.walkable === false) {
-            // showModal("Camino Bloqueado", `No puedes moverte sobre ${targetTerrainData.name}.`); // Puede ser muy verboso
+        // 1. Límites del mapa
+        if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) {
             canMove = false;
-          } else {
-            const entityAtNewPosition = gameState.map.entities.find(
-              (e) =>
-                e.x === newX &&
-                e.y === newY &&
-                e.type !== "shop" &&
-                e.type !== "secta_entrada_principal" &&
-                !(entityTypes[e.type] && entityTypes[e.type].npcId)
-            );
-            if (entityAtNewPosition) {
-              if (
-                G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) ||
-                entityAtNewPosition.isBoss ||
-                entityAtNewPosition.isSectChallengeRival
-              ) {
-                playerState.isMoving = false; // Detener animación antes de la batalla
-                updatePlayerSpriteVisual();
-                startBattle(entityAtNewPosition);
-                return;
-              }
-            }
-          }
+            console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Límites del mapa.`);
         }
+
+        // 2. Terreno
+        if (canMove) {
+            const targetTerrainId = getTerrainTypeAt(newX, newY);
+            if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) {
+                canMove = false;
+                console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Terreno no caminable ('${targetTerrainId}').`);
+            }
+        }
+        
+        // 3. Entidades
+        if (canMove) {
+            const entityAtNewPosition = gameState.map.entities.find(e => e.x === newX && e.y === newY);
+            
+            if (entityAtNewPosition) {
+                console.log(`[MovePlayer CALL #${callId}] Entidad encontrada en destino:`, JSON.parse(JSON.stringify(entityAtNewPosition)));
+                const entityTypeToCheck = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
+                console.log(`[MovePlayer CALL #${callId}] Tipo de entidad a verificar: '${entityTypeToCheck}'`);
+                
+                if (G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) || entityAtNewPosition.isBoss || entityAtNewPosition.isSectChallengeRival) {
+                    console.log(`[MovePlayer CALL #${callId}] La entidad es hostil. Iniciando batalla...`);
+                    startBattle(entityAtNewPosition);
+                    return; 
+                }
+                
+                const isBlocking = G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck);
+                console.log(`[MovePlayer CALL #${callId}] ¿Está en la lista de bloqueo (G_BLOCKING_ENTITY_TYPES)? -> ${isBlocking}`);
+                
+                if (isBlocking) {
+                    canMove = false;
+                    console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Entidad Bloqueadora.`);
+                }
+            } else {
+                console.log(`[MovePlayer CALL #${callId}] Celda de destino vacía.`);
+            }
+        }
+
+        console.log(`[MovePlayer CALL #${callId}] Decisión final. canMove: ${canMove}`);
 
         if (canMove) {
-          playerState.x = newX;
-          playerState.y = newY;
-          updatePlayerPosition(`movePlayer_success`);
-          updateUI();
+            console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) PERMITIDO.`);
+            gameState.player.x = newX;
+            gameState.player.y = newY;
+            updatePlayerPosition(`movePlayer_success_call_${callId}`);
+            updateUI();
+            lastSuccessfulMoveTime = now;
         } else {
-          playerState.isMoving = false; // No se pudo mover, no está "moviéndose"
-          // console.log("[MovePlayer] Movement blocked.");
+            console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) BLOQUEADO.`);
         }
-
-        updatePlayerSpriteVisual(); // Actualizar el sprite con la dirección y estado de movimiento actuales
-
-        clearTimeout(playerState.stopMoveAnimTimer);
-        playerState.stopMoveAnimTimer = setTimeout(() => {
-          // console.log("[MovePlayer] Stop animation timer fired.");
-          playerState.isMoving = false;
-          // playerState.spriteWalkFrame = PLAYER_WALK_CYCLE[0]; // Volver al frame definido como "quieto"
-          updatePlayerSpriteVisual(); // Asegurar que se muestre el frame de quieto
-        }, PLAYER_ANIMATION_SPEED + 50); // Un poco más que la velocidad de animación del frame
+        console.log(`--- Fin de la llamada a movePlayer #${callId} ---`);
       }
+      //FIN MOVE PLAYER
 
       let playerMovementKeysDown = {
         // Para rastrear qué teclas de movimiento están presionadas
@@ -5478,60 +5406,26 @@
         left: false,
         right: false,
       };
-      function handlePlayerMovementInput(direction, isKeyDown) {
-        const player = gameState.player;
+      function handleMovement() {
+        let dx = 0;
+        let dy = 0;
+        let newDirection = null;
 
-        if (isKeyDown) {
-          playerMovementKeysDown[direction] = true;
-          player.currentDirection = direction;
-          player.isMoving = true;
+        // Determina la dirección del movimiento
+        if (playerMovementKeysDown.up) { dy = -1; newDirection = 'up'; }
+        else if (playerMovementKeysDown.down) { dy = 1; newDirection = 'down'; }
+        else if (playerMovementKeysDown.left) { dx = -1; newDirection = 'left'; }
+        else if (playerMovementKeysDown.right) { dx = 1; newDirection = 'right'; }
 
-          if (player.idleTimeout) {
-            clearTimeout(player.idleTimeout);
-            player.idleTimeout = null;
-          }
-
-          if (!player.animationTimer) {
-            player.currentFrame = 1;
-            updatePlayerSpriteVisual(); // <--- CORREGIR AQUÍ
-            player.animationTimer = setInterval(() => {
-              if (player.isMoving) {
-                player.currentFrame =
-                  (player.currentFrame + 1) % player.animationFrames;
-                if (player.currentFrame === 0) player.currentFrame = 1;
-                updatePlayerSpriteVisual(); // <--- CORREGIR AQUÍ
-              }
-            }, player.animationSpeed);
-          }
-        } else {
-          playerMovementKeysDown[direction] = false;
-          const stillMoving = Object.values(playerMovementKeysDown).some(
-            (status) => status === true
-          );
-
-          if (!stillMoving) {
-            player.isMoving = false;
-            if (player.animationTimer) {
-              clearInterval(player.animationTimer);
-              player.animationTimer = null;
-            }
-            player.idleTimeout = setTimeout(() => {
-              if (!player.isMoving) {
-                player.currentFrame = 0;
-                updatePlayerSpriteVisual(); // <--- CORREGIR AQUÍ
-              }
-            }, player.animationSpeed);
-          } else {
-            if (playerMovementKeysDown["up"]) player.currentDirection = "up";
-            else if (playerMovementKeysDown["down"])
-              player.currentDirection = "down";
-            else if (playerMovementKeysDown["left"])
-              player.currentDirection = "left";
-            else if (playerMovementKeysDown["right"])
-              player.currentDirection = "right";
-            updatePlayerSpriteVisual(); // <--- CORREGIR AQUÍ
-          }
+        // Si hay una dirección presionada, intenta mover al jugador
+        if (newDirection) {
+            gameState.player.currentDirection = newDirection;
+            movePlayer(dx, dy); // La lógica de cooldown y colisión está dentro
         }
+
+        // Lógica de animación visual (separada de la lógica de movimiento)
+        const isActuallyMoving = playerMovementKeysDown.up || playerMovementKeysDown.down || playerMovementKeysDown.left || playerMovementKeysDown.right;
+        gameState.player.isMoving = isActuallyMoving;
       }
 
       function interact() {
@@ -9561,7 +9455,7 @@
       let joystickCurrentDy = 0;
 
       const JOYSTICK_THRESHOLD = 15;
-      const JOYSTICK_GAME_MOVE_INTERVAL = 250;
+      const JOYSTICK_GAME_MOVE_INTERVAL = 300;
       let joystickGameMoveTimerId = null;
       let lastJoystickMoveTime = 0;
       let joystickLoopId = null;
@@ -9635,7 +9529,7 @@
       }
       // <!-- CAMBIO JOYSTICK: Modificaciones en los manejadores -->
       function handleJoystickStart(event) {
-        // event.preventDefault(); // Puede ser necesario, pero probar sin él primero si causa problemas
+        
         if (
           gameState.player.isCultivating ||
           gameState.battle.active ||
@@ -9674,12 +9568,12 @@
           passive: false,
         });
 
-        if (!joystickGameMoveTimerId) {
-          joystickGameMoveTimerId = setInterval(
-            processJoystickGameMove,
-            JOYSTICK_GAME_MOVE_INTERVAL
-          );
-        }
+        // if (!joystickGameMoveTimerId) {
+        //   joystickGameMoveTimerId = setInterval(
+        //     processJoystickGameMove,
+        //     JOYSTICK_GAME_MOVE_INTERVAL
+        //   );
+        // }
         updateJoystickHandlePosition(touch);
         // console.log("Joystick Start, ID:", joystickTouchIdentifier);
       }
@@ -10305,89 +10199,47 @@
         // Llamada inicial para asegurar el estado correcto de la barra
         updateBottomNavVisibility();
 
-        // MODIFICACIÓN DEL LISTENER DE TECLADO
+        // --- INICIO DEL REEMPLAZO DE EVENT LISTENERS ---
         document.addEventListener("keydown", (e) => {
-          if (
-            gameState.player.isCultivating ||
-            gameState.battle.active ||
-            isAnyModalOpen()
-          ) {
-            if (e.code === "Escape") {
-              /* ... tu lógica de modales ... */
+            if (isAnyModalOpen() || gameState.battle.active || gameState.player.isCultivating) {
+                Object.keys(playerMovementKeysDown).forEach(k => playerMovementKeysDown[k] = false);
+                return;
             }
-            return;
-          }
-          let direction = null;
-          switch (e.code) {
-            case "KeyW":
-            case "ArrowUp":
-              direction = "up";
-              break;
-            case "KeyS":
-            case "ArrowDown":
-              direction = "down";
-              break;
-            case "KeyA":
-            case "ArrowLeft":
-              direction = "left";
-              break;
-            case "KeyD":
-            case "ArrowRight":
-              direction = "right";
-              break;
-            case "Space":
-              e.preventDefault();
-              interact();
-              return; // Interact no cambia
-          }
 
-          if (direction) {
-            e.preventDefault();
-            handlePlayerMovementInput(direction, true); // true para keyDown
-            // El movePlayer original se llamará desde un intervalo o lógica de juego si es necesario
-            // para desacoplar la actualización visual de la lógica de movimiento
-            if (
-              dxFromDirection(direction) !== 0 ||
-              dyFromDirection(direction) !== 0
-            ) {
-              movePlayer(
-                dxFromDirection(direction),
-                dyFromDirection(direction)
-              );
+            let direction = null;
+            switch (e.code) {
+                case "KeyW": case "ArrowUp":    direction = "up"; break;
+                case "KeyS": case "ArrowDown":  direction = "down"; break;
+                case "KeyA": case "ArrowLeft":  direction = "left"; break;
+                case "KeyD": case "ArrowRight": direction = "right"; break;
+                case "Space":
+                    e.preventDefault();
+                    interact();
+                    return;
             }
-          }
+
+            if (direction) {
+                e.preventDefault();
+                playerMovementKeysDown[direction] = true;
+            }
         });
+
         document.addEventListener("keyup", (e) => {
-          if (
-            gameState.player.isCultivating ||
-            gameState.battle.active ||
-            isAnyModalOpen()
-          ) {
-            return;
-          }
-          let direction = null;
-          switch (e.code) {
-            case "KeyW":
-            case "ArrowUp":
-              direction = "up";
-              break;
-            case "KeyS":
-            case "ArrowDown":
-              direction = "down";
-              break;
-            case "KeyA":
-            case "ArrowLeft":
-              direction = "left";
-              break;
-            case "KeyD":
-            case "ArrowRight":
-              direction = "right";
-              break;
-          }
-          if (direction) {
-            handlePlayerMovementInput(direction, false); // false para keyUp
-          }
+            let direction = null;
+            switch (e.code) {
+                case "KeyW": case "ArrowUp":    direction = "up"; break;
+                case "KeyS": case "ArrowDown":  direction = "down"; break;
+                case "KeyA": case "ArrowLeft":  direction = "left"; break;
+                case "KeyD": case "ArrowRight": direction = "right"; break;
+            }
+
+            if (direction) {
+                e.preventDefault();
+                playerMovementKeysDown[direction] = false;
+            }
         });
+        // --- FIN DEL REEMPLAZO ---
+
         // Helper para convertir dirección a dx/dy para movePlayer
         function dxFromDirection(direction) {
           if (direction === "left") return -1;
@@ -10423,6 +10275,7 @@
         // Iniciar el bucle de actualización del juego
         setInterval(gameTickUpdater, 1000); // Llama cada segundo, ajusta según necesidad
         initJoystick();
+        setInterval(gameLoop, 100);
         calculateAndSetTileSize();
         // generateMap() ahora es más simple, isRespawn = false para carga inicial completa
         gameState.lastGameTimeUpdate = Date.now(); // Inicializar antes del primer tick
