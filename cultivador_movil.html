@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Camino del Cultivador</title>
     <style>
-      * {
+   /****************************************
+       * 1. ESTILOS GENERALES Y LAYOUT
+       ****************************************/
+       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
@@ -18,310 +21,20 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+        overflow: hidden; /* Evita el scroll indeseado */
       }
 
       .game-container {
         display: flex;
-        flex-grow: 1; /* Para que ocupe el espacio que body le da */
-        /* height: 100vh; /* Se gestiona mejor con flex-grow y min-height en body */
+        flex-grow: 1;
+        /* El padding-top crea el espacio para la barra de navegación superior */
+        padding-top: 55px; /* Ajusta este valor si cambia la altura de la barra */
       }
 
-      .map-container {
-        flex: 1;
-        position: relative;
-        background: #1a3d2e;
-        border: 3px solid #d4af37;
-        overflow: hidden; /* MANTENER ESTO para que el mapa no se desborde si los tiles son muy grandes */
-      }
-
-      .map {
-        width: 100%; /* El div del mapa interno ocupa todo el contenedor */
-        height: 100%;
-        position: relative; /* Tiles se posicionan relativos a este */
-        /* ... el resto de tus estilos para .map ... */
-      }
-
-      .tile {
-        /* Estilos comunes para todos los tiles, si los tienes */
-        position: absolute;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .player {
-        z-index: 10;
-        color: transparent;
-        font-size: 0;
-        border-radius: 0;
-
-        background-image: url("img/tu_sprite_sheet.png"); /* ¡TU RUTA! */
-        background-repeat: no-repeat;
-        background-position: 0 0; /* Se actualizará por JS */
-
-        background-size: 256px 256px; /* <--- AJUSTA ESTO AL TAMAÑO TOTAL DE TU SPRITE SHEET */
-
-        image-rendering: pixelated;
-        image-rendering: -moz-crisp-edges;
-        image-rendering: crisp-edges;
-
-        /* El width y height del div se controlan por JS con updatePlayerVisualSize */
-        /* La posición se controla por JS con updatePlayerSpriteVisual */
-      }
-      /* === ESTILOS PARA BARRAS SOBRE EL JUGADOR EN EL MAPA === */
-      #playerOnMapBarsContainer {
-        position: absolute; /* Se posicionará relativo a la ubicación calculada del jugador en pantalla */
-        width: 48px; /* Ancho de las barras (ajusta según el tamaño de tu sprite) */
-        display: flex;
-        flex-direction: column;
-        gap: 1px; /* Pequeño espacio entre barras */
-        z-index: 15; /* Encima del jugador, pero debajo de modales y UI principal */
-        pointer-events: none; /* Para que no interfieran con clics al mapa */
-        /* El top y left se ajustarán por JS. Inicialmente pueden estar ocultas o fuera de pantalla */
-        transform: translateX(
-          -50%
-        ); /* Ayuda a centrar si left es el centro del jugador */
-        display: none; /* Inicialmente ocultas, JS las mostrará */
-      }
-
-      .on-map-stat-bar {
-        width: 100%;
-        height: 6px; /* Altura de cada barra */
-        background-color: rgba(
-          50,
-          50,
-          50,
-          0.7
-        ); /* Fondo oscuro para la parte vacía */
-        border: 1px solid rgba(0, 0, 0, 0.5);
-        border-radius: 2px;
-        overflow: hidden;
-      }
-
-      .on-map-stat-fill {
-        height: 100%;
-        transition: width 0.2s linear; /* Transición suave para cambios de valor */
-      }
-
-      #playerOnMapHpFill {
-        background-color: #f44336; /* Rojo para HP */
-      }
-
-      #playerOnMapManaFill {
-        background-color: #2196f3; /* Azul para Mana */
-      }
-      .stat-fill {
-        height: 100%;
-        transition: width 0.3s;
-      }
-      .hp-fill {
-        background: linear-gradient(90deg, #ff4444, #ff6666);
-      }
-      .mana-fill {
-        background: linear-gradient(90deg, #4444ff, #6666ff);
-      }
-      .exp-fill {
-        background: linear-gradient(90deg, #44ff44, #66ff66);
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.1);
-        }
-      }
-
-      /* === ESTILOS PARA BARRAS SOBRE EL SPRITE DEL JUGADOR EN BATALLA === */
-      #playerInBattleSpriteBarsContainer {
-        position: absolute; /* Relativo al div.character que lo contiene */
-        width: 60px; /* Un poco menos que el sprite (80px) para que no sobresalga mucho */
-        display: flex;
-        flex-direction: column;
-        gap: 1px;
-        z-index: 5; /* Encima del sprite, pero no necesariamente de otros elementos del modal */
-        pointer-events: none;
-        /* top y left se ajustarán por JS. Inicialmente pueden estar ocultas o fuera de pantalla */
-        transform: translateX(-50%); /* Ayuda a centrar horizontalmente */
-        /* Se mostrarán/ocultarán con la pantalla de batalla */
-      }
-
-      .in-battle-sprite-stat-bar {
-        width: 100%;
-        height: 5px; /* Más delgadas que las del mapa quizás */
-        background-color: rgba(50, 50, 50, 0.8);
-        border: 1px solid rgba(0, 0, 0, 0.6);
-        border-radius: 2px;
-        overflow: hidden;
-      }
-
-      .in-battle-sprite-stat-fill {
-        height: 100%;
-        transition: width 0.2s linear;
-      }
-
-      #playerInBattleSpriteHpFill {
-        background-color: #e53935; /* Rojo más intenso para batalla */
-      }
-
-      #playerInBattleSpriteManaFill {
-        background-color: #1e88e5; /* Azul más intenso para batalla */
-      }
-
-      /* Ajuste para que .character sea el contexto de posicionamiento */
-      .battle-area .character {
-        position: relative; /* Necesario para que position:absolute de las barras funcione correctamente */
-      }
-      .character-sprite {
-        /* Sprite del jugador en batalla */
-        width: 80px;
-        height: 80px;
-        background-image: url("img/tu_sprite_sheet.png"); /* También usa la hoja de sprites */
-        background-size: auto; /* O ajusta si es necesario */
-        background-position: 0 0; /* Por defecto, mirando hacia abajo, frame 0 */
-        background-repeat: no-repeat;
-        display: inline-block;
-        color: transparent;
-        font-size: 0;
-      }
       .sidebar {
-        width: 300px;
-        background: linear-gradient(180deg, #2c1810, #1a1a1a);
-        border-left: 3px solid #d4af37;
-        padding: 20px;
-        overflow-y: auto;
+        display: none; /* La barra lateral ya no se usa, se oculta permanentemente */
       }
-
-      .stats-panel,
-      .inventory-panel,
-      .controls-panel,
-      .secta-panel {
-        /* Añadido secta-panel aquí */
-        background: rgba(212, 175, 55, 0.1);
-        border: 2px solid #d4af37;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 20px;
-      }
-      /* === CORRECCIÓN/ADICIÓN PARA BARRAS EN EL SIDEBAR === */
-      .stats-panel .stat-bar {
-        /* Asegúrate de que este selector sea específico si es necesario */
-        width: 100%;
-        height: 15px;
-        background-color: rgba(0, 0, 0, 0.3);
-        border-radius: 7px;
-        margin-top: 3px;
-        margin-bottom: 12px;
-        overflow: hidden;
-        border: 1px solid rgba(212, 175, 55, 0.3);
-        position: relative;
-      }
-      .inventory-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: 8px;
-        margin-top: 10px;
-        max-height: 120px;
-        overflow-y: auto;
-        padding-right: 5px;
-      }
-
-      .inventory-item {
-        font-size: 11px;
-        padding: 5px;
-        background: rgba(212, 175, 55, 0.2);
-        border: 1px solid #d4af37;
-        border-radius: 5px;
-        text-align: center;
-      }
-
-      .hp-fill {
-        background: linear-gradient(90deg, #ff4444, #ff6666);
-      }
-      .mana-fill {
-        background: linear-gradient(90deg, #4444ff, #6666ff);
-      }
-      .exp-fill {
-        background: linear-gradient(90deg, #44ff44, #66ff66);
-      }
-
-      /* === PANTALLA DE BATALLA === */
-        .battle-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            display: none; /* Se cambia a flex por JS */
-            flex-direction: column;
-            z-index: 200;
-            overflow: hidden; /* IMPORTANTE: Evitar que el contenido desborde la pantalla */
-        }
-
-        .battle-area {
-            flex: 1; /* Que ocupe el espacio vertical disponible */
-            display: flex;
-            align-items: center;
-            justify-content: space-around; /* O space-evenly */
-            padding: 20px 10px; /* Reducir padding horizontal en general, especialmente para móvil */
-            gap: 10px; /* Espacio entre personaje y enemigo */
-            overflow-y: auto; /* Si el contenido vertical es demasiado, permitir scroll DENTRO del área */
-        }
-
-        .character,
-        .enemy {
-
-            padding-top: 60px;
-            padding-bottom: 60px;
-
-           /* border: 2px solid #d4af37; /* Borde más delgado */
-           /* border-radius: 10px;*/
-            /*background: rgba(212, 175, 55, 0.1);*/
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-
-            /* MODIFICACIÓN CLAVE: Hacerlos flexibles y con tamaño máximo */
-            flex-basis: 45%; /* Que cada uno intente ocupar cerca de la mitad del espacio disponible */
-            max-width: 280px; /* Pero no más de este ancho, incluso en escritorio si se prefiere */
-            min-width: 120px; /* Un mínimo para que no se colapsen demasiado */
-            box-sizing: border-box; /* Asegurar que padding y border estén dentro del width/height */
-        }
-
-
-        .character-sprite,
-        .enemy-sprite {
-            font-size: 60px; /* Reducir tamaño del sprite por defecto */
-            margin-bottom: 10px; /* Reducir margen */
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .battle-actions {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 10px; /* Reducir padding */
-            border-top: 2px solid #d4af37;
-            flex-shrink: 0; /* Evitar que se encoja si el contenido del battle-area es grande */
-        }
-
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); /* Botones más pequeños */
-            gap: 5px; /* Menos espacio entre botones */
-            margin-bottom: 10px;
-        }
-        .battle-actions button { /* Estilos para los botones de acción específicos */
-            padding: 8px 10px; /* Botones más pequeños */
-            font-size: 0.8em;
-        }
-
+      
       button {
         background: linear-gradient(135deg, #d4af37, #b8941f);
         color: #2c1810;
@@ -345,33 +58,367 @@
         cursor: not-allowed;
         transform: none;
       }
-      #toggleMapControlsBtn.hidden-during-battle {
-        display: none !important; /* !important para asegurar que sobreescriba el display: block de la media query */
-        }
-    .log {
-        display: none; /* OCULTAR EL LOG EN TIEMPO REAL */
-        background: rgba(0, 0, 0, 0.7);
-        padding: 8px;
+
+      /****************************************
+       * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
+       ****************************************/
+      
+      /* --- Barra de Navegación Superior --- */
+      .top-nav-bar {
+        position: fixed;
+        top: 0; 
+        left: 0;
+        width: 100%;
+        height: 55px; /* Altura fija para el cálculo de padding */
+        background: linear-gradient(180deg, #2c1810, #1a1a1a);
+        border-bottom: 2px solid #d4af37;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 250;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(0);
+      }
+
+      .top-nav-bar.hidden {
+        transform: translateY(-100%); 
+      }
+      
+      .nav-button {
+        position: relative;
+        background: transparent;
+        border: none;
+        color: #f4e4bc;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 5px;
+        cursor: pointer;
+        font-family: "Courier New", monospace;
+        font-size: 0.75rem;
+        flex-grow: 1;
+        max-width: 20%;
+        transition: background-color 0.2s, color 0.2s;
+      }
+
+      .nav-button:hover,
+      .nav-button.active {
+        background-color: rgba(212, 175, 55, 0.15);
+        color: #f4d03f;
+      }
+
+      .nav-icon {
+        font-size: 1.5rem;
+        margin-bottom: 3px;
+      }
+      
+      /* --- HUD de Stats del Jugador (Esquina superior izquierda) --- */
+      .stats-panel {
+        position: fixed; /* FIJO en la ventana, no relativo al mapa */
+        top: 70px; /* 55px de la barra + 15px de margen */
+        left: 15px;
+        z-index: 100;
+        width: 250px;
+        background: rgba(26, 26, 26, 0.75);
+        backdrop-filter: blur(4px);
+        border: 2px solid #d4af37;
         border-radius: 8px;
-        max-height: 100px;
-        overflow-y: auto;
-        font-size: 0.8rem;
-        line-height: 1.4;
+        padding: 10px;
+        margin: 0;
+      }
+
+      .stats-panel .stat-bar {
+        width: 100%;
+        height: 12px;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 7px;
+        margin-top: 3px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+      
+      .stat-fill {
+        height: 100%;
+        transition: width 0.3s;
+      }
+      .hp-fill { background: linear-gradient(90deg, #ff4444, #ff6666); }
+      .mana-fill { background: linear-gradient(90deg, #4444ff, #6666ff); }
+      .exp-fill { background: linear-gradient(90deg, #44ff44, #66ff66); }
+
+      /* --- Barra de Acceso Rápido Inferior --- */
+      .quick-slot-bar {
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        padding: 8px;
+        background: rgba(26, 26, 26, 0.8);
+        border: 2px solid #d4af37;
+        border-radius: 12px;
+        z-index: 150;
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        backdrop-filter: blur(4px);
+      }
+
+      .quick-slot {
+        width: 55px;
+        height: 55px;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+        border-radius: 8px;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+      }
+      .quick-slot:hover {
+        background-color: rgba(212, 175, 55, 0.2);
+        border-color: #f4d03f;
+      }
+      .quick-slot.empty { border-style: dashed; }
+
+      .slot-item-count {
+        position: absolute;
+        bottom: 2px;
+        right: 4px;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px black;
+      }
+
+      .slot-key-hint {
+        position: absolute;
+        top: 2px;
+        left: 4px;
+        font-size: 12px;
+        color: #f4e4bc;
+        opacity: 0.7;
+      }
+
+      /* --- Botones de Control Superpuestos (Móvil) --- */
+      #mobileMenuBtn {
+        display: none;
+        position: fixed;
+        top: 10px;
+        right: 10px; /* <--- CORREGIDO */
+        z-index: 1000;
+        width: 45px;
+        height: 45px;
+        font-size: 24px;
+        padding: 0;
+        }
+      
+        #toggleMapControlsBtn {
+        display: none;
+        position: fixed;
+        top: 60px; /* <--- CORREGIDO (10px + 45px del botón de arriba + 5px de espacio) */
+        right: 10px;
+        z-index: 1005;
+        padding: 8px 12px;
+        font-size: 14px;
         }
 
-      .resource {
-        background: #228b22;
-      }
-      .monster {
-        background: #8b0000;
-      }
-      .master {
-        background: #4169e1;
-      }
-      .cultivation-spot {
-        background: #daa520;
+      #toggleMapControlsBtn.hidden-during-battle {
+        display: none !important;
       }
 
+      /****************************************
+       * 3. MAPA Y ELEMENTOS DEL MAPA
+       ****************************************/
+      .map-container {
+        flex: 1;
+        position: relative;
+        background: #1a3d2e;
+        border: 3px solid #d4af37;
+        overflow: hidden;
+      }
+
+      .map {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      .tile {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .player {
+        z-index: 10;
+        color: transparent; /* Oculta el emoji de fallback */
+        font-size: 0;
+        background-image: url("img/tu_sprite_sheet.png"); /* Asegúrate que la ruta sea correcta */
+        background-repeat: no-repeat;
+        background-position: 0 0;
+        background-size: 256px 256px; /* Ajusta al tamaño total de tu spritesheet */
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+      }
+
+      /* Barras de stats sobre el jugador en el mapa */
+      #playerOnMapBarsContainer {
+        position: absolute;
+        width: 48px;
+        display: none; /* JS lo controla */
+        flex-direction: column;
+        gap: 1px;
+        z-index: 15;
+        pointer-events: none;
+        transform: translateX(-50%);
+      }
+
+      .on-map-stat-bar {
+        width: 100%;
+        height: 6px;
+        background-color: rgba(50, 50, 50, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .on-map-stat-fill {
+        height: 100%;
+        transition: width 0.2s linear;
+      }
+
+      #playerOnMapHpFill { background-color: #f44336; }
+      #playerOnMapManaFill { background-color: #2196f3; }
+
+      /****************************************
+       * 4. PANTALLA DE BATALLA
+       ****************************************/
+      .battle-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        display: none;
+        flex-direction: column;
+        z-index: 300;
+        overflow: hidden;
+      }
+
+      .battle-area {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 20px 10px;
+        gap: 10px;
+        overflow-y: auto;
+      }
+
+      .character, .enemy {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-basis: 45%;
+        max-width: 280px;
+        min-width: 120px;
+        padding: 60px 0;
+      }
+
+      .character-sprite, .enemy-sprite {
+        width: 80px;
+        height: 80px;
+        font-size: 60px;
+        margin-bottom: 10px;
+      }
+
+      .character-sprite {
+        background-image: url("img/tu_sprite_sheet.png");
+        background-repeat: no-repeat;
+        background-position: 0 0;
+        background-size: auto;
+        color: transparent;
+      }
+
+      .battle-actions {
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-top: 2px solid #d4af37;
+        flex-shrink: 0;
+      }
+
+      .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      
+      .battle-actions button {
+        padding: 8px 10px;
+        font-size: 0.8em;
+      }
+      
+      .log { display: none; }
+
+      /* Barras sobre sprites en batalla */
+      #playerInBattleSpriteBarsContainer, #enemyInBattleInfoContainer {
+        position: absolute;
+        display: none;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 5;
+        pointer-events: none;
+        transform: translateX(-50%);
+      }
+
+      #playerInBattleSpriteBarsContainer { width: 60px; }
+      #enemyInBattleInfoContainer {
+        min-width: 70px;
+        max-width: 190px;
+        align-items: center;
+        padding: 2px 4px;
+        background-color: rgba(10, 10, 10, 0.6);
+        border-radius: 3px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+
+      .in-battle-sprite-stat-bar {
+        width: 100%;
+        height: 5px;
+        background-color: rgba(50, 50, 50, 0.8);
+        border: 1px solid rgba(0, 0, 0, 0.6);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .in-battle-sprite-stat-fill {
+        height: 100%;
+        transition: width 0.2s linear;
+      }
+      
+      #playerInBattleSpriteHpFill { background-color: #e53935; }
+      #playerInBattleSpriteManaFill { background-color: #1e88e5; }
+      #enemyInBattleSpriteHpFill { background-color: #c62828; }
+
+      .enemy-battle-name-level {
+        font-size: 0.8em;
+        color: #f4e4bc;
+        font-weight: bold;
+        white-space: nowrap;
+      }
+
+      /****************************************
+       * 5. MODALES Y ELEMENTOS DE UI
+       ****************************************/
       .modal {
         position: fixed;
         top: 0;
@@ -382,176 +429,41 @@
         display: none;
         align-items: center;
         justify-content: center;
-        z-index: 300;
-        padding: 10px; /* Espacio para que el modal content no pegue a los bordes */
+        z-index: 400; /* Más alto que la batalla */
+        padding: 10px;
       }
 
       .modal-content {
         background: linear-gradient(135deg, #2c1810, #1a1a1a);
         border: 3px solid #d4af37;
         border-radius: 15px;
-        padding: 20px; /* Reducido de 30px */
-        max-width: 95%; /* Para móviles */
-        width: 500px; /* Ancho base */
+        padding: 20px;
+        max-width: 95%;
+        width: 500px;
         text-align: center;
-        max-height: 90vh; /* Para modales largos */
-        overflow-y: auto; /* Para modales largos */
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      .cultivation-option-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 8px;
+        text-align: left;
       }
 
-      /* Ajuste específico para inventory-grid dentro de un modal si es necesario, */
-      /* pero ya tiene su propio overflow y max-height. */
-
-      /* Para pantallas más pequeñas, ej. menos de 768px */
-      @media (max-width: 768px) {
-        .game-container {
-          flex-direction: column;
-          height: 100vh; /* Ocupa toda la altura de la ventana gráfica */
-        }
-
-        .sidebar {
-          width: 100%;
-          height: 40vh; /* Sidebar ocupa el 40% inferior */
-          border-left: none;
-          border-top: 3px solid #d4af37;
-          overflow-y: auto;
-          flex-shrink: 0; /* Evita que se encoja */
-        }
-
-        .map-container {
-          height: 60vh; /* Mapa ocupa el 60% superior */
-          border-bottom: none;
-          flex-shrink: 0; /* Evita que se encoja */
-        }
-
-        .tile {
-          width: 30px;
-          height: 30px;
-          font-size: 18px;
-        }
-
-        .action-buttons {
-          /* Botones de batalla más adaptables */
-          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        }
-        .battle-area {
-            padding: 15px 5px;
-            gap: 5px;
-          flex: 1;
-          display: flex;
-          align-items: center; /* Para centrar verticalmente los contenedores .character y .enemy */
-          justify-content: space-around; /* CAMBIADO: 'space-around' distribuye el espacio
-                                            uniformemente alrededor de los elementos.
-                                            Prueba también con 'space-evenly' si el resultado no te gusta.
-                                            'space-between' los pegará a los bordes y dejará todo el espacio solo en el medio. */
-       /*    padding: 50px; Mantenemos el padding general del área de batalla */
-        }
-      }
-      @media (max-width: 768px) {
-        .character-sprite {
-          width: 60px;
-          height: 60px;
-          /* Si la imagen del spritesheet es grande, podrías necesitar ajustar background-size aquí también */
-          /* background-size: 192px 192px; /* Ejemplo si cada frame en móvil es 48x48 y hay 4x4 */
-        }
-      }
-
-      @media (max-width: 480px) {
-        .sidebar {
-          height: 45vh; /* Un poco más de espacio para el sidebar en pantallas muy pequeñas */
-        }
-        .map-container {
-          height: 55vh;
-        }
-        .tile {
-          width: 25px;
-          height: 25px;
-          font-size: 16px;
-        }
-        .modal-content {
-          padding: 15px;
-        }
-        button {
-          padding: 10px 15px;
-          font-size: 0.9em;
-        } /* Botones más pequeños */
-
-        .battle-area {
-            padding: 10px 5px;
-            /* Considerar seriamente apilarlos verticalmente aquí si no caben */
-            /* flex-direction: column; */
-            /* align-items: center; Si se apilan, centrarlos */
-        }
-
-        .character, .enemy {
-            flex-basis: 48%; /* Si se mantienen lado a lado, darles un poco más de espacio */
-            min-width: 100px; /* Mínimo aún más pequeño */
-            padding: 5px;
-        }
-        /* Si se apilan verticalmente con flex-direction: column en .battle-area: */
-        /*
-        .character, .enemy {
-            width: 90%;
-            max-width: 280px;
-            margin-bottom: 10px;
-        }
-        */
-
-        .character-sprite, .enemy-sprite {
-            font-size: 50px; /* Sprites más pequeños */
-            width: 50px;
-            height: 50px;
-        }
-    
-
-
-        .character h3 {
-            font-size: 15px;
-        }
-
-        .enemy h3 {
-            font-size: 13px;
-        }
-        #enemyHp {
-            font-size: 13px;
-        }
-        .character div {
-            font-size: 13px;
-        }
-        #enemySprite {
-            font-size: 48px;
-        }
-        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar{
-            max-width: 180px;
-            height: 5px;
-        }
-        .character .stat-bar, .enemy .stat-bar {
-            height: 8px;
-        }
-
-        .action-buttons {
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Botones aún más adaptables */
-        }
-        .battle-actions button {
-            padding: 6px 8px;
-            font-size: 0.75em;
-        }
-        .log {
-            max-height: 80px;
-            font-size: 0.75rem;
-        }
-      }
-
+      /* Controles táctiles del mapa (Joystick, Botón Acción) */
       #joystick-container {
         position: fixed;
-        bottom: 20px; /* Ajustado para no superponer tanto con sidebar en vista móvil */
+        bottom: 20px;
         left: 20px;
-        width: 120px; /* Más pequeño */
+        width: 120px;
         height: 120px;
-        z-index: 999; /* Un poco menos que el botón de acción y el de menu */
+        z-index: 160;
         display: none;
         opacity: 0.7;
       }
-
       #joystick-pad {
         width: 100%;
         height: 100%;
@@ -563,606 +475,155 @@
         justify-content: center;
         border: 2px solid rgba(255, 255, 255, 0.7);
       }
-
       #joystick-handle {
-        width: 50px; /* Más pequeño */
+        width: 50px;
         height: 50px;
         background-color: rgba(80, 80, 80, 0.8);
         border-radius: 50%;
         position: absolute;
         border: 2px solid rgba(200, 200, 200, 0.9);
       }
-
       #action-button-touch {
         position: fixed;
-        bottom: 20px; /* Ajustado */
-        right: 20px;
-        width: 70px; /* Más pequeño */
+        bottom: 60px;
+        right: 60px;
+        width: 70px;
         height: 70px;
         border-radius: 50%;
-        z-index: 1000;
+        z-index: 160;
         display: none;
-        font-size: 0.8em; /* Texto más pequeño si lo tiene */
+        font-size: 0.8em;
       }
 
-      /* Mostrar el joystick y botón de acción solo en pantallas táctiles o pequeñas */
-      /* La visibilidad real se controla por JS, esta query es una guía */
-      @media (hover: none) and (pointer: coarse), (max-width: 768px) {
-        /* #joystick-container, #action-button-touch { } */
-      }
 
-      /* Botón para alternar visibilidad de controles del mapa en móvil */
-      #toggleMapControlsBtn {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        z-index: 1005;
-        padding: 8px 12px;
-        background-color: rgba(44, 24, 16, 0.8);
-        color: #f4e4bc;
-        border: 1px solid #d4af37;
-        border-radius: 5px;
-        font-family: "Courier New", monospace;
-        font-size: 14px;
-        cursor: pointer;
-        display: none;
-      }
-      /* Mostrar botón de alternar controles solo en móvil (misma query que joystick) */
-      @media (hover: none) and (pointer: coarse), (max-width: 768px) {
-        #toggleMapControlsBtn {
+      /****************************************
+       * 6. MEDIA QUERIES (RESPONSIVIDAD)
+       ****************************************/
+       @media (max-width: 768px) {
+        .game-container {
+          padding-top: 0; /* En móvil, no hay espacio arriba, el menú es un overlay */
+          /* --- CORRECCIÓN CLAVE --- */
+          /* Hacemos que el contenedor del juego pueda estar detrás de la barra */
+          position: relative;
+          z-index: 1; 
+        }
+        
+        .map-container {
+          height: 100vh;
+        }
+
+        #mobileMenuBtn, #toggleMapControlsBtn {
           display: block;
         }
-      }
-
-      /* NUEVOS ESTILOS PARA LA TIENDA (ya existentes y adaptados) */
-      #shopModal .modal-content {
-        max-width: 95%;
-        width: auto; /* Permitir que se ajuste, el max-width lo limita */
-        min-width: 300px; /* Para que no se colapse demasiado */
-        max-height: 90vh;
-        overflow-y: auto;
-        padding: 20px;
-        background: linear-gradient(135deg, #2c1810, #1a1a1a);
-        border: 3px solid #d4af37;
-        border-radius: 15px;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .shop-container {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        flex-grow: 1;
-        overflow: hidden;
-      }
-
-      .products-grid {
-        display: grid;
-        grid-template-columns: repeat(
-          auto-fill,
-          minmax(250px, 1fr)
-        ); /* Reducido minmax para móvil */
-        gap: 15px;
-        max-height: 50vh; /* Altura del scroll de productos */
-        overflow-y: auto;
-        padding-right: 10px;
-        flex-grow: 1; /* Para que use el espacio en shop-products */
-      }
-
-      #shopModal .modal-content > div:last-child {
-        /* Botón de Salir */
-        margin-top: auto;
-        padding-top: 20px;
-        position: sticky;
-        bottom: 0;
-        background: linear-gradient(135deg, #2c1810, #1a1a1a);
-        z-index: 10;
-      }
-
-      @media (max-width: 768px) {
-        #shopModal .modal-content {
-          padding: 10px;
-        }
-
-        .shop-container {
+        
+        .top-nav-bar {
           flex-direction: column;
-          overflow: visible;
+          justify-content: flex-start;
+          align-items: stretch;
+          height: auto;
+          padding-top: 60px;
+          /* --- CORRECCIÓN CLAVE --- */
+          /* Aseguramos que la barra esté por encima del game-container */
+          z-index: 200; 
+          transform: translateY(-100%);
+          transition: transform 0.4s ease-in-out;
         }
 
-        .shop-filters {
-          min-width: unset; /* Quitar min-width en móvil */
-          width: 100%;
-        }
-        .shop-products {
-          min-width: unset;
+        .top-nav-bar.open {
+          transform: translateY(0);
         }
 
-        .products-grid {
-          grid-template-columns: 1fr;
-          max-height: 40vh; /* Ajustar altura en móviles */
+        .top-nav-bar .nav-button {
+          justify-content: flex-start;
+          padding: 15px 20px;
+          max-width: 100%;
         }
 
-        #shopModal .modal-content > div:last-child {
-          padding-top: 15px;
+        .stats-panel {
+          width: 200px;
+          padding: 8px;
+          font-size: 0.9em;
+          top: 10px; /* Vuelve a su posición original en móvil */
         }
-        .character, .enemy {
-            /* Aquí podrías necesitar ajustar flex-basis si quieres que uno sea más pequeño,
-            o si decides ponerlos uno encima del otro. Por ahora, se mantiene el 45% */
-            padding: 8px;
-        }
-
-        /* Los sprites y sus barras sobre ellos ya tienen estilos para móvil, pero podemos revisar */
-        #playerInBattleSpriteBarsContainer { /* Barras SOBRE el sprite del jugador */
-            width: 50px; /* Ajustar al tamaño del sprite móvil */
-            /* top y left se ajustan por JS, pero el width es importante */
-        }
-        .in-battle-sprite-stat-bar { /* Barras individuales SOBRE sprites */
-            height: 4px;
+        
+        #toggleMapControlsBtn {
+            top: 60px; /* Vuelve a su posición original en móvil */
         }
 
-        #enemyInBattleInfoContainer { /* Info SOBRE el sprite del enemigo */
-            min-width: 50px;
-            max-width: 190px; /* Reducir el ancho máximo */
-        }
-        #enemyInBattleInfoContainer .enemy-battle-name-level {
-            font-size: 0.1em;
-        }
-        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar { /* Barra de vida SOBRE sprite enemigo */
-            max-width: 50px; /* Ajustar al sprite */
-            height: 4px;
-        }
-      }
-      .shop-header {
-        text-align: center;
-        margin-bottom: 20px;
-        padding: 15px;
-        background: rgba(212, 175, 55, 0.1);
-        border: 2px solid #d4af37;
-        border-radius: 10px;
-      }
-
-      .shop-stats {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 10px;
-        font-size: 1.1rem;
-      }
-
-      .shop-stats span {
-        background: rgba(0, 0, 0, 0.5);
-        padding: 5px 15px;
-        border-radius: 20px;
-        border: 1px solid #d4af37;
-      }
-
-      .shop-filters {
-        flex: 1;
-        min-width: 250px;
-        background: rgba(212, 175, 55, 0.1);
-        border: 2px solid #d4af37;
-        border-radius: 10px;
-        padding: 20px;
-        height: fit-content;
-      }
-
-      .shop-products {
-        flex: 3;
-        min-width: 300px;
-        background: rgba(212, 175, 55, 0.1);
-        border: 2px solid #d4af37;
-        border-radius: 10px;
-        padding: 20px;
-        display: flex; /* Para que products-grid pueda crecer */
-        flex-direction: column;
-      }
-
-      .section-title {
-        color: #f4d03f;
-        margin-bottom: 15px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #d4af37;
-        font-size: 1.2rem;
-      }
-
-      .search-box {
-        width: 100%;
-        padding: 10px 15px;
-        margin-bottom: 20px;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid #d4af37;
-        border-radius: 5px;
-        color: #f4e4bc;
-        font-size: 1rem;
-      }
-
-      .search-box::placeholder {
-        color: #a99a7a;
-      }
-
-      .filter-group {
-        margin-bottom: 20px;
-      }
-      .filter-title {
-        margin-bottom: 10px;
-        font-weight: bold;
-      }
-      .category-list {
-        list-style: none;
-      }
-      .category-item {
-        padding: 8px 12px;
-        margin-bottom: 5px;
-        cursor: pointer;
-        border-radius: 5px;
-        transition: all 0.2s;
-      }
-      .category-item:hover {
-        background: rgba(212, 175, 55, 0.2);
-      }
-      .category-item.active {
-        background: rgba(212, 175, 55, 0.4);
-        font-weight: bold;
-      }
-
-      .products-grid::-webkit-scrollbar {
-        width: 8px;
-      }
-      .products-grid::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-      }
-      .products-grid::-webkit-scrollbar-thumb {
-        background: #d4af37;
-        border-radius: 10px;
-      }
-
-      .product-card {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid #d4af37;
-        border-radius: 8px;
-        padding: 15px;
-        transition: all 0.3s;
-      }
-      .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.2);
-      }
-      .product-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-      .product-name {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: #f4d03f;
-      }
-      .product-price {
-        font-size: 1.1rem;
-        color: #f4d03f;
-      }
-      .product-type {
-        display: inline-block;
-        padding: 3px 8px;
-        font-size: 0.8rem;
-        border-radius: 10px;
-        background: rgba(212, 175, 55, 0.3);
-        margin-top: 5px;
-      }
-      .product-description {
-        margin: 10px 0;
-        font-size: 0.9rem;
-        color: #e6d8b5;
-        min-height: 60px;
-      }
-      .product-stats {
-        margin: 10px 0;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 5px;
-        font-size: 0.9rem;
-      }
-      .product-stats div {
-        margin-bottom: 5px;
-      }
-      .product-actions {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-      }
-      .buy-btn {
-        flex-grow: 1;
-        padding: 8px 15px;
-        background: linear-gradient(135deg, #d4af37, #b8941f);
-        color: #2c1810;
-        border: none;
-        border-radius: 5px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      .buy-btn:hover {
-        background: linear-gradient(135deg, #f4d03f, #d4af37);
-      }
-      .buy-btn:disabled {
-        background: #666;
-        color: #999;
-        cursor: not-allowed;
-      }
-      .pagination {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-        gap: 10px;
-      }
-      .page-btn {
-        padding: 8px 15px;
-        background: rgba(212, 175, 55, 0.2);
-        border: 1px solid #d4af37;
-        border-radius: 5px;
-        color: #f4e4bc;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      .page-btn:hover {
-        background: rgba(212, 175, 55, 0.4);
-      }
-      .page-btn.active {
-        background: rgba(212, 175, 55, 0.6);
-        font-weight: bold;
-      }
-
-      .cultivation-option-btn {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 8px;
-        text-align: left;
-      }
-      /* === ESTILOS PARA INFORMACIÓN Y BARRAS SOBRE EL SPRITE DEL ENEMIGO EN BATALLA === */
-      #enemyInBattleInfoContainer {
-        position: absolute; /* Relativo al div.enemy que lo contiene */
-        left: 0;
-        width: auto; /* Se ajustará al contenido, o puedes fijarlo como las del jugador */
-        min-width: 70px; /* Ancho mínimo para que quepa algo de texto */
-        max-width: 190px; /* Evitar que sea demasiado ancho para nombres largos */
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Centrar la barra de vida si el texto es más ancho */
-        gap: 2px; /* Espacio entre el nombre/nivel y la barra */
-        z-index: 5; /* Encima del sprite del enemigo */
-        pointer-events: none;
-        transform: translateX(-50%); /* Ayuda a centrar horizontalmente */
-        /* top y left se ajustarán por JS. Inicialmente pueden estar ocultas o fuera de pantalla */
-        display: none; /* Inicialmente oculto, JS lo mostrará */
-        padding: 2px 4px; /* Pequeño padding interno */
-        background-color: rgba(
-          10,
-          10,
-          10,
-          0.6
-        ); /* Fondo semitransparente opcional */
-        border-radius: 3px;
-        border: 1px solid rgba(212, 175, 55, 0.3); /* Borde sutil */
-      }
-
-      .enemy-battle-name-level {
-        font-size: 0.5em; /* Más pequeño que el H3 principal */
-        color: #f4e4bc;
-        font-weight: bold;
-        text-align: center;
-        white-space: nowrap; /* Evitar que el nombre se parta en dos líneas si es corto */
-        overflow: hidden; /* Ocultar si el nombre es muy largo y excede max-width */
-        text-overflow: ellipsis; /* Añadir "..." si el nombre es muy largo */
-      }
-
-      /* Reutilizar estilos de barra si es posible, o copiar y ajustar IDs */
-      #enemyInBattleInfoContainer .in-battle-sprite-stat-bar {
-        /* Selector más específico */
-        width: 100%; /* La barra de vida ocupa todo el ancho del contenedor de info */
-        max-width: 60px; /* Pero no más ancha que las barras del jugador, por ejemplo */
-        height: 5px;
-        background-color: rgba(50, 50, 50, 0.8);
-        border: 1px solid rgba(0, 0, 0, 0.6);
-        border-radius: 2px;
-        overflow: hidden;
-      }
-
-      #enemyInBattleInfoContainer .in-battle-sprite-stat-fill {
-        /* Selector más específico */
-        height: 100%;
-        transition: width 0.2s linear;
-      }
-
-      /* Específico para la barra de vida del enemigo sobre el sprite */
-      #enemyInBattleSpriteHpFill {
-        background-color: #c62828; /* Rojo un poco más oscuro o diferente para el enemigo */
-      }
-
-      /* Asegúrate que .enemy también sea position: relative */
-      .battle-area .enemy {
-        position: relative; /* Necesario para que position:absolute de #enemyInBattleInfoContainer funcione */
-        /* El padding que ya tenías en .enemy ayuda a dar espacio para estas barras si se salen un poco */
-      }
-
-      /* === ESTILOS PARA LA BARRA DE NAVEGACIÓN INFERIOR === */
-      .bottom-nav-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: linear-gradient(
-          180deg,
-          #1a1a1a,
-          #2c1810
-        ); /* Invertido para que la parte más oscura esté arriba */
-        border-top: 2px solid #d4af37;
-        display: flex;
-        justify-content: space-around; /* Distribuye los botones equitativamente */
-        align-items: center;
-        padding: 5px 0; /* Un poco de padding vertical */
-        z-index: 150; /* Encima del mapa pero debajo de modales */
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5); /* Sombra sutil hacia arriba */
-        transition: transform 0.3s ease-in-out; /* Para animar si se oculta/muestra */
-      }
-
-      /* Ocultar la barra cuando un modal o la pantalla de batalla estén activos */
-      .bottom-nav-bar.hidden {
-        transform: translateY(100%); /* Desliza hacia abajo para ocultar */
-      }
-
-      .nav-button {
-        background: transparent;
-        border: none;
-        color: #f4e4bc;
-        display: flex;
-        flex-direction: column; /* Icono arriba, texto abajo */
-        align-items: center;
-        justify-content: center;
-        padding: 8px 5px; /* Padding interno del botón */
-        cursor: pointer;
-        font-family: "Courier New", monospace;
-        font-size: 0.75rem; /* Tamaño del texto */
-        flex-grow: 1; /* Para que los botones ocupen el espacio disponible */
-        max-width: 20%; /* Para 5 botones, cada uno toma hasta el 20% */
-        transition: background-color 0.2s, color 0.2s;
-      }
-
-      .nav-button:hover,
-      .nav-button.active {
-        /* Para resaltar el botón activo */
-        background-color: rgba(212, 175, 55, 0.15);
-        color: #f4d03f;
-      }
-
-      .nav-icon {
-        font-size: 1.5rem; /* Tamaño del icono */
-        margin-bottom: 3px;
-      }
-
-      /* En pantallas muy pequeñas, podríamos querer ocultar el texto */
-      @media (max-width: 380px) {
-        .nav-text {
-          display: none;
-        }
-        .nav-icon {
-          font-size: 1.8rem; /* Hacer iconos un poco más grandes si no hay texto */
-          margin-bottom: 0;
-        }
-        .nav-button {
-          padding: 10px 5px;
-        }
-      }
-      /* === AJUSTES ESPECÍFICOS PARA MÓVILES EN BATALLA (REVISIÓN) === */
-        @media (max-width: 768px) {
-        /* Sprites en tablet */
         .character-sprite, .enemy-sprite {
-            font-size: 55px; /* Ligeramente más pequeño que el default de 60px */
-            width: 55px;
-            height: 55px;
-            margin-bottom: 8px;
+            width: 60px; height: 60px; font-size: 55px;
         }
+      }
 
-        #playerInBattleSpriteBarsContainer {
-            width: 50px; /* Coincidir o ser un poco menor que el sprite */
+      @media (max-width: 480px) {
+        .nav-text { display: none; }
+        .nav-icon { font-size: 1.8rem; margin-bottom: 0; }
+        .nav-button { padding: 10px 5px; }
+        
+        .stats-panel {
+          width: 160px;
+          font-size: 0.8em;
         }
-        .in-battle-sprite-stat-bar {
-            height: 5px;
-        }
-        #enemyInBattleInfoContainer {
-            min-width: 50px;
-            max-width: 190px;
-        }
-        #enemyInBattleInfoContainer .enemy-battle-name-level {
-            font-size: 0.6em;
-        }
-        #enemyInBattleInfoContainer .in-battle-sprite-stat-bar {
-            max-width: 45px; /* Un poco menor que el width de playerInBattleSpriteBarsContainer */
-            height: 4px;
-        }
-        }
-
-        @media (max-width: 480px) { /* Pantallas muy pequeñas */
+        .stats-panel h3 { font-size: 1.1em; }
+        
         .character-sprite, .enemy-sprite {
-            font-size: 50px;
-            width: 50px;
-            height: 50px;
-            margin-bottom: 6px;
+            width: 50px; height: 50px; font-size: 50px;
         }
-
-        #playerInBattleSpriteBarsContainer {
-            width: 45px; /* Ajustar al tamaño del sprite */
+        .battle-actions button {
+            padding: 6px 8px; font-size: 0.75em;
         }
-        .in-battle-sprite-stat-bar {
-            height: 3px; /* Barras más delgadas */
-        }
-
-        #enemyInBattleInfoContainer {
-            min-width: 45px;
-            max-width: 190px;
-            padding: 1px 3px;
-        }
-        #enemyInBattleInfoContainer .enemy-battle-name-level {
-            font-size: 0.5em;
-        }
-      
-        }
-        /* --- ESTILOS PARA EL NUEVO HUD DE STATS --- */
-        .map-container .stats-panel {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        z-index: 100; /* Para que esté sobre el mapa pero debajo de modales */
-        width: 250px;
-        margin: 0; /* Quita el margen que tenía en el sidebar */
-        padding: 10px;
-        background: rgba(26, 26, 26, 0.75); /* Fondo más oscuro y semitransparente */
-        backdrop-filter: blur(4px); /* Efecto de desenfoque de fondo (opcional) */
-        }
-
-        /* Ajuste para las barras de stats dentro del HUD */
-        .map-container .stats-panel .stat-bar {
-        height: 12px;
-        margin-bottom: 8px;
-        }
-        .sidebar {
-        /* width: 300px; */ /* Comentado o eliminado */
-        display: none; /* La forma más sencilla de ocultarlo */
-        background: linear-gradient(180deg, #2c1810, #1a1a1a);
-        border-left: 3px solid #d4af37;
-        padding: 20px;
-        overflow-y: auto;
-        }
-        @media (max-width: 768px) {
-            /* ... otros estilos ... */
-            .sidebar {
-                display: none; /* También oculto en móvil */
-                width: 100%;
-                height: 40vh; 
-                /* ... */
-            }
-            /* Aprovechamos para que el mapa ocupe toda la altura en móvil */
-            .map-container {
-                height: 100vh;
-            }
-            /* ... */
-}
+      }
     </style>
   </head>
   <body>
+    <!-- BOTÓN DE MENÚ PARA MÓVILES -->
+    <button id="mobileMenuBtn">☰</button>
+    <!-- FIN DEL BOTÓN -->
+
+    <!-- ================================================================= -->
+    <!-- CORRECCIÓN 1: PANEL DE ESTADÍSTICAS MOVIDO AQUÍ -->
+    <!-- Este panel ahora es un hijo directo del body. Gracias a `position: fixed` en su CSS,
+         se quedará anclado en la esquina superior izquierda sin importar el resto del layout. -->
+    <div class="stats-panel">
+        <h3>Cultivador</h3>
+        <p>Coords: <span id="playerCoords">X: 0, Y: 0</span></p>
+        <p>Nivel: <span id="playerLevel">1</span></p>
+        <p>Reino: <span id="playerRealm">Mortal</span></p>
+
+        <div>Vida: <span id="hpText">100/100</span></div>
+        <div class="stat-bar">
+          <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
+        </div>
+
+        <div>Maná: <span id="manaText">50/50</span></div>
+        <div class="stat-bar">
+          <div
+            class="stat-fill mana-fill"
+            id="manaBar"
+            style="width: 100%"
+          ></div>
+        </div>
+
+        <div>Experiencia: <span id="expText">0/100</span></div>
+        <div class="stat-bar">
+          <div class="stat-fill exp-fill" id="expBar" style="width: 0%"></div>
+        </div>
+    </div>
+    <!-- ================================================================= -->
+ 
     <!-- PANEL LATERAL -->
     <input type="file" id="fileInput" accept=".json" style="display: none" />
     <button id="toggleMapControlsBtn">Ocultar Controles</button>
     <!-- Botón para ocultar/mostrar controles -->
 
     <div class="game-container">
+        
       <div class="map-container">
         
         <div class="map" id="gameMap"></div>
         <div class="tile player" id="player">🧘</div>
+
+        <!-- Este contenedor ahora SÓLO tiene las barras pequeñas que van sobre el sprite en el mapa -->
         <div id="playerOnMapBarsContainer">
           <div class="on-map-stat-bar">
             <!-- Barra de Vida -->
@@ -1173,33 +634,7 @@
             <div class="on-map-stat-fill" id="playerOnMapManaFill"></div>
           </div>
         </div>
-        <div class="stats-panel">
-            <h3>Cultivador</h3>
-            <p>Coords: <span id="playerCoords">X: 0, Y: 0</span></p>
-            <!-- NUEVA LÍNEA -->
-            <p>Nivel: <span id="playerLevel">1</span></p>
-            <p>Reino: <span id="playerRealm">Mortal</span></p>
-  
-            <div>Vida: <span id="hpText">100/100</span></div>
-            <div class="stat-bar">
-              <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
-            </div>
-  
-            <div>Maná: <span id="manaText">50/50</span></div>
-            <div class="stat-bar">
-              <div
-                class="stat-fill mana-fill"
-                id="manaBar"
-                style="width: 100%"
-              ></div>
-            </div>
-  
-            <div>Experiencia: <span id="expText">0/100</span></div>
-            <div class="stat-bar">
-              <div class="stat-fill exp-fill" id="expBar" style="width: 0%"></div>
-            </div>
-          </div>
-      </div>
+        
       <div id="joystick-container">
         <div id="joystick-pad">
           <div id="joystick-handle"></div>
@@ -1208,8 +643,6 @@
       <button id="action-button-touch">Acción</button>
 
       <div class="sidebar">
-        
-
         <div class="inventory-panel">
           <h3>Inventario</h3>
           <div class="inventory-grid" id="inventory"></div>
@@ -1635,40 +1068,42 @@
         </button>
       </div>
     </div>
-    <!-- BARRA DE NAVEGACIÓN INFERIOR FIJA -->
-    <nav class="bottom-nav-bar" id="bottomNavBar">
-      <button class="nav-button" id="navBtnInventory">
-        <span class="nav-icon">🎒</span>
-        <span class="nav-text">Inventario</span>
-      </button>
-      <button class="nav-button" id="navBtnCharacter">
-        <span class="nav-icon">👤</span>
-        <span class="nav-text">Personaje</span>
-      </button>
-       <!-- BOTÓN NUEVO DE MISIONES -->
-        <button class="nav-button" id="navBtnMissions">
-            <span class="nav-icon">📜</span>
+    <!-- ================================================================= -->
+    <!-- CORRECCIÓN 2: BARRA DE NAVEGACIÓN SUPERIOR RELLENADA CON BOTONES -->
+    <!-- Se han añadido los botones que faltaban. Ahora el JavaScript podrá encontrarlos
+         y asignarles las funciones de click correspondientes. -->
+    <nav class="top-nav-bar" id="topNavBar">
+        <button id="navBtnCharacter" class="nav-button">
+            <div class="nav-icon">👤</div>
+            <span class="nav-text">Personaje</span>
+        </button>
+        <button id="navBtnMissions" class="nav-button">
+            <div class="nav-icon">📖</div>
             <span class="nav-text">Misiones</span>
         </button>
-        <!-- FIN DEL BOTÓN NUEVO -->
-      <button class="nav-button" id="navBtnCultivate">
-        <span class="nav-icon">🧘</span>
-        <span class="nav-text">Cultivar</span>
-      </button>
-      <button class="nav-button" id="navBtnTechniques">
-        <span class="nav-icon">📖</span>
-        <span class="nav-text">Técnicas</span>
-      </button>
-      <button class="nav-button" id="navBtnMenu">
-        <span class="nav-icon">☰</span>
-        <span class="nav-text">Menú</span>
-      </button>
+        <button id="navBtnInventory" class="nav-button">
+            <div class="nav-icon">🎒</div>
+            <span class="nav-text">Inventario</span>
+        </button>
+        <button id="navBtnCultivate" class="nav-button">
+            <div class="nav-icon">🧘</div>
+            <span class="nav-text">Cultivar</span>
+        </button>
+        <button id="navBtnTechniques" class="nav-button">
+            <div class="nav-icon">📜</div>
+            <span class="nav-text">Técnicas</span>
+        </button>
+        <button id="navBtnMenu" class="nav-button">
+            <div class="nav-icon">⚙️</div>
+            <span class="nav-text">Menú</span>
+        </button>
     </nav>
+    <!-- ================================================================= -->
     <script>
 
 let lastSuccessfulMoveTime = 0;
         const PLAYER_MOVE_COOLDOWN = 250;  // <-- ¡ESTE ES EL NÚMERO QUE AJUSTARÁS! (en milisegundos)
-      const bottomNavBar = document.getElementById("bottomNavBar");
+        const topNavBar = document.getElementById("topNavBar");
       const navBtnInventory = document.getElementById('navBtnInventory');
         console.log("Botón de Inventario (navBtnInventory):", navBtnInventory);     
       const navBtnCharacter = document.getElementById("navBtnCharacter");
@@ -1699,11 +1134,13 @@ let lastSuccessfulMoveTime = 0;
           exp: 0,
           expToNext: 100,
           realm: "Mortal",
+          quickSlots: [null, null, null, null, null], // 5 slots, inicialmente vacíos
           isCultivating: false,
           cultivationMode: {
             type: null,
             targetId: null,
             startTime: 0,
+
           },
           cultivationStartTime: 0,
           qiPerSecondBase: 1,
@@ -4019,6 +3456,7 @@ let lastSuccessfulMoveTime = 0;
       }
 
       /// <!-- CAMBIO TAMAÑO MAPA MÓVIL -->
+      //TAMAÑO TILE
       function calculateAndSetTileSize() {
         const mapContainerElement = document.querySelector(".map-container");
         if (!mapContainerElement) {
@@ -4033,19 +3471,41 @@ let lastSuccessfulMoveTime = 0;
           const availableWidth = mapContainerElement.clientWidth;
           const availableHeight = mapContainerElement.clientHeight;
 
-          // Decidir cuántos tiles queremos ver en pantalla en móvil (aproximado)
-          // Ajusta estos valores según tus preferencias visuales.
-          const TILES_VISIBLE_X_MOBILE = 5; // Por ejemplo, queremos ver unos 15 tiles de ancho
-          const TILES_VISIBLE_Y_MOBILE = 3; // Y unos 10 de alto
+          // --- INICIO DE LA LÓGICA DE ORIENTACIÓN ---
 
-          const tileSizeBasedOnWidth = availableWidth / TILES_VISIBLE_X_MOBILE;
-          const tileSizeBasedOnHeight =
-            availableHeight / TILES_VISIBLE_Y_MOBILE;
+          // Determina si estamos en modo horizontal (landscape) o vertical (portrait)
+          const isLandscape = availableWidth > availableHeight;
 
+          // Define cuántos tiles queremos ver en cada orientación.
+          // Estos valores son la clave. ¡Puedes ajustarlos a tu gusto!
+          const TILES_VISIBLE_X_PORTRAIT = 7;  // Menos tiles de ancho en vertical
+          const TILES_VISIBLE_Y_PORTRAIT = 5;  // Más tiles de alto en vertical
+          
+          const TILES_VISIBLE_X_LANDSCAPE = 8; // Más tiles de ancho en horizontal
+          const TILES_VISIBLE_Y_LANDSCAPE = 6;  // Menos tiles de alto en horizontal
+
+          let tileSizeBasedOnWidth;
+          let tileSizeBasedOnHeight;
+
+          if (isLandscape) {
+            // Si la pantalla es más ancha que alta
+            console.log("Orientación: Horizontal (Landscape)");
+            tileSizeBasedOnWidth = availableWidth / TILES_VISIBLE_X_LANDSCAPE;
+            tileSizeBasedOnHeight = availableHeight / TILES_VISIBLE_Y_LANDSCAPE;
+          } else {
+            // Si la pantalla es más alta que ancha
+            console.log("Orientación: Vertical (Portrait)");
+            tileSizeBasedOnWidth = availableWidth / TILES_VISIBLE_X_PORTRAIT;
+            tileSizeBasedOnHeight = availableHeight / TILES_VISIBLE_Y_PORTRAIT;
+          }
+
+          // --- FIN DE LA LÓGICA DE ORIENTACIÓN ---
+
+          // El tamaño del tile será el menor de los dos cálculos para asegurar que todo quepa
           currentTileSize = Math.floor(
             Math.min(tileSizeBasedOnWidth, tileSizeBasedOnHeight)
           );
-          currentTileSize = Math.max(20, currentTileSize); // Asegurar un tamaño mínimo razonable (ej. 20px)
+          currentTileSize = Math.max(20, currentTileSize); // Asegurar un tamaño mínimo razonable
 
           console.log(
             `Mobile View: Container W: ${availableWidth}, H: ${availableHeight}. Calculated Tile Size: ${currentTileSize}`
@@ -4077,15 +3537,15 @@ let lastSuccessfulMoveTime = 0;
       }
 
       // NUEVA FUNCIÓN para controlar la visibilidad de la barra inferior
-      function updateBottomNavVisibility() {
-        if (!bottomNavBar) return;
+      function updateTopNavVisibility() { // Renombramos la función para claridad
+        if (!topNavBar) return;
 
         if (gameState.battle.active || isAnyModalOpen()) {
-          bottomNavBar.classList.add("hidden");
+            topNavBar.classList.add("hidden");
         } else {
-          bottomNavBar.classList.remove("hidden");
+            topNavBar.classList.remove("hidden");
         }
-      }
+    }
       function openMissionsModal() {
         const container = document.getElementById("missionsContainer");
         container.innerHTML = "";
@@ -4232,7 +3692,7 @@ let lastSuccessfulMoveTime = 0;
 
         modalElement.style.display = "flex";
         hideTouchControls();
-        updateBottomNavVisibility();
+        updateTopNavVisibility();
       }
 
       function closeModal() {
@@ -4242,7 +3702,7 @@ let lastSuccessfulMoveTime = 0;
         }
         updatePlayerBarsOnMap();
         showTouchControls(); // Restaurar controles táctiles (si aplica)
-        updateBottomNavVisibility();
+        updateTopNavVisibility();
       }
 
       function ensureFixedEntities() {
@@ -7103,7 +6563,7 @@ let lastSuccessfulMoveTime = 0;
         populateBattleActionButtons();
         updateBattleUI();
         logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
-        updateBottomNavVisibility();
+        updateTopNavVisibility();
         updatePlayerBarsOnMap();
       }
 
@@ -8715,7 +8175,7 @@ function closeBattleReviewModal() {
 
         recalculatePlayerStats();
         updateUI();
-        updateBottomNavVisibility();
+        updateTopNavVisibility();
         showTouchControls();
         updatePlayerBarsOnMap();
       }
@@ -9417,7 +8877,80 @@ function closeBattleReviewModal() {
             // ...
         });
     */
+    function renderQuickSlotBar() {
+        const bar = document.getElementById("quickSlotBar");
+        if (!bar) return;
+        bar.innerHTML = ""; // Limpiar la barra
 
+        gameState.player.quickSlots.forEach((itemName, index) => {
+            const slot = document.createElement("div");
+            slot.className = "quick-slot";
+            
+            const keyHint = document.createElement("span");
+            keyHint.className = "slot-key-hint";
+            keyHint.textContent = index + 1;
+            slot.appendChild(keyHint);
+
+            if (itemName && itemData[itemName]) {
+                const item = itemData[itemName];
+                const itemCount = gameState.inventory[itemName] || 0;
+
+                slot.innerHTML += getItemIcon(itemName); // Reutilizamos tu función de iconos
+                
+                const countDisplay = document.createElement("span");
+                countDisplay.className = "slot-item-count";
+                countDisplay.textContent = itemCount;
+                slot.appendChild(countDisplay);
+
+                if (itemCount === 0) {
+                    slot.style.opacity = 0.5;
+                    slot.title = `${itemName} (Agotado)`;
+                } else {
+                    slot.title = `Usar ${itemName} (x${itemCount})`;
+                    slot.onclick = () => useQuickSlotItem(index);
+                }
+
+            } else {
+                slot.classList.add("empty");
+                // Aquí podrías añadir una lógica para que al hacer clic en un slot vacío, se abra el inventario para asignar un item.
+                slot.title = "Slot de acceso rápido vacío";
+            }
+            bar.appendChild(slot);
+        });
+    }
+
+    function useQuickSlotItem(slotIndex) {
+        const itemName = gameState.player.quickSlots[slotIndex];
+        if (!itemName) {
+            console.log(`Slot ${slotIndex + 1} está vacío.`);
+            return;
+        }
+
+        const item = itemData[itemName];
+        const itemCount = gameState.inventory[itemName] || 0;
+
+        if (itemCount <= 0) {
+            showModal("Agotado", `No te quedan más ${itemName}.`);
+            return;
+        }
+
+        if (item && item.canUse && !item.canUse(gameState.player)) {
+            showModal("No se puede usar", `No puedes usar ${itemName} ahora.`);
+            return;
+        }
+
+        // Usar el objeto
+        const message = (item.effect) ? item.effect(gameState.player, gainExperience) : `No se puede usar ${itemName}.`;
+        
+        if (message && !message.toLowerCase().includes("error") && !message.toLowerCase().includes("al máximo")) {
+            gameState.inventory[itemName]--;
+            showModal("Objeto Usado", message);
+            updateUI(); // Actualiza los stats y el inventario del sidebar
+            renderQuickSlotBar(); // Vuelve a renderizar la barra para actualizar la cantidad
+        } else {
+            showModal("Acción no posible", message);
+        }
+    }
       function showHelp() {
         showModal(
           "Ayuda - Camino del Cultivador",
@@ -9805,70 +9338,48 @@ function closeBattleReviewModal() {
       // Modal para Inventario Detallado (si decides usar un modal en lugar del sidebar)
       function openInventoryModal() {
         let inventoryContent = "<h2>Inventario</h2>";
-        inventoryContent += '<div class="inventory-grid" style="max-height: 60vh; overflow-y: auto;">'; // Grid dentro del modal
-
-        if (Object.keys(gameState.inventory).every(key => gameState.inventory[key] === 0 && key !== "Piedras Espirituales")) {
-            inventoryContent += "<p>Tu inventario está vacío, excepto por tus Piedras Espirituales.</p>";
-            if (gameState.inventory["Piedras Espirituales"] > 0) {
-                inventoryContent += `<p>Piedras Espirituales: ${gameState.inventory["Piedras Espirituales"]}</p>`;
-            }
-        } else {
-            Object.entries(gameState.inventory).forEach(([itemName, count]) => {
-            if (count <= 0 && itemName !== "Piedras Espirituales") return; // No mostrar items con 0 cantidad (excepto piedras)
-
+        // ... (código existente de la función) ...
+        Object.entries(gameState.inventory).forEach(([itemName, count]) => {
+            // ... (código existente para cada item) ...
+            
+            // --- AÑADE ESTE BLOQUE DENTRO DEL BUCLE ---
             const itemInfo = itemData[itemName];
-            const description = itemInfo ? itemInfo.description : "Un objeto misterioso.";
-            const canBeUsedNow = itemInfo && itemInfo.canUse ? itemInfo.canUse(gameState.player) : (itemInfo && itemInfo.effect ? true : false);
-            const isEquipment = itemInfo && itemInfo.type === "equipment"; // Asumiendo que tienes 'type' en itemData
-
-            inventoryContent += `
-                <div class="inventory-item-modal" style="border: 1px solid #d4af37; padding: 10px; margin-bottom: 8px; border-radius: 5px; background: rgba(212,175,55,0.1);">
-                <strong>${getItemIcon(itemName, itemInfo?.category)} ${itemName}: ${count}</strong><br>
-                <small><em>${description}</em></small><br>`;
-
-            if (itemInfo && itemInfo.effect && !isEquipment) { // Solo mostrar botón "Usar" para no equipables
-                inventoryContent += `<button class="modal-use-item-btn" data-itemname="${itemName}" ${!canBeUsedNow ? 'disabled title="No se puede usar ahora"' : ''} style="margin-top: 5px; padding: 5px 10px;">Usar</button>`;
-            } else if (isEquipment) {
-                // Aquí podrías poner un botón "Equipar" o mostrar stats si es un arma/armadura
-                // Por ahora lo dejamos sin botón de acción directa en el modal de inventario general
+            // Solo mostrar botón de asignar si es un consumible
+            if (itemInfo && itemInfo.canUse) {
+                inventoryContent += `<button class="assign-slot-btn" data-itemname="${itemName}" style="margin-left: 10px; padding: 5px;">Asignar</button>`;
             }
+            // --- FIN DEL BLOQUE AÑADIDO ---
+
             inventoryContent += `</div>`;
-            });
-        }
-        inventoryContent += '</div>';
-        showModal("Detalles del Inventario", inventoryContent); // Usas tu función showModal existente
+        });
 
-        // Añadir event listeners a los botones "Usar" generados dinámicamente
-        document.querySelectorAll('.modal-use-item-btn').forEach(button => {
+        // ...
+        showModal("Detalles del Inventario", inventoryContent);
+
+        // --- AÑADE ESTE BLOQUE DE LISTENERS AL FINAL DE LA FUNCIÓN ---
+        document.querySelectorAll('.assign-slot-btn').forEach(button => {
             button.addEventListener('click', function() {
-            const itemName = this.dataset.itemname;
-            // Llamar a la función de usar item, pero esta vez el modal se cerrará y reabrirá
-            // o se actualizará si la lógica de useItem no cierra todos los modales.
-            const itemInfo = itemData[itemName];
-            let message = "";
-            if (itemInfo && itemInfo.effect) {
-                if (itemInfo.canUse && !itemInfo.canUse(gameState.player)) {
-                    message = "No puedes usar esto ahora.";
-                } else {
-                    message = (itemName === "Piedras Espirituales" || itemName === "Núcleo de Bestia Menor" || (itemInfo.description && (itemInfo.description.includes("Otorga") || itemInfo.description.includes("otorga"))))
-                    ? itemInfo.effect(gameState.player, gainExperience)
-                    : itemInfo.effect(gameState.player);
-                    if (message && !message.toLowerCase().includes("error") && !message.toLowerCase().includes("al máximo")) {
-                    gameState.inventory[itemName]--;
-                    }
-                }
-            } else {
-                message = `${itemName} no tiene un efecto usable.`;
-            }
-            // Actualizar la UI del juego (stats, inventario en sidebar si aún es visible)
-            updateUI();
-            // Volver a abrir el modal de inventario para reflejar el cambio
-            closeModal(); // Cierra el modal actual
-            openInventoryModal(); // Vuelve a abrir con el contenido actualizado
-            showModal("Objeto Usado", message); // Muestra el mensaje del uso del objeto sobre el modal de inventario
+                const itemName = this.dataset.itemname;
+                assignItemToQuickSlot(itemName);
             });
         });
+    }
+
+    function assignItemToQuickSlot(itemName) {
+        // Pide al jugador que elija un slot
+        const slotChoice = prompt(`¿A qué slot (1-5) quieres asignar ${itemName}?`, "1");
+        if (slotChoice) {
+            const slotIndex = parseInt(slotChoice, 10) - 1;
+            if (slotIndex >= 0 && slotIndex < 5) {
+                gameState.player.quickSlots[slotIndex] = itemName;
+                closeModal(); // Cierra el modal de inventario
+                renderQuickSlotBar(); // Actualiza la barra visualmente
+                showModal("Asignado", `${itemName} asignado al slot ${slotIndex + 1}.`);
+            } else {
+                alert("Número de slot inválido. Debe ser entre 1 y 5.");
+            }
         }
+    }
 
       // Modal para Personaje (Stats, Equipo, etc.)
       function openCharacterModal() {
@@ -9944,7 +9455,7 @@ function closeBattleReviewModal() {
 
         modalElement.style.display = "flex";
         hideTouchControls();
-        updateBottomNavVisibility();
+        updateTopNavVisibility();
       }
 
       function openSectHallInterface() {
@@ -10214,6 +9725,22 @@ function closeBattleReviewModal() {
 
       // --- INICIALIZACIÓN ---
       document.addEventListener("DOMContentLoaded", () => {
+        const mobileMenuButton = document.getElementById('mobileMenuBtn');
+        const topNavBar = document.getElementById('topNavBar'); // Ya deberías tener esta variable
+        if (mobileMenuButton && topNavBar) {
+            mobileMenuButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Evita que otros clicks se disparen
+                topNavBar.classList.toggle('open');
+            });
+        }
+        
+        // Añadir un listener para cerrar el menú si se hace clic fuera de él
+        document.addEventListener('click', (e) => {
+            if (topNavBar.classList.contains('open') && !topNavBar.contains(e.target)) {
+                topNavBar.classList.remove('open');
+            }
+        });
+        renderQuickSlotBar();
         const navBtnMissions = document.getElementById('navBtnMissions');
         if (navBtnMissions) {
             navBtnMissions.addEventListener('click', openMissionsModal);
@@ -10279,7 +9806,7 @@ function closeBattleReviewModal() {
         }
 
         // Llamada inicial para asegurar el estado correcto de la barra
-        updateBottomNavVisibility();
+        updateTopNavVisibility();
 
         // --- INICIO DEL REEMPLAZO DE EVENT LISTENERS ---
         document.addEventListener("keydown", (e) => {
@@ -10287,7 +9814,16 @@ function closeBattleReviewModal() {
                 Object.keys(playerMovementKeysDown).forEach(k => playerMovementKeysDown[k] = false);
                 return;
             }
-
+            // --- INICIO DE LA MODIFICACIÓN PARA ACCESO RÁPIDO ---
+            if (e.code.startsWith("Digit")) {
+                const slotIndex = parseInt(e.code.replace("Digit", ""), 10) - 1;
+                if (slotIndex >= 0 && slotIndex < 5) {
+                    e.preventDefault();
+                    useQuickSlotItem(slotIndex);
+                    return; // Importante para que no procese el movimiento
+                }
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
             let direction = null;
             switch (e.code) {
                 case "KeyW": case "ArrowUp":    direction = "up"; break;
@@ -10406,5 +9942,9 @@ function closeBattleReviewModal() {
         });
       });
     </script>
+    <!-- BARRA DE ACCESO RÁPIDO INFERIOR -->
+    <div class="quick-slot-bar" id="quickSlotBar">
+        <!-- Los slots se generarán con JavaScript -->
+      </div>
   </body>
 </html>
