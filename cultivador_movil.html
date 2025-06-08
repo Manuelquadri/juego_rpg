@@ -120,7 +120,7 @@
         top: 70px; /* 55px de la barra + 15px de margen */
         left: 15px;
         z-index: 100;
-        width: 250px;
+        width: 180px;
         background: rgba(26, 26, 26, 0.75);
         backdrop-filter: blur(4px);
         border: 2px solid #d4af37;
@@ -533,6 +533,15 @@
             padding: 6px 10px;
             font-size: 0.8em;
         }
+        .assignable-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .assignable-item:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+            border-color: rgba(212, 175, 55, 0.4);
+        }
         /* --- Fin Estilos Modal Inventario --- */
 
       /****************************************
@@ -579,10 +588,12 @@
         }
 
         .stats-panel {
-          width: 200px;
-          padding: 8px;
-          font-size: 0.9em;
-          top: 10px; /* Vuelve a su posición original en móvil */
+            width: 100px;         /* <-- MÁS ESTRECHO: De 250px (escritorio) a 180px. */
+            padding: 8px;         /* <-- MENOS PADDING: Un poco menos de espacio interior. */
+            font-size: 0.75em;    /* <-- FUENTE MÁS PEQUEÑA: Textos más compactos. */
+            top: 10px;            /* Posición original en móvil (ya la tenías). */
+            left: 10px;           /* <-- Un poco menos de margen izquierdo. */
+            backdrop-filter: blur(2px); /* <-- MENOS BLUR: Más rendimiento en móviles. */
         }
         
         #toggleMapControlsBtn {
@@ -600,8 +611,8 @@
         .nav-button { padding: 10px 5px; }
         
         .stats-panel {
-          width: 160px;
-          font-size: 0.8em;
+            width: 160px;
+            font-size: 0.8em;
         }
         .stats-panel h3 { font-size: 1.1em; }
         
@@ -611,7 +622,7 @@
         .battle-actions button {
             padding: 6px 8px; font-size: 0.75em;
         }
-      }
+    }
     </style>
   </head>
   <body>
@@ -8951,8 +8962,10 @@ function closeBattleReviewModal() {
 
             } else {
                 slot.classList.add("empty");
-                // Aquí podrías añadir una lógica para que al hacer clic en un slot vacío, se abra el inventario para asignar un item.
-                slot.title = "Slot de acceso rápido vacío";
+                // === NUEVA LÓGICA AQUÍ ===
+                slot.title = "Haz clic para asignar un objeto";
+                slot.onclick = () => openItemAssignmentModal(index); // Llama a una nueva función
+                // === FIN NUEVA LÓGICA ===
             }
             bar.appendChild(slot);
         });
@@ -9399,7 +9412,7 @@ function closeBattleReviewModal() {
                         </div>
                         <div class="item-actions">
                             ${itemInfo.effect ? `<button class="use-item-btn" data-itemname="${itemName}" ${canBeUsed ? '' : 'disabled'} title="${canBeUsed ? 'Usar objeto' : 'No se puede usar ahora'}">Usar</button>` : ''}
-                            ${itemInfo.canUse ? `<button class="assign-slot-btn" data-itemname="${itemName}" title="Asignar a acceso rápido">Asignar</button>` : ''}
+                     
                         </div>
                     </div>
                 `;
@@ -9433,20 +9446,57 @@ function closeBattleReviewModal() {
         });
     }
 
-    function assignItemToQuickSlot(itemName) {
-        // Pide al jugador que elija un slot
-        const slotChoice = prompt(`¿A qué slot (1-5) quieres asignar ${itemName}?`, "1");
-        if (slotChoice) {
-            const slotIndex = parseInt(slotChoice, 10) - 1;
-            if (slotIndex >= 0 && slotIndex < 5) {
-                gameState.player.quickSlots[slotIndex] = itemName;
-                closeModal(); // Cierra el modal de inventario
-                renderQuickSlotBar(); // Actualiza la barra visualmente
-                showModal("Asignado", `${itemName} asignado al slot ${slotIndex + 1}.`);
-            } else {
-                alert("Número de slot inválido. Debe ser entre 1 y 5.");
-            }
+    function openItemAssignmentModal(slotIndex) {
+        let assignmentContent = `
+            <h2 style="text-align: center; margin-bottom: 20px;">Asignar al Slot ${slotIndex + 1}</h2>
+            <p style="text-align: center; opacity: 0.8; margin-bottom: 15px;">Selecciona un objeto consumible para este acceso rápido.</p>
+            <div id="assignment-modal-list" style="text-align: left;">
+        `;
+
+        // Filtrar para mostrar solo los ítems consumibles que el jugador posee
+        const assignableItems = Object.entries(gameState.inventory).filter(([itemName, count]) => {
+            const itemInfo = itemData[itemName];
+            return count > 0 && itemInfo && itemInfo.canUse; // 'canUse' es nuestro indicador de consumible
+        });
+
+        if (assignableItems.length === 0) {
+            assignmentContent += "<p style='text-align: center; opacity: 0.7;'>No tienes objetos consumibles para asignar.</p>";
+        } else {
+            assignableItems.forEach(([itemName, count]) => {
+                const itemInfo = itemData[itemName];
+                assignmentContent += `
+                    <div class="inventory-modal-item assignable-item" data-itemname="${itemName}">
+                        <div class="item-details">
+                            <div class="item-name">${getItemIcon(itemName, '')} ${itemName} (x${count})</div>
+                            <div class="item-description">${itemInfo.description}</div>
+                        </div>
+                    </div>
+                `;
+            });
         }
+
+        assignmentContent += `</div><button onclick="unassignQuickSlot(${slotIndex})" style="margin-top:20px; background-color: #883333;">Quitar Objeto del Slot</button>`;
+        
+        // Mostramos el modal
+        showModal("Asignar Objeto", assignmentContent);
+        document.getElementById('modalTitle').style.display = 'none';
+
+        // Añadimos listeners a los ítems clicables
+        document.querySelectorAll('.assignable-item').forEach(itemDiv => {
+            itemDiv.addEventListener('click', function() {
+                const itemName = this.dataset.itemname;
+                // Asignar el ítem al slot correspondiente
+                gameState.player.quickSlots[slotIndex] = itemName;
+                // Cerrar el modal y actualizar la barra
+                closeModal();
+                renderQuickSlotBar();
+            });
+        });
+    }
+    function unassignQuickSlot(slotIndex) {
+        gameState.player.quickSlots[slotIndex] = null;
+        closeModal();
+        renderQuickSlotBar();
     }
 
       // Modal para Personaje (Stats, Equipo, etc.)
