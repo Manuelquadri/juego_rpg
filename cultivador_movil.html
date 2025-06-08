@@ -348,7 +348,8 @@
       #toggleMapControlsBtn.hidden-during-battle {
         display: none !important; /* !important para asegurar que sobreescriba el display: block de la media query */
         }
-      .log {
+    .log {
+        display: none; /* OCULTAR EL LOG EN TIEMPO REAL */
         background: rgba(0, 0, 0, 0.7);
         padding: 8px;
         border-radius: 8px;
@@ -356,7 +357,7 @@
         overflow-y: auto;
         font-size: 0.8rem;
         line-height: 1.4;
-      }
+        }
 
       .resource {
         background: #228b22;
@@ -1109,6 +1110,46 @@
         }
       
         }
+        /* --- ESTILOS PARA EL NUEVO HUD DE STATS --- */
+        .map-container .stats-panel {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 100; /* Para que esté sobre el mapa pero debajo de modales */
+        width: 250px;
+        margin: 0; /* Quita el margen que tenía en el sidebar */
+        padding: 10px;
+        background: rgba(26, 26, 26, 0.75); /* Fondo más oscuro y semitransparente */
+        backdrop-filter: blur(4px); /* Efecto de desenfoque de fondo (opcional) */
+        }
+
+        /* Ajuste para las barras de stats dentro del HUD */
+        .map-container .stats-panel .stat-bar {
+        height: 12px;
+        margin-bottom: 8px;
+        }
+        .sidebar {
+        /* width: 300px; */ /* Comentado o eliminado */
+        display: none; /* La forma más sencilla de ocultarlo */
+        background: linear-gradient(180deg, #2c1810, #1a1a1a);
+        border-left: 3px solid #d4af37;
+        padding: 20px;
+        overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+            /* ... otros estilos ... */
+            .sidebar {
+                display: none; /* También oculto en móvil */
+                width: 100%;
+                height: 40vh; 
+                /* ... */
+            }
+            /* Aprovechamos para que el mapa ocupe toda la altura en móvil */
+            .map-container {
+                height: 100vh;
+            }
+            /* ... */
+}
     </style>
   </head>
   <body>
@@ -1119,6 +1160,7 @@
 
     <div class="game-container">
       <div class="map-container">
+        
         <div class="map" id="gameMap"></div>
         <div class="tile player" id="player">🧘</div>
         <div id="playerOnMapBarsContainer">
@@ -1131,6 +1173,32 @@
             <div class="on-map-stat-fill" id="playerOnMapManaFill"></div>
           </div>
         </div>
+        <div class="stats-panel">
+            <h3>Cultivador</h3>
+            <p>Coords: <span id="playerCoords">X: 0, Y: 0</span></p>
+            <!-- NUEVA LÍNEA -->
+            <p>Nivel: <span id="playerLevel">1</span></p>
+            <p>Reino: <span id="playerRealm">Mortal</span></p>
+  
+            <div>Vida: <span id="hpText">100/100</span></div>
+            <div class="stat-bar">
+              <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
+            </div>
+  
+            <div>Maná: <span id="manaText">50/50</span></div>
+            <div class="stat-bar">
+              <div
+                class="stat-fill mana-fill"
+                id="manaBar"
+                style="width: 100%"
+              ></div>
+            </div>
+  
+            <div>Experiencia: <span id="expText">0/100</span></div>
+            <div class="stat-bar">
+              <div class="stat-fill exp-fill" id="expBar" style="width: 0%"></div>
+            </div>
+          </div>
       </div>
       <div id="joystick-container">
         <div id="joystick-pad">
@@ -1140,32 +1208,7 @@
       <button id="action-button-touch">Acción</button>
 
       <div class="sidebar">
-        <div class="stats-panel">
-          <h3>Cultivador</h3>
-          <p>Coords: <span id="playerCoords">X: 0, Y: 0</span></p>
-          <!-- NUEVA LÍNEA -->
-          <p>Nivel: <span id="playerLevel">1</span></p>
-          <p>Reino: <span id="playerRealm">Mortal</span></p>
-
-          <div>Vida: <span id="hpText">100/100</span></div>
-          <div class="stat-bar">
-            <div class="stat-fill hp-fill" id="hpBar" style="width: 100%"></div>
-          </div>
-
-          <div>Maná: <span id="manaText">50/50</span></div>
-          <div class="stat-bar">
-            <div
-              class="stat-fill mana-fill"
-              id="manaBar"
-              style="width: 100%"
-            ></div>
-          </div>
-
-          <div>Experiencia: <span id="expText">0/100</span></div>
-          <div class="stat-bar">
-            <div class="stat-fill exp-fill" id="expBar" style="width: 0%"></div>
-          </div>
-        </div>
+        
 
         <div class="inventory-panel">
           <h3>Inventario</h3>
@@ -1509,6 +1552,27 @@
       </div>
     </div>
 
+    <!-- Modal para Misiones -->
+    <div class="modal" id="missionsModal">
+        <div class="modal-content" style="max-width: 600px; text-align: left;">
+        <h3 style="text-align: center;">Diario de Misiones</h3>
+        <div id="missionsContainer" style="margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 10px;">
+            <!-- El contenido de las misiones se generará aquí -->
+        </div>
+        <button onclick="closeMissionsModal()" style="display: block; margin: 20px auto 0;">Cerrar</button>
+        </div>
+    </div>
+    <!-- Modal para Revisión de Batalla -->
+    <div class="modal" id="battleReviewModal">
+        <div class="modal-content" style="max-width: 600px; text-align: left;">
+        <h3 style="text-align: center;">Resumen del Combate</h3>
+        <div id="battleReviewLog" style="margin-top: 15px; max-height: 60vh; overflow-y: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; font-size: 0.9em; line-height: 1.5;">
+            <!-- El log de la batalla se insertará aquí -->
+        </div>
+        <button onclick="closeBattleReviewModal()" style="display: block; margin: 20px auto 0;">Cerrar</button>
+        </div>
+    </div>
+    
     <!-- Modal para Selección de Cultivo -->
     <div class="modal" id="cultivationChoiceModal">
       <div class="modal-content" style="max-width: 500px; text-align: left">
@@ -1581,6 +1645,12 @@
         <span class="nav-icon">👤</span>
         <span class="nav-text">Personaje</span>
       </button>
+       <!-- BOTÓN NUEVO DE MISIONES -->
+        <button class="nav-button" id="navBtnMissions">
+            <span class="nav-icon">📜</span>
+            <span class="nav-text">Misiones</span>
+        </button>
+        <!-- FIN DEL BOTÓN NUEVO -->
       <button class="nav-button" id="navBtnCultivate">
         <span class="nav-icon">🧘</span>
         <span class="nav-text">Cultivar</span>
@@ -1898,6 +1968,8 @@ let lastSuccessfulMoveTime = 0;
         lastGameTimeUpdate: Date.now(),
         activeCombatAbilities: [],
       };
+
+      let battleLogHistory = [];
 
       // --- CONSTANTES Y DATOS DEL JUEGO --- (sin cambios, deben estar aquí)
       let G_TILE_SIZE = 100; // Valor por defecto para escritorio
@@ -4014,7 +4086,57 @@ let lastSuccessfulMoveTime = 0;
           bottomNavBar.classList.remove("hidden");
         }
       }
+      function openMissionsModal() {
+        const container = document.getElementById("missionsContainer");
+        container.innerHTML = "";
+        const player = gameState.player;
 
+        if (player.secta.misionesActivas.length === 0) {
+            container.innerHTML = "<p style='text-align: center;'>No tienes misiones activas en este momento.</p>";
+        } else {
+            player.secta.misionesActivas.forEach((misionActiva) => {
+                const misionData = MISIONES_DATA[misionActiva.id];
+                if (!misionData) return;
+
+                // Reutilizamos la lógica de la UI de la secta para mostrar el progreso
+                let progresoTexto = "";
+                const objetivo = misionActiva.objetivoOriginal;
+                if (objetivo) {
+                    const npcEntregaNombre = SECTA_DATA.npcs[objetivo.npcEntrega]?.nombre || "el NPC correspondiente";
+                    if (objetivo.tipo === "eliminar_enemigo") {
+                        progresoTexto = `Progreso: ${misionActiva.progreso || 0}/${objetivo.cantidad} ${objetivo.nombreDisplay || "objetivos"}`;
+                        if ((misionActiva.progreso || 0) >= objetivo.cantidad) progresoTexto += ` <strong>(¡Listo para entregar a ${npcEntregaNombre}!)</strong>`;
+                    } else if (objetivo.tipo === "entregar_item") {
+                        progresoTexto = `Reunir: ${gameState.inventory[objetivo.item] || 0}/${objetivo.cantidad} ${objetivo.item}`;
+                        if ((gameState.inventory[objetivo.item] || 0) >= objetivo.cantidad) progresoTexto += ` <strong>(¡Listo para entregar a ${npcEntregaNombre}!)</strong>`;
+                    }
+                    // Puedes añadir más casos para otros tipos de misiones
+                }
+                
+                const div = document.createElement("div");
+                div.style.border = "1px solid #d4af37";
+                div.style.borderRadius = "8px";
+                div.style.padding = "10px";
+                div.style.marginBottom = "10px";
+                div.style.background = "rgba(0,0,0,0.2)";
+
+                div.innerHTML = `
+                    <h4>${misionData.titulo}</h4>
+                    <p style="font-size: 0.9em; margin-top: 5px;">${misionData.descripcion}</p>
+                    <p style="font-size: 0.8em; color: #f4d03f; margin-top: 8px;">${progresoTexto}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById("missionsModal").style.display = "flex";
+        hideTouchControls();
+    }
+
+    function closeMissionsModal() {
+        document.getElementById("missionsModal").style.display = "none";
+        showTouchControls();
+    }
       function showTouchControls() {
         const joystick = document.getElementById("joystick-container");
         const actionBtn = document.getElementById("action-button-touch");
@@ -6933,6 +7055,7 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function startBattle(mapEntity) {
+        battleLogHistory = []; 
         const toggleBtn = document.getElementById('toggleMapControlsBtn');
         if (toggleBtn) {
             toggleBtn.classList.add('hidden-during-battle');
@@ -7822,120 +7945,71 @@ let lastSuccessfulMoveTime = 0;
 
       function handleEnemyDefeat() {
         const enemy = gameState.battle.enemy;
-        const player = gameState.player; // Añadir referencia al jugador
+        const player = gameState.player;
 
         logBattle(`¡Has derrotado al ${enemy.name}!`);
         gainExperience(enemy.exp);
 
-        // ... (tu lógica de progreso de misiones existente) ...
+        // Lógica de progreso de misiones (sin cambios, ya debería estar bien)
         const misionesActivasDelJugador = [...player.secta.misionesActivas];
         misionesActivasDelJugador.forEach((misionActiva) => {
-          const misionDataOriginal = MISIONES_DATA[misionActiva.id];
-          if (!misionDataOriginal || !misionActiva.objetivoOriginal) return;
-          const objetivo = misionActiva.objetivoOriginal;
-
-          if (objetivo.tipo === "eliminar_enemigo") {
-            const enemyJustDefeated = gameState.battle.enemy;
-            if (
-              enemyJustDefeated.originalEntityTypeId === objetivo.enemigoTipo || // Comparar con originalEntityTypeId
-              enemyJustDefeated.name === objetivo.nombreDisplay
-            ) {
-              misionActiva.progreso = (misionActiva.progreso || 0) + 1;
-              logBattle(
-                `Progreso '${misionDataOriginal.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`
-              );
+            const misionDataOriginal = MISIONES_DATA[misionActiva.id];
+            if (!misionDataOriginal || !misionActiva.objetivoOriginal) return;
+            const objetivo = misionActiva.objetivoOriginal;
+            if (objetivo.tipo === "eliminar_enemigo" && (enemy.originalEntityTypeId === objetivo.enemigoTipo || enemy.name === objetivo.nombreDisplay)) {
+                misionActiva.progreso = (misionActiva.progreso || 0) + 1;
+                logBattle(`Progreso '${misionDataOriginal.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`);
+            } else if (objetivo.tipo === "derrotar_npc_especifico" && enemy.isSectChallengeRival && enemy.npcId === objetivo.npcId) {
+                completeMission(misionActiva.id);
+            } else if (objetivo.tipo === "cazar_y_recuperar_item_de_loot" && enemy.originalEntityTypeId === objetivo.enemigoTipo) {
+                misionActiva.progreso = 1;
+                logBattle(`Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`);
             }
-          } else if (objetivo.tipo === "derrotar_npc_especifico") {
-            if (enemy.isSectChallengeRival && enemy.npcId === objetivo.npcId) {
-              completeMission(misionActiva.id);
-            }
-          } else if (objetivo.tipo === "cazar_y_recuperar_item_de_loot") {
-            // Comprobar si el enemigo derrotado es el objetivo de la caza
-            if (enemy.originalEntityTypeId === objetivo.enemigoTipo) {
-              // El loot se añade más abajo. Aquí solo podrías marcar un progreso
-              // si la misión lo requiere antes de obtener el item.
-              // Por ejemplo, si la misión es "derrota X y luego trae Y".
-              // Si la misión es solo "trae Y" y el loot es la única condición,
-              // la comprobación del item en inventario se hace al ENTREGAR al NPC.
-              // PERO, es bueno marcar que el tipo correcto fue derrotado
-              misionActiva.progreso = 1; // 1 significa que el tipo correcto fue derrotado
-              logBattle(
-                `Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`
-              );
-            }
-          }
         });
         updateSectUI();
 
-        // Lógica de Loot
+        // Lógica de Loot (sin cambios)
+        let lootObtenido = [];
         if (enemy.lootTable && enemy.lootTable.length > 0) {
-          enemy.lootTable.forEach((loot) => {
-            if (Math.random() < loot.chance) {
-              const quantity =
-                loot.quantity && loot.quantity.length === 2
-                  ? Math.floor(
-                      Math.random() * (loot.quantity[1] - loot.quantity[0] + 1)
-                    ) + loot.quantity[0]
-                  : 1;
-              gameState.inventory[loot.itemName] =
-                (gameState.inventory[loot.itemName] || 0) + quantity;
-              logBattle(`¡${enemy.name} soltó ${quantity} ${loot.itemName}!`);
-
-              // Si el item looteado es el item de la misión "cazar_y_recuperar_item_de_loot"
-              player.secta.misionesActivas.forEach((mActiva) => {
-                const mDataOrig = MISIONES_DATA[mActiva.id];
-                if (
-                  mDataOrig?.objetivo?.tipo ===
-                    "cazar_y_recuperar_item_de_loot" &&
-                  enemy.originalEntityTypeId ===
-                    mDataOrig.objetivo.enemigoTipo && // Asegurarse que es del enemigo correcto
-                  loot.itemName === mDataOrig.objetivo.itemPrueba
-                ) {
-                  // El progreso ya se puso a 1 al derrotar. Aquí solo confirmamos.
-                  // La UI de la misión ya debería reflejarlo bien.
-                  console.log(
-                    `[Loot] Item de misión "${loot.itemName}" obtenido para "${mDataOrig.titulo}".`
-                  );
+            enemy.lootTable.forEach((loot) => {
+                if (Math.random() < loot.chance) {
+                    const quantity = loot.quantity && loot.quantity.length === 2 ? Math.floor(Math.random() * (loot.quantity[1] - loot.quantity[0] + 1)) + loot.quantity[0] : 1;
+                    gameState.inventory[loot.itemName] = (gameState.inventory[loot.itemName] || 0) + quantity;
+                    const lootMessage = `¡${enemy.name} soltó ${quantity} ${loot.itemName}!`;
+                    logBattle(lootMessage);
+                    lootObtenido.push(`${quantity} x ${loot.itemName}`);
                 }
-              });
-            }
-          });
+            });
         }
 
-        // Manejo de Jefes y Entidades Fijas Derrotadas
+        // Manejo de Jefes (sin cambios)
         if (enemy.isBoss) {
-          player.worldState.defeatedBosses[
-            enemy.originalEntityTypeId || enemy.type
-          ] = true; // Usar originalEntityTypeId si existe
-          if (enemy.nextBossId) {
-            player.worldState.currentBossToSpawn = enemy.nextBossId;
-          } else {
-            player.worldState.currentBossToSpawn = null;
-          }
-          // generateMap(true); // Opcional regenerar todo el mapa. ensureFixedEntities se encargará de no reaparecerlo.
-        } else if (
-          enemy.isFixed &&
-          (enemy.isMiniBoss ||
-            entityTypes[enemy.originalEntityTypeId]?.respawnTime)
-        ) {
-          // Para entidades fijas que son minibosses o tienen un tiempo de respawn.
-          if (!player.worldState.defeatedFixedEntities) {
-            player.worldState.defeatedFixedEntities = {};
-          }
-          player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] =
-            {
-              time: Date.now(),
-              // defeated: true // Ya implícito por estar en el objeto
-            };
-          console.log(
-            `[Defeat] Miniboss/Fixed ${enemy.name} (ID: ${enemy.originalEntityTypeId}) marcado como derrotado.`
-          );
+            player.worldState.defeatedBosses[enemy.originalEntityTypeId || enemy.type] = true;
+            if (enemy.nextBossId) player.worldState.currentBossToSpawn = enemy.nextBossId;
+            else player.worldState.currentBossToSpawn = null;
+        } else if (enemy.isFixed && (enemy.isMiniBoss || entityTypes[enemy.originalEntityTypeId]?.respawnTime)) {
+            if (!player.worldState.defeatedFixedEntities) player.worldState.defeatedFixedEntities = {};
+            player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] = { time: Date.now() };
         }
 
         updateUI();
-        setTimeout(() => endBattle(true), 2000); // endBattle(true) ya llama a removeEntity para el enemigo de la batalla.
-        // ensureFixedEntities se encargará de si debe reaparecer o no en la próxima carga/tick.
-      }
+
+        // --- INICIO DE LA MODIFICACIÓN CLAVE ---
+        // Construye el texto para el modal de victoria
+        let lootSummary = lootObtenido.length > 0 ? `<strong>Botín Obtenido:</strong><br>${lootObtenido.join('<br>')}` : "No has obtenido ningún botín.";
+        const victoryModalText = `
+            <p>Has ganado ${enemy.exp} EXP.</p>
+            <div style="margin: 10px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">${lootSummary}</div>
+            <button onclick="showBattleReview()">Ver Resumen del Combate</button>
+        `;
+
+        // Finaliza la batalla y MUESTRA el modal
+        setTimeout(() => {
+            endBattle(true); // 'true' para victoria
+            showModal("¡Victoria!", victoryModalText);
+        }, 1500); // Retraso para que se vea el último golpe
+        // --- FIN DE LA MODIFICACIÓN CLAVE ---
+    }
 
       function completeMission(misionId, npcIdEntregaManual = null) {
         // npcIdEntregaManual es para cuando se completa desde el diálogo del NPC
@@ -8556,28 +8630,34 @@ let lastSuccessfulMoveTime = 0;
 
         // ... (resto de la lógica de derrota del jugador y fin de turno sin cambios) ...
         if (player.hp <= 0) {
-          player.hp = 0;
-          logBattle("¡Has sido derrotado!");
-          setTimeout(() => {
-            player.hp = Math.floor(player.maxHp * 0.1);
-            player.mana = Math.floor(player.maxMana * 0.1);
-            const expLoss = Math.floor(player.exp * 0.1);
-            player.exp = Math.max(0, player.exp - expLoss);
-            logBattle(`Pierdes ${expLoss} EXP.`);
-            const safeCoords = findSafeRespawnLocation(
-              G_SAFE_RESPAWN_X,
-              G_SAFE_RESPAWN_Y
-            );
-            player.x = safeCoords.x;
-            player.y = safeCoords.y;
-            updatePlayerPosition();
-            endBattle(false);
-            showModal(
-              "Derrota",
-              "Has sido derrotado. Regresas a un lugar seguro, mermado."
-            );
-          }, 2000);
-          return;
+            player.hp = 0;
+            logBattle("¡Has sido derrotado!"); // El último mensaje para el log
+
+            // Construye el texto para el modal de derrota
+            const expLoss = Math.floor(gameState.player.exp * 0.1);
+            const defeatModalText = `
+                <p>Regresas a un lugar seguro, mermado. Pierdes ${expLoss} EXP.</p>
+                <br>
+                <button onclick="showBattleReview()">Ver Resumen del Combate</button>
+            `;
+
+            // Finaliza la batalla y MUESTRA el modal
+            setTimeout(() => {
+                // Aplica las penalizaciones por derrota
+                gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
+                gameState.player.mana = Math.floor(gameState.player.maxMana * 0.1);
+                gameState.player.exp = Math.max(0, gameState.player.exp - expLoss);
+
+                const safeCoords = findSafeRespawnLocation(G_SAFE_RESPAWN_X, G_SAFE_RESPAWN_Y);
+                gameState.player.x = safeCoords.x;
+                gameState.player.y = safeCoords.y;
+                
+                updatePlayerPosition("player_defeat_respawn");
+                endBattle(false); // 'false' para derrota
+                showModal("Derrota", defeatModalText);
+            }, 2000);
+
+            return; // Importante: Detiene la ejecución de la función actual
         }
 
         if (player.elementalTurns > 0) {
@@ -8594,6 +8674,21 @@ let lastSuccessfulMoveTime = 0;
         updateBattleUI();
         updateUI();
       }
+
+    function showBattleReview() {
+        const reviewLog = document.getElementById("battleReviewLog");
+        reviewLog.innerHTML = ""; // Limpiar contenido anterior
+
+        // Unimos todos los mensajes del historial con un salto de línea
+        const formattedLog = battleLogHistory.join("<br>");
+        reviewLog.innerHTML = formattedLog;
+
+        document.getElementById("battleReviewModal").style.display = "flex";
+    }
+
+function closeBattleReviewModal() {
+    document.getElementById("battleReviewModal").style.display = "none";
+}
 
       function endBattle(victory) {
         const player = gameState.player;
@@ -8657,12 +8752,8 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function logBattle(message) {
-        const log = document.getElementById("battleLog");
-        const p = document.createElement("p");
-        p.textContent = message;
-        log.appendChild(p);
-        log.scrollTop = log.scrollHeight;
-      }
+        battleLogHistory.push(message);
+    }
 
       function showTechniquePanel() {
         const container = document.getElementById("learnedTechniquesContainer");
@@ -10123,6 +10214,10 @@ let lastSuccessfulMoveTime = 0;
 
       // --- INICIALIZACIÓN ---
       document.addEventListener("DOMContentLoaded", () => {
+        const navBtnMissions = document.getElementById('navBtnMissions');
+        if (navBtnMissions) {
+            navBtnMissions.addEventListener('click', openMissionsModal);
+        }
         const navBtnInventory = document.getElementById('navBtnInventory');
         console.log("Dentro de DOMContentLoaded, navBtnInventory:", navBtnInventory);
         if (navBtnInventory) {
