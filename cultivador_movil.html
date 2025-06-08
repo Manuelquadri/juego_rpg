@@ -494,7 +494,46 @@
         display: none;
         font-size: 0.8em;
       }
+      /* --- Estilos para Modal de Inventario --- */
+        .inventory-modal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.15);
+        }
 
+        .inventory-modal-item .item-details {
+            flex-grow: 1;
+        }
+
+        .inventory-modal-item .item-name {
+            font-weight: bold;
+            color: #f4d03f;
+            font-size: 1.1em;
+        }
+
+        .inventory-modal-item .item-description {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .inventory-modal-item .item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .inventory-modal-item .item-actions button {
+            padding: 6px 10px;
+            font-size: 0.8em;
+        }
+        /* --- Fin Estilos Modal Inventario --- */
 
       /****************************************
        * 6. MEDIA QUERIES (RESPONSIVIDAD)
@@ -9337,26 +9376,55 @@ function closeBattleReviewModal() {
 
       // Modal para Inventario Detallado (si decides usar un modal en lugar del sidebar)
       function openInventoryModal() {
-        let inventoryContent = "<h2>Inventario</h2>";
-        // ... (código existente de la función) ...
-        Object.entries(gameState.inventory).forEach(([itemName, count]) => {
-            // ... (código existente para cada item) ...
-            
-            // --- AÑADE ESTE BLOQUE DENTRO DEL BUCLE ---
-            const itemInfo = itemData[itemName];
-            // Solo mostrar botón de asignar si es un consumible
-            if (itemInfo && itemInfo.canUse) {
-                inventoryContent += `<button class="assign-slot-btn" data-itemname="${itemName}" style="margin-left: 10px; padding: 5px;">Asignar</button>`;
-            }
-            // --- FIN DEL BLOQUE AÑADIDO ---
+        let inventoryContent = `
+            <h2 style="text-align: center; margin-bottom: 20px;">Inventario</h2>
+            <div id="inventory-modal-list" style="text-align: left;">
+        `;
 
-            inventoryContent += `</div>`;
+        // Filtrar para mostrar solo los ítems que el jugador posee
+        const itemsToShow = Object.entries(gameState.inventory).filter(([itemName, count]) => count > 0);
+
+        if (itemsToShow.length === 0) {
+            inventoryContent += "<p style='text-align: center; opacity: 0.7;'>No tienes ningún objeto.</p>";
+        } else {
+            itemsToShow.forEach(([itemName, count]) => {
+                const itemInfo = itemData[itemName] || {};
+                const canBeUsed = itemInfo.canUse ? itemInfo.canUse(gameState.player) : false;
+                
+                inventoryContent += `
+                    <div class="inventory-modal-item">
+                        <div class="item-details">
+                            <div class="item-name">${getItemIcon(itemName, '')} ${itemName} (x${count})</div>
+                            <div class="item-description">${itemInfo.description || "Un objeto misterioso."}</div>
+                        </div>
+                        <div class="item-actions">
+                            ${itemInfo.effect ? `<button class="use-item-btn" data-itemname="${itemName}" ${canBeUsed ? '' : 'disabled'} title="${canBeUsed ? 'Usar objeto' : 'No se puede usar ahora'}">Usar</button>` : ''}
+                            ${itemInfo.canUse ? `<button class="assign-slot-btn" data-itemname="${itemName}" title="Asignar a acceso rápido">Asignar</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        inventoryContent += '</div>';
+
+        // Usamos el modal genérico para mostrar el contenido
+        showModal("Detalles del Inventario", inventoryContent);
+        // Ocultamos el título por defecto del modal genérico, ya que hemos puesto el nuestro.
+        document.getElementById('modalTitle').style.display = 'none';
+
+        // AÑADIMOS LOS LISTENERS DESPUÉS DE QUE EL MODAL ES VISIBLE
+        document.querySelectorAll('.use-item-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemName = this.dataset.itemname;
+                // Usamos la función de uso de ítem, que ya da feedback y actualiza la UI
+                useItem(itemName); 
+                // Cerramos y reabrimos el modal para reflejar los cambios (ej. item gastado)
+                closeModal();
+                openInventoryModal();
+            });
         });
 
-        // ...
-        showModal("Detalles del Inventario", inventoryContent);
-
-        // --- AÑADE ESTE BLOQUE DE LISTENERS AL FINAL DE LA FUNCIÓN ---
         document.querySelectorAll('.assign-slot-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const itemName = this.dataset.itemname;
@@ -9748,22 +9816,10 @@ function closeBattleReviewModal() {
         const navBtnInventory = document.getElementById('navBtnInventory');
         console.log("Dentro de DOMContentLoaded, navBtnInventory:", navBtnInventory);
         if (navBtnInventory) {
-            console.log("Añadiendo listener al botón de inventario..."); // <-- AÑADE ESTO
           navBtnInventory.addEventListener("click", () => {
-            console.log("¡Clic en el botón de Inventario detectado!"); // <-- AÑADE ESTO
-            openInventoryModal();
-            // Necesitas una función para abrir un MODAL de inventario
-            // o decidir cómo quieres mostrarlo.
-            // Por ahora, un simple placeholder:
-            // showModal("Inventario", "Aquí se mostrará tu inventario detallado.");
-            // O, si quieres mostrar el panel lateral de inventario y scrollear a él (menos ideal):
-            const inventoryPanel = document.querySelector(".inventory-panel");
-            if (inventoryPanel) {
-              inventoryPanel.scrollIntoView({ behavior: "smooth" });
-              // Podrías resaltar el panel de inventario temporalmente
-            } else {
-              // Si quieres un modal dedicado para el inventario:
-              openInventoryModal(); // Tendrías que crear esta función y el modal
+            openInventoryModal(); // Llama a nuestra nueva y mejorada función
+            if(isMobileView() && topNavBar.classList.contains('open')) {
+                topNavBar.classList.remove('open');
             }
           });
         }
