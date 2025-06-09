@@ -58,7 +58,22 @@
         cursor: not-allowed;
         transform: none;
       }
+      /* Esta regla se aplicará a TODAS las barras de estadísticas del juego */
+      .stat-bar {
+          width: 100%;
+          height: 18px; /* Una altura estándar y visible. Puedes ajustarla. */
+          background-color: rgba(0, 0, 0, 0.4);
+          border-radius: 9px;
+          overflow: hidden; /* Asegura que el relleno no se salga */
+          border: 1px solid rgba(212, 175, 55, 0.2);
+          margin: 8px 0; /* Un poco de espacio vertical para que no se pegue a otros elementos */
+      }
 
+      /* El relleno de la barra */
+      .stat-fill {
+          height: 100%; /* Ahora esto funcionará, porque el padre (.stat-bar) tiene una altura fija */
+          transition: width 0.3s linear;
+      }
       /****************************************
        * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
        ****************************************/
@@ -892,6 +907,8 @@
             /* Quitamos el flex-grow para evitar conflictos */
         }
     }
+
+   
     </style>
   </head>
   <body>
@@ -1079,103 +1096,53 @@
       </div>
     </div>
 
-    <!-- Modal para Cultivo Activo  -->
-    <div class="modal" id="activeCultivationModal">
-      <div class="modal-content" style="max-width: 450px">
+    <!-- Modal para Cultivo Activo -->
+<div class="modal" id="activeCultivationModal">
+    <div class="modal-content" style="max-width: 450px;">
         <h3 id="activeCultivationTitle">Cultivando...</h3>
         <p id="activeCultivationDescription">Concentrando tu energía...</p>
 
-        <div id="activeCultivationProgressUI" style="display: none">
-          <p>
-            Progreso:
-            <span id="activeCultivationTargetName">Técnica X</span> (Nv.
-            <span id="activeCultivationTargetLevel">Y</span>)
-          </p>
-          <div class="stat-bar" style="background: #444; margin: 10px 0">
-            <div
-              class="stat-fill exp-fill"
-              id="activeCultivationProgressBar"
-              style="
-                width: 0%;
-                background: linear-gradient(90deg, #ffd700, #ffae42);
-              "
-            ></div>
-          </div>
-          <p id="activeCultivationProgressText">0s / 0s</p>
-        </div>
-
-        <div
-          id="recoveryCultivationProgressUI"
-          style="display: none; margin-top: 15px"
-        >
-          <p>Absorbiendo Qi del entorno...</p>
-          <div
-            class="stat-bar"
-            style="background: #2c1810; margin: 10px 0; border-color: #66ccff"
-          >
-            <div
-              class="stat-fill"
-              id="recoveryProgressBar"
-              style="
-                width: 0%;
-                background: linear-gradient(90deg, #66ccff, #99ddff);
-                transition: width 0.9s linear;
-              "
-            ></div>
-          </div>
-          <p><span id="recoveryCycleText"></span></p>
-
-          <!-- SECCIÓN DE BARRAS DE HP Y MANÁ PARA RECUPERACIÓN (ya existente, la usaremos) -->
-          <div style="margin-top: 15px; font-size: 0.9em">
-            <div>Vida: <span id="modalHpText">100/100</span></div>
-            <div class="stat-bar">
-              <!-- Barra de HP en Modal -->
-              <div
-                class="stat-fill hp-fill"
-                id="modalHpBar"
-                style="width: 100%"
-              ></div>
+        <!-- SECCIÓN PARA CULTIVO DE TÉCNICA -->
+        <div id="activeCultivationProgressUI" style="display: none;">
+            <p>
+                Progreso:
+                <span id="activeCultivationTargetName">Técnica X</span> (Nv.
+                <span id="activeCultivationTargetLevel">Y</span>)
+            </p>
+            <!-- El contenedor de la barra -->
+            <div class="stat-bar"style="background: #444; margin: 10px 0;"> 
+                <!-- La barra de relleno -->
+                <div class="stat-fill" id="activeCultivationProgressBar" style="width: 0%; background: linear-gradient(90deg, #ffd700, #ffae42);"></div>
             </div>
+            <p id="activeCultivationProgressText" style="text-align: center; font-size: 0.9em;">0s / 0s</p>
+        </div>
 
-            <div>Maná: <span id="modalManaText">50/50</span></div>
-            <div class="stat-bar">
-              <!-- Barra de Maná en Modal -->
-              <div
-                class="stat-fill mana-fill"
-                id="modalManaBar"
-                style="width: 100%"
-              ></div>
+        <!-- SECCIÓN PARA MEDITACIÓN RESTAURADORA -->
+        <div id="recoveryCultivationProgressUI" style="display: none; margin-top: 15px;">
+            <p>Absorbiendo Qi del entorno...</p>
+            <div style="margin-top: 15px; font-size: 0.9em;">
+                <div>Vida: <span id="modalHpText">100/100</span></div>
+                <div class="stat-bar">
+                    <div class="stat-fill hp-fill" id="modalHpBar" style="width: 100%;"></div>
+                </div>
+                <div>Maná: <span id="modalManaText">50/50</span></div>
+                <div class="stat-bar">
+                    <div class="stat-fill mana-fill" id="modalManaBar" style="width: 100%;"></div>
+                </div>
             </div>
-          </div>
-          <!-- FIN SECCIÓN BARRAS -->
-        </div>
-        <!-- NUEVA SECCIÓN PARA ACELERACIÓN -->
-        <div
-          id="cultivationBoostSection"
-          style="
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #555;
-          "
-        >
-          <p>
-            Piedras Espirituales:
-            <span id="cultivationModalPlayerStones">0</span>
-          </p>
-          <button
-            id="boostCultivationButton"
-            onclick="boostCultivationProgress()"
-            style="margin-top: 8px; width: 100%"
-          >
-            ⚡ Acelerar Cultivo (1 Piedra = 10s)
-          </button>
         </div>
 
-        <button onclick="stopCultivation()" style="margin-top: 20px">
-          🚫 Detener Cultivo
-        </button>
-      </div>
+        <!-- SECCIÓN PARA ACELERACIÓN -->
+        <div id="cultivationBoostSection" style="display: none; margin-top: 15px; padding-top: 10px; border-top: 1px solid #555;">
+            <p>Piedras Espirituales: <span id="cultivationModalPlayerStones">0</span></p>
+            <button id="boostCultivationButton" onclick="boostCultivationProgress()" style="margin-top: 8px; width: 100%;">⚡ Acelerar Cultivo (1 Piedra = 10s)</button>
+        </div>
+
+        <!-- Botón para detener -->
+        <button onclick="stopCultivation(true)" style="margin-top: 20px;">🚫 Detener Cultivo</button>
     </div>
+</div>
+
 
     <!-- Modal para tienda -->
     <div class="modal" id="shopModal">
@@ -3448,10 +3415,10 @@ let lastSuccessfulMoveTime = 0;
 
       const itemData = {
         "Hierbas Medicinales": {
-          description: "Restaura un 10 de HP.",
+          description: "Restaura un 30 de HP.",
           effect: (ps) => {
             if (ps.hp >= ps.maxHp) return "Vida al máximo.";
-            const h = 10;
+            const h = 30;
             const o = ps.hp;
             ps.hp = Math.min(ps.maxHp, ps.hp + h);
             return `Usada Píldora, recuperado ${ps.hp - o} HP.`;
@@ -6086,38 +6053,46 @@ let lastSuccessfulMoveTime = 0;
 
       function openCultivationChoiceModal() {
         const player = gameState.player;
-        const techniquesListDiv = document.getElementById(
-          "cultivableTechniquesList"
-        );
-        techniquesListDiv.innerHTML = "";
+        const techniquesListDiv = document.getElementById("cultivableTechniquesList");
+        
+        // Comprobación de seguridad
+        if (!techniquesListDiv) {
+            console.error("Error: El contenedor 'cultivableTechniquesList' no se encontró en el HTML.");
+            return;
+        }
+        
+        techniquesListDiv.innerHTML = ""; // Limpiar contenido anterior
         let hasCultivableTechniques = false;
+
         for (const techId in player.learnedTechniques) {
-          const playerTech = player.learnedTechniques[techId];
-          const techData = techniqueData[techId];
-          if (
-            techData &&
-            techData.cultivationSettings &&
-            playerTech.level < techData.maxLevel
-          ) {
-            hasCultivableTechniques = true;
-            const techButton = document.createElement("button");
-            techButton.className = "cultivation-option-btn";
-            techButton.textContent = `${techData.name} (Nv. ${playerTech.level})`;
-            techButton.onclick = () => {
-              startCultivationMode("technique", techId);
-              closeCultivationChoiceModal();
-            };
-            techniquesListDiv.appendChild(techButton);
-          }
+            const playerTech = player.learnedTechniques[techId];
+            const techData = techniqueData[techId];
+            if (techData && techData.cultivationSettings && playerTech.level < techData.maxLevel) {
+                hasCultivableTechniques = true;
+                const techButton = document.createElement("button");
+                techButton.className = "cultivation-option-btn";
+                techButton.textContent = `${techData.name} (Nv. ${playerTech.level})`;
+                
+                // --- LA CORRECCIÓN CLAVE ESTÁ AQUÍ ---
+                techButton.onclick = () => {
+                    // 1. Primero, cerramos el modal actual.
+                    closeCultivationChoiceModal();
+                    // 2. Después, iniciamos el nuevo modo de cultivo.
+                    startCultivationMode("technique", techId);
+                };
+                // --- FIN DE LA CORRECCIÓN ---
+
+                techniquesListDiv.appendChild(techButton);
+            }
         }
+
         if (!hasCultivableTechniques) {
-          techniquesListDiv.innerHTML =
-            "<p>No tienes técnicas que requieran más cultivo.</p>";
+            techniquesListDiv.innerHTML = "<p>No tienes técnicas que requieran más cultivo.</p>";
         }
-        document.getElementById("cultivationChoiceModal").style.display =
-          "flex";
+
+        document.getElementById("cultivationChoiceModal").style.display = "flex";
         hideTouchControls();
-      }
+    }
 
       function closeCultivationChoiceModal() {
         document.getElementById("cultivationChoiceModal").style.display =
@@ -6127,37 +6102,23 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function startCultivationMode(type, targetId = null) {
-        const player = gameState.player;
         console.log(`[Cultivo LOG] ==> INTENTO DE INICIAR CULTIVO (Tipo: '${type}', Técnica: '${targetId}')`);
-
-        // Paso 1: Detener SIEMPRE cualquier cultivo existente.
-        if (player.isCultivating || gameState.cultivationInterval) {
-            console.log(`[Cultivo LOG]   -> Cultivo previo detectado. Llamando a stopCultivation() primero.`);
+        if (gameState.player.isCultivating || gameState.cultivationInterval) {
             stopCultivation();
-        } else {
-            console.log(`[Cultivo LOG]   -> No había cultivo previo. Procediendo a iniciar uno nuevo.`);
         }
         
-        // Paso 2: Configurar el nuevo estado.
-        player.isCultivating = true;
-        player.cultivationMode = {
-            type: type,
-            targetId: targetId,
-            startTime: Date.now(),
-            isConversionCultivation: false,
-        };
-        console.log(`[Cultivo LOG]   -> Estado del jugador actualizado: isCultivating = ${player.isCultivating}`);
-
-        // Paso 3: Crear el nuevo y único intervalo.
-        // Limpiamos por si acaso quedó un intervalo fantasma (doble seguridad)
-        if (gameState.cultivationInterval) clearInterval(gameState.cultivationInterval); 
-        gameState.cultivationInterval = setInterval(processCultivationTick, 1000);
-        console.log(`[Cultivo LOG]   -> NUEVO INTERVALO CREADO. ID: ${gameState.cultivationInterval}`);
+        gameState.player.isCultivating = true;
+        gameState.player.cultivationMode = { type, targetId, startTime: Date.now(), isConversionCultivation: false };
         
-        // Paso 4: Actualizar la UI.
+        // El intervalo se crea, pero no hacemos nada más que podría fallar aquí.
+        gameState.cultivationInterval = setInterval(processCultivationTick, 1000);
+        console.log(`[Cultivo LOG] -> NUEVO INTERVALO CREADO. ID: ${gameState.cultivationInterval}`);
+        
+        // Llamamos a la actualización de la UI por separado.
         showActiveCultivationModal();
         renderQuickSlotBar();
     }
+
     /**
  * Detiene cualquier proceso de cultivo en curso. Limpia el intervalo,
  * resetea el estado del jugador y actualiza la interfaz de usuario.
@@ -6202,199 +6163,88 @@ let lastSuccessfulMoveTime = 0;
 
 
       function showActiveCultivationModal() {
-        const player = gameState.player;
-        const mode = player.cultivationMode;
+    const player = gameState.player;
+    const modal = document.getElementById("activeCultivationModal");
+    if (!modal) return; // Salida temprana si el modal no existe.
 
-        const modal = document.getElementById("activeCultivationModal");
-        const title = document.getElementById("activeCultivationTitle");
-        const description = document.getElementById(
-          "activeCultivationDescription"
-        );
+    // Ocultar todas las secciones primero
+    const techUI = document.getElementById("activeCultivationProgressUI");
+    const recoveryUI = document.getElementById("recoveryCultivationProgressUI");
+    const boostUI = document.getElementById("cultivationBoostSection");
+    
+    if (techUI) techUI.style.display = "none";
+    if (recoveryUI) recoveryUI.style.display = "none";
+    if (boostUI) boostUI.style.display = "none";
+    
+    if (!player.isCultivating) {
+        modal.style.display = "none";
+        return;
+    }
 
-        const techniqueProgressUIDiv = document.getElementById(
-          "activeCultivationProgressUI"
-        );
-        const recoveryProgressUIDiv = document.getElementById(
-          "recoveryCultivationProgressUI"
-        );
-        const cultivationBoostSection = document.getElementById(
-          "cultivationBoostSection"
-        ); // Nueva referencia
-        if (!player.isCultivating) {
-          closeActiveCultivationModal();
-          return;
+    const mode = player.cultivationMode.type;
+    const targetId = player.cultivationMode.targetId;
+
+    const titleEl = document.getElementById("activeCultivationTitle");
+    const descEl = document.getElementById("activeCultivationDescription");
+    if (!titleEl || !descEl) return;
+    
+    if (mode === 'technique' && targetId) {
+        const techData = techniqueData[targetId];
+        const playerTech = player.learnedTechniques[targetId];
+
+        if (techData && playerTech && techUI) {
+            techUI.style.display = "block";
+            if (boostUI) boostUI.style.display = "block";
+            
+            titleEl.textContent = `Cultivando: ${techData.name}`;
+            descEl.textContent = techData.description;
+
+            // Actualizar UI de la técnica
+            const nameSpan = document.getElementById("activeCultivationTargetName");
+            const levelSpan = document.getElementById("activeCultivationTargetLevel");
+            if (nameSpan) nameSpan.textContent = techData.name;
+            if (levelSpan) levelSpan.textContent = playerTech.level;
+
+            // Lógica de la barra de progreso
+            const progressBar = document.getElementById("activeCultivationProgressBar");
+            const progressText = document.getElementById("activeCultivationProgressText");
+            if (progressBar && progressText) {
+                const progress = playerTech.currentCultivationProgress || 0;
+                const timeToNext = playerTech.cultivationTimeToNextLevel || Infinity;
+                let percent = (timeToNext > 0 && timeToNext !== Infinity) ? (progress / timeToNext) * 100 : (playerTech.level >= techData.maxLevel ? 100 : 0);
+                
+                progressBar.style.width = `${Math.min(100, percent)}%`;
+                progressText.textContent = (timeToNext === Infinity) ? "Nivel Máximo" : `${Math.floor(progress)}s / ${timeToNext}s`;
+            }
+
+            // Actualizar sección de aceleración
+            const stonesDisplay = document.getElementById("cultivationModalPlayerStones");
+            const boostButton = document.getElementById("boostCultivationButton");
+            if (stonesDisplay) stonesDisplay.textContent = gameState.inventory["Piedras Espirituales"] || 0;
+            if (boostButton) boostButton.disabled = (gameState.inventory["Piedras Espirituales"] || 0) < 1 || playerTech.level >= techData.maxLevel;
         }
+    } else if (mode === 'recovery') {
+        if (recoveryUI) {
+            recoveryUI.style.display = "block";
+            titleEl.textContent = "Meditación Restauradora";
+            descEl.textContent = "Recuperando energía...";
+            
+            // Actualizar barras de HP/Maná del modal
+            const hpText = document.getElementById("modalHpText");
+            const hpBar = document.getElementById("modalHpBar");
+            const manaText = document.getElementById("modalManaText");
+            const manaBar = document.getElementById("modalManaBar");
+            if (hpText) hpText.textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
+            if (hpBar) hpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
+            if (manaText) manaText.textContent = `${Math.floor(player.mana)}/${player.maxMana}`;
+            if (manaBar) manaBar.style.width = `${(player.mana / player.maxMana) * 100}%`;
+        }
+    }
+    
+    modal.style.display = "flex";
+    hideTouchControls();
+}
 
-        // Ocultar barras sobre el jugador en el mapa mientras el modal está abierto
-        const playerBarsOnMap = document.getElementById(
-          "playerOnMapBarsContainer"
-        );
-        if (playerBarsOnMap) playerBarsOnMap.style.display = "none";
-
-        // Ocultar barras sobre el sprite en batalla (aunque no debería estar en batalla y cultivando)
-        const playerBarsInBattle = document.getElementById(
-          "playerInBattleSpriteBarsContainer"
-        );
-        if (playerBarsInBattle) playerBarsInBattle.style.display = "none";
-
-        if (techniqueProgressUIDiv)
-          techniqueProgressUIDiv.style.display = "none";
-        if (recoveryProgressUIDiv) recoveryProgressUIDiv.style.display = "none";
-        if (cultivationBoostSection)
-          cultivationBoostSection.style.display = "none";
-
-        if (mode.type === "recovery") {
-          title.textContent = "Meditación Restauradora";
-          description.textContent =
-            "Recuperando energía vital, Qi y absorbiendo experiencia del entorno.";
-
-          if (recoveryProgressUIDiv) {
-            recoveryProgressUIDiv.style.display = "block";
-            const recoveryProgressBar = document.getElementById(
-              "recoveryProgressBar"
-            );
-            const recoveryCycleText =
-              document.getElementById("recoveryCycleText");
-
-            // Referencias a los elementos de HP y Maná del modal
-            const modalHpText = document.getElementById("modalHpText");
-            const modalHpBar = document.getElementById("modalHpBar");
-            const modalManaText = document.getElementById("modalManaText");
-            const modalManaBar = document.getElementById("modalManaBar");
-
-            if (recoveryProgressBar)
-              recoveryProgressBar.style.width = `${recoveryProgress}%`;
-            if (recoveryCycleText)
-              recoveryCycleText.textContent =
-                recoveryDirection === 1
-                  ? "Inhalando Qi..."
-                  : "Exhalando impurezas...";
-
-            // Actualizar texto y barras de HP/Maná en el modal
-            if (modalHpText)
-              modalHpText.textContent = `${Math.floor(player.hp)}/${
-                player.maxHp
-              }`;
-            if (modalHpBar)
-              modalHpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
-            if (modalManaText)
-              modalManaText.textContent = `${Math.floor(player.mana)}/${
-                player.maxMana
-              }`;
-            if (modalManaBar)
-              modalManaBar.style.width = `${
-                (player.mana / player.maxMana) * 100
-              }%`;
-          }
-        } else if (mode.type === "technique" && mode.targetId) {
-          const techData = techniqueData[mode.targetId];
-          const playerTech = player.learnedTechniques[mode.targetId];
-
-          if (techData && playerTech) {
-            title.textContent = `Cultivando: ${techData.name}`;
-            description.textContent = techData.description;
-
-            if (techniqueProgressUIDiv) {
-              techniqueProgressUIDiv.style.display = "block";
-              const targetNameSpan = document.getElementById(
-                "activeCultivationTargetName"
-              );
-              const targetLevelSpan = document.getElementById(
-                "activeCultivationTargetLevel"
-              );
-              const techniqueProgressBar = document.getElementById(
-                "activeCultivationProgressBar"
-              );
-              const techniqueProgressText = document.getElementById(
-                "activeCultivationProgressText"
-              );
-
-              if (targetNameSpan) targetNameSpan.textContent = techData.name;
-              if (targetLevelSpan)
-                targetLevelSpan.textContent = playerTech.level;
-
-              const timeToNext =
-                playerTech.cultivationTimeToNextLevel ||
-                (techData.cultivationSettings
-                  ? techData.cultivationSettings.baseTimeToLevelUp
-                  : Infinity);
-              const progressPercent =
-                playerTech.currentCultivationProgress && timeToNext !== Infinity
-                  ? (playerTech.currentCultivationProgress / timeToNext) * 100
-                  : playerTech.level >= techData.maxLevel
-                  ? 100
-                  : 0;
-              if (techniqueProgressBar)
-                techniqueProgressBar.style.width = `${Math.min(
-                  100,
-                  progressPercent
-                )}%`;
-              if (techniqueProgressText)
-                techniqueProgressText.textContent =
-                  timeToNext === Infinity
-                    ? "Nivel Máximo"
-                    : `${Math.floor(
-                        playerTech.currentCultivationProgress || 0
-                      )}s / ${timeToNext}s`;
-            }
-
-            // Mostrar y configurar la sección de aceleración
-            if (cultivationBoostSection) {
-              cultivationBoostSection.style.display = "block";
-              document.getElementById(
-                "cultivationModalPlayerStones"
-              ).textContent = gameState.inventory["Piedras Espirituales"] || 0;
-              const boostButton = document.getElementById(
-                "boostCultivationButton"
-              );
-              if (boostButton) {
-                boostButton.disabled =
-                  (gameState.inventory["Piedras Espirituales"] || 0) < 1 ||
-                  playerTech.level >= techData.maxLevel;
-                if (playerTech.level >= techData.maxLevel) {
-                  boostButton.title = "Técnica al máximo nivel";
-                } else if (
-                  (gameState.inventory["Piedras Espirituales"] || 0) < 1
-                ) {
-                  boostButton.title = "Piedras Espirituales insuficientes";
-                } else {
-                  boostButton.title = "Acelerar Cultivo (1 Piedra = 10s)";
-                }
-              }
-            }
-          } else {
-            // Fallback a recuperación si hay un error
-            title.textContent = "Meditación Restauradora";
-            description.textContent =
-              "Error al cargar datos de técnica/habilidad. Cultivo de recuperación activado.";
-            if (recoveryProgressUIDiv) {
-              recoveryProgressUIDiv.style.display = "block";
-              const modalHpText = document.getElementById("modalHpText");
-              const modalHpBar = document.getElementById("modalHpBar");
-              const modalManaText = document.getElementById("modalManaText");
-              const modalManaBar = document.getElementById("modalManaBar");
-              if (modalHpText)
-                modalHpText.textContent = `${Math.floor(player.hp)}/${
-                  player.maxHp
-                }`;
-              if (modalHpBar)
-                modalHpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
-              if (modalManaText)
-                modalManaText.textContent = `${Math.floor(player.mana)}/${
-                  player.maxMana
-                }`;
-              if (modalManaBar)
-                modalManaBar.style.width = `${
-                  (player.mana / player.maxMana) * 100
-                }%`;
-            }
-          }
-        } // No añadas llaves extra aquí, asegúrate de que la función cierra correctamente.
-
-        if (modal) modal.style.display = "flex";
-
-        hideTouchControls();
-      }
 
       function closeActiveCultivationModal() {
         document.getElementById("activeCultivationModal").style.display =
@@ -6409,82 +6259,56 @@ let lastSuccessfulMoveTime = 0;
  * la subida de nivel de las mismas.
  */
     function processCultivationTick() {
-      const tickId = Date.now(); // Un ID único para cada tick
-      console.log(`[Cultivo LOG] ==> TICK DE CULTIVO (ID: ${tickId})`);
-      
-      const player = gameState.player;
+    console.log(`[Cultivo LOG] ==> TICK EJECUTADO (Intervalo ID: ${gameState.cultivationInterval})`);
+    
+    const player = gameState.player;
+    if (!player.isCultivating) {
+        console.error("[Cultivo LOG] ¡ERROR! Tick ejecutado pero el estado es isCultivating=false. Deteniendo.");
+        stopCultivation();
+        return;
+    }
 
-      if (!player.isCultivating || !gameState.cultivationInterval) {
-          console.error(`[Cultivo LOG] ¡ERROR GRAVE! Tick ejecutado pero el estado es isCultivating=false o no hay intervalo. Forzando detención.`);
-          stopCultivation(); 
-          return;
-      }
+    const mode = player.cultivationMode.type;
+    const targetId = player.cultivationMode.targetId;
 
-      const mode = player.cultivationMode.type;
-      const targetId = player.cultivationMode.targetId;
-      console.log(`[Cultivo LOG]   -> Modo: '${mode}', Técnica: '${targetId}'`);
+    if (mode === 'technique' && targetId) {
+        const playerTech = player.learnedTechniques[targetId];
+        const techData = techniqueData[targetId];
+        if (playerTech && techData && playerTech.level < techData.maxLevel) {
+            playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + 1;
+            const progress = playerTech.currentCultivationProgress;
+            const required = playerTech.cultivationTimeToNextLevel || Infinity;
 
-      if (mode === 'technique' && targetId) {
-          const playerTech = player.learnedTechniques[targetId];
-          const techData = techniqueData[targetId];
+            if (progress >= required) {
+                console.log(`%c[Cultivo LOG] *** LEVEL-UP DETECTADO ***`, 'color: #00ff00; font-weight: bold;');
+                playerTech.level++;
+                playerTech.currentCultivationProgress = 0;
+                
+                if (playerTech.level < techData.maxLevel) {
+                    playerTech.cultivationTimeToNextLevel = Math.floor(techData.cultivationSettings.baseTimeToLevelUp * Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level));
+                } else {
+                    playerTech.cultivationTimeToNextLevel = Infinity;
+                }
+                
+                applyTechniqueEffect(targetId, playerTech.level);
+                recalculatePlayerStats();
+                stopCultivation(true, { title: "¡Técnica Mejorada!", text: `¡'${techData.name}' ha subido al Nivel ${playerTech.level}!` });
+                return; // Salida crucial
+            }
+        } else {
+            stopCultivation(true, { title: "Cultivo Detenido", text: "La técnica ha alcanzado su máximo potencial." });
+            return; // Salida crucial
+        }
+    } else if (mode === 'recovery') {
+        if (player.hp < player.maxHp) player.hp = Math.min(player.maxHp, player.hp + player.hpPerSecondBase);
+        if (player.mana < player.maxMana) player.mana = Math.min(player.maxMana, player.mana + player.qiPerSecondBase);
+        gainExperience(player.expPerSecondBase);
+    }
 
-          if (!playerTech || !techData || !techData.cultivationSettings) {
-              console.error(`[Cultivo LOG] Faltan datos para la técnica ${targetId}. Deteniendo cultivo.`);
-              stopCultivation(true, {title: "Error de Datos", text: "Faltan datos de la técnica, se detuvo el cultivo."});
-              return;
-          }
-          
-          console.log(`[Cultivo LOG]   -> Técnica: '${techData.name}', Nivel Actual: ${playerTech.level}`);
-          
-          if (playerTech.level >= techData.maxLevel) {
-              console.log(`[Cultivo LOG]   -> Técnica ya en nivel MÁXIMO. Deteniendo.`);
-              stopCultivation(true, {title: "Nivel Máximo", text: "La técnica ya ha alcanzado su máximo potencial."});
-              return;
-          }
-
-          playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + 1;
-          
-          const progress = playerTech.currentCultivationProgress;
-          const required = playerTech.cultivationTimeToNextLevel;
-          
-          console.log(`[Cultivo LOG]   -> Progreso: ${progress} / ${required}`);
-
-          // La comprobación clave
-          if (progress >= required) {
-              console.log(`%c[Cultivo LOG]   -> *** ¡CONDICIÓN DE LEVEL-UP CUMPLIDA! ***`, 'color: #00ff00; font-weight: bold;');
-              
-              playerTech.level++;
-              playerTech.currentCultivationProgress = 0;
-              console.log(`[Cultivo LOG]   -> ¡Nivel subido a ${playerTech.level}! Progreso reseteado a 0.`);
-              
-              if (playerTech.level < techData.maxLevel) {
-                  playerTech.cultivationTimeToNextLevel = Math.floor(techData.cultivationSettings.baseTimeToLevelUp * Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level));
-              } else {
-                  playerTech.cultivationTimeToNextLevel = Infinity;
-              }
-              
-              applyTechniqueEffect(targetId, playerTech.level);
-              recalculatePlayerStats();
-              
-              console.log(`%c[Cultivo LOG]   -> LLAMANDO A stopCultivation() Y SALIENDO DEL TICK.`, 'color: #ffaa00; font-weight: bold;');
-              stopCultivation(true, { title: "¡Técnica Mejorada!", text: `¡'${techData.name}' ha subido al Nivel ${playerTech.level}!` });
-              
-              // EL RETURN ESENCIAL
-              return;
-          }
-      } else if (mode === 'recovery') {
-          if (player.hp < player.maxHp) player.hp = Math.min(player.maxHp, player.hp + player.hpPerSecondBase);
-          if (player.mana < player.maxMana) player.mana = Math.min(player.maxMana, player.mana + player.qiPerSecondBase);
-          gainExperience(player.expPerSecondBase);
-      }
-
-      // Este código solo se ejecuta si el tick no terminó con un 'return'
-      console.log(`[Cultivo LOG]   -> Fin del tick (ID: ${tickId}) sin subir de nivel. Actualizando UI.`);
-      updateUI();
-      if (document.getElementById("activeCultivationModal").style.display === "flex") {
-          showActiveCultivationModal();
-      }
-  }
+    // Si el cultivo no se detuvo, actualizamos la UI.
+    updateUI();
+    showActiveCultivationModal(); // Actualiza el modal en cada tick.
+}
 
       /**
      * Acelera el progreso del cultivo de una técnica usando Piedras Espirituales.
@@ -6568,28 +6392,31 @@ let lastSuccessfulMoveTime = 0;
       function toggleQiConversion() {
         const player = gameState.player;
 
-        // Si CUALQUIER tipo de cultivo está activo...
+        // Si ya hay un cultivo de CUALQUIER tipo activo...
         if (player.isCultivating) {
-            // Y el cultivo activo es específicamente el de conversión...
+            // ...y ese cultivo es específicamente el de conversión...
             if (player.cultivationMode.isConversionCultivation) {
                 // ...entonces lo detenemos.
-                stopCultivation();
+                console.log("Deteniendo cultivo de conversión de Qi activo.");
+                stopCultivation(true, { title: "Conversión Detenida", text: "Has detenido la conversión de Maná a Vida."});
             } else {
                 // Si es otro tipo de cultivo (ej. de técnica), avisamos al jugador.
-                showModal("Acción no permitida", "Debes detener tu cultivo de técnica actual para iniciar la conversión de Qi.");
+                showModal("Acción no permitida", "Debes detener tu cultivo actual para iniciar la conversión de Qi.");
             }
             return;
         }
 
         // Si no hay ningún cultivo activo, iniciamos el de conversión.
-        console.log("Iniciando cultivo con conversión de Qi...");
+        console.log("Iniciando cultivo con CONVERSIÓN DE QI.");
         
-        // Activamos ambos flags: el de estado global y el del modo específico.
-        player.isQiConversionActive = true; 
-        
-        // Iniciamos el modo de cultivo de recuperación, pero con una marca especial.
+        // CORRECCIÓN CLAVE 1:
+        // Iniciamos el modo de cultivo de recuperación, pero inmediatamente después,
+        // marcamos que es un modo especial de conversión.
         startCultivationMode('recovery'); 
-        player.cultivationMode.isConversionCultivation = true; // <-- Marca especial
+        player.cultivationMode.isConversionCultivation = true; // <-- Esta es la marca especial.
+
+        // También actualizamos la UI para que el botón refleje el estado activo.
+        renderQuickSlotBar();
     }
 
       
