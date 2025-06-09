@@ -830,22 +830,37 @@
         /* AÑADE ESTAS REGLAS DENTRO DE LA MEDIA QUERY DE 768px */
         #shopModal .modal-content {
             width: 95%; /* Ocupa más ancho en móvil */
+            /* Quitamos la altura fija para que se adapte al contenido en móvil */
+            height: auto; 
+            max-height: 85vh; /* Ponemos una altura máxima para que no ocupe toda la pantalla */
         }
+
         .shop-container {
             flex-direction: column; /* Apila los filtros encima de los productos */
-            overflow-y: auto; /* Permite scroll vertical en el contenedor principal en móvil */
+            /* Hacemos que el scroll sea manejado por el .modal-content general en móvil */
+            overflow: visible; 
         }
+
         .shop-filters {
-            flex: 1 1 auto; /* Permite que crezca y se encoja */
+            flex: 0 0 auto; /* No debe crecer, su tamaño será determinado por su contenido */
             border-right: none;
             border-bottom: 1px solid rgba(212, 175, 55, 0.2);
             padding-bottom: 15px;
-            overflow-y: visible; /* Quita el scroll de los filtros */
+            margin-bottom: 15px;
+            overflow-y: visible; /* Correcto, no queremos scroll aquí */
         }
+
+        .shop-products {
+            /* Quitamos el overflow: hidden que podría estar ocultando el contenido */
+            overflow: visible;
+        }
+
         .products-grid {
             grid-template-columns: 1fr; /* Una sola columna para los productos en móvil */
+            overflow-y: visible; /* El scroll lo maneja el padre */
+            /* Quitamos el flex-grow para evitar conflictos */
         }
-      }
+    }
     </style>
   </head>
   <body>
