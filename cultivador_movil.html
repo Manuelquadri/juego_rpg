@@ -323,6 +323,22 @@
 
       #playerOnMapHpFill { background-color: #f44336; }
       #playerOnMapManaFill { background-color: #2196f3; }
+      .entity-name-plate {
+        position: absolute; /* Para posicionarlo relativo al mapa */
+        bottom: 100%; /* Lo coloca justo encima del 'top' del sprite */
+        left: 50%;
+        transform: translateX(-50%); /* Lo centra horizontalmente */
+        background-color: rgba(10, 10, 10, 0.7);
+        color: #f4e4bc;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 10px; /* Un tamaño de fuente pequeño y legible */
+        font-weight: bold;
+        white-space: nowrap; /* Evita que el nombre se parta en dos líneas */
+        z-index: 6; /* Asegura que esté por encima de la entidad */
+        pointer-events: none; /* Evita que la etiqueta intercepte clics del ratón */
+        border: 1px solid rgba(212, 175, 55, 0.3);
+    }
 
       /****************************************
        * 4. PANTALLA DE BATALLA
@@ -367,6 +383,14 @@
         font-size: 60px;
         margin-bottom: 10px;
       }
+      .enemy-sprite {
+            background-size: contain; /* Asegura que la imagen quepa completa en el div */
+            background-repeat: no-repeat;
+            background-position: center; /* Centra la imagen del sprite */
+            image-rendering: pixelated; /* Mantiene la estética pixel-art si la tienes */
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
 
       .character-sprite {
         background-image: url("img/tu_sprite_sheet.png");
@@ -650,7 +674,178 @@
         .battle-actions button {
             padding: 6px 8px; font-size: 0.75em;
         }
+
     }
+    /****************************************
+       * NUEVO: 7. ESTILOS DE LA TIENDA
+       ****************************************/
+      
+       #shopModal .modal-content {
+        max-width: 90%;
+        width: 1000px; /* Un ancho mayor para la tienda */
+        height: 90vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .shop-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+        flex-shrink: 0;
+      }
+
+      .shop-stats {
+        font-size: 1.1em;
+        color: #f4d03f;
+      }
+
+      .shop-container {
+        display: flex;
+        gap: 20px;
+        flex-grow: 1;
+        overflow: hidden; /* Evita que el contenedor principal scrollee */
+      }
+      
+      .shop-filters {
+        flex: 0 0 220px; /* No crece, no se encoge, base de 220px */
+        padding-right: 15px;
+        border-right: 1px solid rgba(212, 175, 55, 0.2);
+        overflow-y: auto;
+      }
+      
+      .shop-products {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+        overflow-y: auto; /* El scroll ahora está aquí */
+        padding: 5px;
+        flex-grow: 1;
+      }
+
+      .section-title {
+        color: #f4d03f;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        padding-bottom: 5px;
+      }
+
+      .search-box {
+        width: 100%;
+        padding: 8px;
+        background-color: rgba(0,0,0,0.3);
+        border: 1px solid #555;
+        border-radius: 5px;
+        color: #f4e4bc;
+        margin-bottom: 15px;
+      }
+
+      .filter-group {
+        margin-bottom: 20px;
+      }
+      .filter-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        opacity: 0.8;
+      }
+
+      .category-list {
+        list-style: none;
+      }
+      .category-item {
+        padding: 8px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .category-item:hover {
+        background-color: rgba(212, 175, 55, 0.1);
+      }
+      .category-item.active {
+        background-color: rgba(212, 175, 55, 0.2);
+        color: #f4d03f;
+        font-weight: bold;
+      }
+
+      .product-card {
+        background: rgba(0,0,0,0.2);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .product-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .product-name {
+        font-weight: bold;
+        color: #f4d03f;
+      }
+      .product-type {
+        font-size: 0.8em;
+        opacity: 0.7;
+      }
+      .product-price {
+        font-weight: bold;
+        white-space: nowrap;
+      }
+      
+      .product-description {
+        font-size: 0.9em;
+        margin: 10px 0;
+        opacity: 0.9;
+        flex-grow: 1; /* Hace que la descripción empuje el botón hacia abajo */
+      }
+
+      .product-actions {
+        margin-top: auto; /* Empuja el botón al final de la tarjeta */
+      }
+      .buy-btn {
+        width: 100%;
+      }
+
+      /****************************************
+       * 6. MEDIA QUERIES (RESPONSIVIDAD)
+       ****************************************/
+      @media (max-width: 768px) {
+        /* ... (tus otras media queries) ... */
+      
+        /* AÑADE ESTAS REGLAS DENTRO DE LA MEDIA QUERY DE 768px */
+        #shopModal .modal-content {
+            width: 95%; /* Ocupa más ancho en móvil */
+        }
+        .shop-container {
+            flex-direction: column; /* Apila los filtros encima de los productos */
+            overflow-y: auto; /* Permite scroll vertical en el contenedor principal en móvil */
+        }
+        .shop-filters {
+            flex: 1 1 auto; /* Permite que crezca y se encoja */
+            border-right: none;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 15px;
+            overflow-y: visible; /* Quita el scroll de los filtros */
+        }
+        .products-grid {
+            grid-template-columns: 1fr; /* Una sola columna para los productos en móvil */
+        }
+      }
     </style>
   </head>
   <body>
@@ -818,7 +1013,7 @@
             </div>
           </div>
           <!-- === FIN NUEVO === -->
-          <div class="enemy-sprite" id="enemySprite">👹</div>
+          <div class="enemy-sprite" id="enemySprite"></div>
           <h3 id="enemyName">Demonio</h3>
           <div>Vida: <span id="enemyHp">80/80</span></div>
           <div class="stat-bar">
@@ -945,7 +1140,7 @@
     <!-- Modal para tienda -->
     <div class="modal" id="shopModal">
       <div class="modal-content">
-        {/* Estilos de ancho/alto ya definidos en CSS */ }
+        
         <div class="shop-header">
           <h2 id="shopName">Pabellón de Tesoros del Dragón Oculto</h2>
           <div class="shop-stats">
@@ -1346,35 +1541,28 @@ let lastSuccessfulMoveTime = 0;
             },
             // Bosque Esmeralda
             {
-              x1: 30,
-              y1: 10,
-              x2: 59,
-              y2: 39,
-              type: "FOREST",
-              name: "Bosque Esmeralda",
-              spawnSettings: {
-                targetEntities: [
-                  {
-                    entityTypeId: "monster_bosque_lobo",
-                    count: 8,
-                    currentCount: 0,
-                  },
-                  {
-                    entityTypeId: "monster_bosque_arana",
-                    count: 5,
-                    currentCount: 0,
-                  },
-                  {
-                    entityTypeId: "resource_hierbas_bosque",
-                    count: 3,
-                    currentCount: 0,
-                  },
-                  { entityTypeId: "monster_alpha", count: 5, currentCount: 0 },
+                x1: 30,
+                y1: 10,
+                x2: 59,
+                y2: 39,
+                type: "GRASSLAND", // <-- El terreno base ahora es hierba
+                name: "Bosque Esmeralda",
+                decorations: [ // <-- NUEVA PROPIEDAD
+                    { entityTypeId: 'deco_arbol_grande', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
+                    { entityTypeId: 'deco_arbol_normal', density: 0.3 }, // 30% tendrán un árbol normal
+                    { entityTypeId: 'deco_roca_musgosa', density: 0.05 }  // 5% tendrán una roca
                 ],
-                respawnTimer: 0,
-                respawnCooldown: 450, // Más lento para recursos quizá
-                lastSpawnCheck: 0,
-              },
+                spawnSettings: { // Los spawns de monstruos no cambian
+                    targetEntities: [
+                        { entityTypeId: "monster_bosque_lobo", count: 8, currentCount: 0 },
+                        { entityTypeId: "monster_bosque_arana", count: 5, currentCount: 0 },
+                        { entityTypeId: "resource_hierbas_bosque", count: 3, currentCount: 0 },
+                        { entityTypeId: "monster_alpha", count: 5, currentCount: 0 },
+                    ],
+                    respawnTimer: 0,
+                    respawnCooldown: 450,
+                    lastSpawnCheck: 0,
+                },
             },
             // Desierto Abrasador
             {
@@ -1431,12 +1619,17 @@ let lastSuccessfulMoveTime = 0;
             },
             // Ciénaga Sombría
             {
-              x1: 35,
+              x1: 60,
               y1: 15,
-              x2: 45,
-              y2: 25,
+              x2: 90,
+              y2: 45,
               type: "SWAMP",
               name: "Ciénaga Sombría",
+              decorations: [ // <-- NUEVA PROPIEDAD
+                    { entityTypeId: 'deco_arbol_grande', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
+                    { entityTypeId: 'deco_arbol_normal', density: 0.2 }, // 20% tendrán un árbol normal
+                    { entityTypeId: 'deco_roca_musgosa', density: 0.05 }  // 5% tendrán una roca
+                ],
               spawnSettings: {
                 targetEntities: [
                   {
@@ -1518,13 +1711,44 @@ let lastSuccessfulMoveTime = 0;
       const G_SAFE_RESPAWN_Y = 10;
       const G_SAFE_RESPAWN_SEARCH_RADIUS = 3;
       const G_TERRAIN_TYPES = {
-        GRASSLAND: { symbol: "🟩", color: "#34A853", name: "Pradera" }, // Verde para pastizales
-        FOREST: { symbol: "🌲", color: "#1E824C", name: "Bosque" }, // Verde oscuro para bosques
-        MOUNTAIN: { symbol: "⛰️", color: "#A9A9A9", name: "Montaña" }, // Gris para montañas
-        WATER: { symbol: "🟦", color: "#4A86E8", name: "Agua" }, // Azul para agua (intransitable)
-        RUINS: { symbol: "🏛️", color: "#706050", name: "Ruinas" }, // Marrón/Gris para ruinas
-        DESERT: { symbol: "🟨", color: "#F9E79F", name: "Desierto" }, // Amarillo claro para desierto
-        SWAMP: { symbol: "🟪", color: "#5D3A9A", name: "Pantano" }, // Púrpura/Verde oscuro para pantano
+        GRASSLAND: { 
+            symbol: "🟩", 
+            textureUrl: "img/grassland.png",
+            color: "#34A853", 
+            name: "Pradera" 
+        
+        }, // Verde para pastizales
+        FOREST: { 
+            symbol: "🌲", 
+            textureUrl: "img/grassland.png",
+            color: "#1E824C", 
+            name: "Bosque" 
+        }, // Verde oscuro para bosques
+        MOUNTAIN: { 
+            symbol: "⛰️", 
+            color: "#A9A9A9", 
+            name: "Montaña" 
+        }, // Gris para montañas
+        WATER: { 
+            symbol: "🟦", 
+            color: "#4A86E8", 
+            name: "Agua" }, // Azul para agua (intransitable)
+        RUINS: { 
+            symbol: "🏛️", 
+            color: "#706050", 
+            name: "Ruinas" 
+        }, // Marrón/Gris para ruinas
+        DESERT: { 
+            symbol: "🟨", 
+            color: "#F9E79F", 
+            name: "Desierto" 
+        }, // Amarillo claro para desierto
+        SWAMP: { 
+            symbol: "🟪", 
+            textureUrl: "img/pantano.png",
+            color: "#5D3A9A", 
+            name: "Pantano" 
+        }, // Púrpura/Verde oscuro para pantano
         ARENA: { symbol: "🏟️", color: "#D2B48C", name: "Arena" },
         // Añade más según necesites
       };
@@ -2504,6 +2728,7 @@ let lastSuccessfulMoveTime = 0;
         secta_entrada_principal: {
           symbol: "⛩️",
           name: "Salón Principal de la Secta",
+          spriteUrl: "img/secta.png",
           interaction: "access_sect_hall",
           // fixedX: 12, // Si tenías esto antes
           // fixedY: 15, // Si tenías esto antes
@@ -2515,6 +2740,7 @@ let lastSuccessfulMoveTime = 0;
         deco_arbol_grande: {
           symbol: "🌳",
           name: "Arbol Ancestral",
+          spriteUrl: "img/arbol.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2522,6 +2748,7 @@ let lastSuccessfulMoveTime = 0;
         deco_arbol_pequeño: {
           symbol: "🌳",
           name: "Pino",
+          spriteUrl: "img/arbol.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2529,6 +2756,7 @@ let lastSuccessfulMoveTime = 0;
         deco_arbol_normal: {
           symbol: "🌳",
           name: "Otro arbol",
+          spriteUrl: "img/arbol_grande.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2536,6 +2764,7 @@ let lastSuccessfulMoveTime = 0;
         deco_roca_musgosa: {
           symbol: "🪨",
           name: "Roca Musgosa",
+          spriteUrl: "img/arbol_grande.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2543,6 +2772,7 @@ let lastSuccessfulMoveTime = 0;
         deco_ruina_pilar: {
           symbol: "🏛",
           name: "Pilar Caído",
+          spriteUrl: "img/arbol_grande.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2559,6 +2789,7 @@ let lastSuccessfulMoveTime = 0;
         master: {
           symbol: "👴",
           name: "Maestro Anciano",
+          spriteUrl: "img/guia_lin.png",
           teaching: "técnica",
           expGain: 50,
           interaction: "learn_from_master",
@@ -2566,6 +2797,7 @@ let lastSuccessfulMoveTime = 0;
         npc_secta_guia: {
           symbol: "👨‍🏫",
           name: "Guía Lin",
+          spriteUrl: "img/guia_lin.png",
           interaction: "talk_secta_npc",
           npcId: "guia_lin",
           fixedLocation: { x: 13, y: 15 },
@@ -2573,6 +2805,7 @@ let lastSuccessfulMoveTime = 0;
         npc_secta_admin: {
           symbol: " 👴",
           name: "Administrador Yao",
+          spriteUrl: "img/adm_yao.png",
           interaction: "talk_secta_npc",
           npcId: "admin_yao",
           fixedLocation: { x: 17, y: 15 },
@@ -2631,6 +2864,8 @@ let lastSuccessfulMoveTime = 0;
         monster: {
           symbol: "👹",
           name: "Demonio Menor",
+          spriteUrl: "img/demonio_menor.png",
+          level:2,
           hp: 60,
           attack: 30,
           defense: 2,
@@ -2645,6 +2880,8 @@ let lastSuccessfulMoveTime = 0;
         monster_secta_debil: {
           symbol: "🐾",
           name: "Bestia Menor de Pradera",
+          spriteUrl: "img/monstruo_pradera.png",
+          level:1,
           hp: 40,
           attack: 30,
           defense: 1,
@@ -2658,7 +2895,9 @@ let lastSuccessfulMoveTime = 0;
         monster_bosque_lobo: {
           symbol: "🐺",
           name: "Lobo del Bosque",
+          spriteUrl: "img/lobo_bosque.png",
           hp: 70,
+          level:2,
           attack: 40,
           defense: 3,
           exp: 20,
@@ -2678,6 +2917,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "🕷️",
           name: "Araña Tejesombras",
           hp: 50,
+          level:1,
           attack: 45,
           defense: 5,
           exp: 18,
@@ -2693,6 +2933,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "🦂",
           name: "Escorpión de las Dunas",
           hp: 90,
+          level:5,
           attack: 30,
           defense: 8,
           exp: 35,
@@ -2718,6 +2959,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "🧱",
           name: "Golem de Tormenta de Arena",
           hp: 200,
+          level:10,
           attack: 35,
           defense: 15,
           exp: 80,
@@ -2749,6 +2991,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "🐍",
           name: "Serpiente de Ciénaga",
           hp: 60,
+          level:3,
           attack: 28,
           defense: 2,
           exp: 22,
@@ -2778,6 +3021,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "😠",
           name: "Cultivador Novato Hostil",
           hp: 150,
+          level:5,
           attack: 50,
           defense: 5,
           exp: 80,
@@ -2793,6 +3037,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "🐺",
           name: "Demonio Alfa",
           hp: 200,
+          level:10,
           attack: 60,
           defense: 4,
           exp: 35,
@@ -2814,6 +3059,7 @@ let lastSuccessfulMoveTime = 0;
           symbol: "😡",
           name: "Cultivador Adepto Agresivo",
           hp: 400,
+          level:15,
           attack: 80,
           defense: 10,
           exp: 250,
@@ -2870,6 +3116,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Espíritu de Hielo Protector",
           typeOverride: "monster",
           hp: 120,
+          level:5,
           attack: 35,
           defense: 10,
           exp: 40,
@@ -2888,6 +3135,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Elemental de Magma Menor",
           typeOverride: "monster",
           hp: 150,
+          level:7,
           attack: 40,
           defense: 5,
           exp: 45,
@@ -2910,6 +3158,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Bandido del Desfiladero",
           typeOverride: "monster",
           hp: 180,
+          level:10,
           attack: 45,
           defense: 10,
           exp: 60,
@@ -2929,6 +3178,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Esqueleto podrido",
           typeOverride: "monster",
           hp: 180,
+          level:10,
           attack: 45,
           defense: 10,
           exp: 60,
@@ -2948,6 +3198,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Jabalí Colmilludo Alfa",
           typeOverride: "monster",
           hp: 300,
+          level:10,
           attack: 55,
           defense: 20,
           exp: 120,
@@ -2975,6 +3226,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Líder Cultor Renegado Kai",
           typeOverride: "monster",
           hp: 500,
+          level:15,
           attack: 70,
           defense: 25,
           exp: 250,
@@ -3009,6 +3261,7 @@ let lastSuccessfulMoveTime = 0;
           name: "General Demonio de la Sombra",
           typeOverride: "monster",
           hp: 500,
+          level:20,
           attack: 45,
           defense: 20,
           exp: 300,
@@ -3073,6 +3326,7 @@ let lastSuccessfulMoveTime = 0;
           name: "Golem Ancestral de Jade",
           typeOverride: "monster",
           hp: 800,
+          level:25,
           attack: 35,
           defense: 50,
           exp: 500,
@@ -4057,97 +4311,93 @@ let lastSuccessfulMoveTime = 0;
       }
       //GENERAR MAPA!
       function generateMap(isFullReset = true) {
-        calculateAndSetTileSize();
+            calculateAndSetTileSize();
 
-        if (isFullReset) {
-          console.log(
-            "generateMap: Full reset. Entities BEFORE filtering for isFixed:"
-          );
-          gameState.map.entities.forEach((e) => {
-            if (
-              e.type === "secta_entrada_principal" ||
-              e.type === "npc_secta_guia" ||
-              e.type === "npc_secta_admin"
-            ) {
-              console.log(
-                `  - ${e.name || e.type} at (${e.x},${e.y}), isFixed: ${
-                  e.isFixed
-                }, ID: ${e.id}`
-              );
-            }
-          });
+            if (isFullReset) {
+                // Limpiar entidades que no son fijas
+                gameState.map.entities = gameState.map.entities.filter(e => e.isFixed && !e.isDecorative); // Quitamos también las decoraciones viejas
+                
+                // Resetear contadores de spawn
+                gameState.map.terrainZones.forEach((zone) => {
+                    if (zone.spawnSettings && zone.spawnSettings.targetEntities) {
+                        zone.spawnSettings.targetEntities.forEach((target) => {
+                            target.currentCount = 0;
+                        });
+                        zone.spawnSettings.respawnTimer = 0;
+                        zone.spawnSettings.lastSpawnCheck = 0;
+                    }
+                });
 
-          // Limpiar entidades que no son fijas si es un reseteo completo
-          // Esto es importante para que populateZoneWithObjects no cuente entidades viejas
-          gameState.map.entities = gameState.map.entities.filter(
-            (e) => e.isFixed
-          );
-          console.log(
-            "generateMap: Full reset. Entities AFTER filtering for isFixed:"
-          );
-          gameState.map.entities.forEach((e) => {
-            if (
-              e.type === "secta_entrada_principal" ||
-              e.type === "npc_secta_guia" ||
-              e.type === "npc_secta_admin"
-            ) {
-              console.log(
-                `  - KEPT: ${e.name || e.type} at (${e.x},${e.y}), isFixed: ${
-                  e.isFixed
-                }, ID: ${e.id}`
-              );
+                // Poblar cada zona con monstruos/recursos y luego con decoraciones
+                gameState.map.terrainZones.forEach((zone) => {
+                    if (zone.spawnSettings) {
+                        console.log(`generateMap: Poblando spawns para la zona "${zone.name}".`);
+                        populateZoneWithObjects(zone, true);
+                    }
+                    // === LÓGICA MODIFICADA ===
+                    if (zone.decorations) {
+                        console.log(`generateMap: Poblando decoraciones para la zona "${zone.name}".`);
+                        populateZoneWithDecorations(zone); // Llamamos a la nueva función
+                    }
+                    // === FIN DE LA MODIFICACIÓN ===
+                });
+                
+                // Ya no necesitamos la función global y aleatoria de decoraciones.
+                // populateDecorativeElements(50); // <-- ELIMINA O COMENTA ESTA LÍNEA
+                
+            } else {
+                gameState.map.entities = gameState.map.entities.filter(
+                    (e) => e.isFixed || e.isDecorative || (!e.zoneOrigin && !e.isFixed)
+                );
             }
-          });
-          // Resetear currentCount en las spawnSettings de las zonas
-          gameState.map.terrainZones.forEach((zone) => {
-            if (zone.spawnSettings && zone.spawnSettings.targetEntities) {
-              zone.spawnSettings.targetEntities.forEach((target) => {
-                target.currentCount = 0;
-              });
-              zone.spawnSettings.respawnTimer = 0; // Asegurar que el timer esté a 0 para el llenado inicial
-              zone.spawnSettings.lastSpawnCheck = 0; // Resetear lastSpawnCheck también
-            }
-          });
-
-          gameState.map.terrainZones.forEach((zone) => {
-            if (zone.spawnSettings) {
-              console.log(
-                `generateMap: Processing zone "${zone.name}" for initial population.`
-              );
-              populateZoneWithObjects(zone, true); // true para forzar el llenado inicial completo
-              console.log(
-                "generateMap: Full reset. Populating decorative elements."
-              );
-              populateDecorativeElements(50); // Añade, por ejemplo, 50 elementos decorativos
-            }
-          });
-        } else {
-          // Para una "reaparición" más ligera (si aún necesitas este concepto fuera de las zonas)
-          // Filtra solo las entidades que NO son gestionadas por zonas y NO son fijas
-
-          gameState.map.entities = gameState.map.entities.filter(
-            (e) => e.isFixed || e.isDecorative || (!e.zoneOrigin && !e.isFixed)
-          );
+            
+            updatePlayerPosition();
+            showTouchControls();
+            ensureFixedEntities();
         }
-        updatePlayerPosition(); // Esto llamará a renderMap()
-        showTouchControls();
-        // Siempre asegurar que las entidades fijas estén presentes y correctas
-        ensureFixedEntities();
-        console.log("generateMap: Entities AFTER ensureFixedEntities has run:");
-        gameState.map.entities.forEach((e) => {
-          if (
-            e.type === "secta_entrada_principal" ||
-            e.type === "npc_secta_guia" ||
-            e.type === "npc_secta_admin"
-          ) {
-            console.log(
-              `  - FINAL: ${e.name || e.type} at (${e.x},${e.y}), isFixed: ${
-                e.isFixed
-              }, ID: ${e.id}`
-            );
-          }
-        });
-      }
+
+      function populateZoneWithDecorations(zone) {
+        if (!zone.decorations || zone.decorations.length === 0) {
+            return; // No hay nada que decorar en esta zona
+        }
+
+        console.log(`[Decor] Poblando decoraciones para la zona: ${zone.name}`);
+
+        // Recorremos cada celda de la zona
+        for (let y = zone.y1; y <= zone.y2; y++) {
+            for (let x = zone.x1; x <= zone.x2; x++) {
+                // Verificamos si la celda ya está ocupada por algo importante
+                const isOccupied = gameState.map.entities.some(e => e.x === x && e.y === y);
+                if (isOccupied) {
+                    continue; // Si ya hay un monstruo o recurso, no ponemos decoración encima
+                }
+
+                // Iteramos sobre los tipos de decoración definidos para la zona
+                for (const deco of zone.decorations) {
+                    // Usamos Math.random() para decidir si colocar esta decoración
+                    if (Math.random() < deco.density) {
+                        const decoDefinition = entityTypes[deco.entityTypeId];
+                        if (decoDefinition) {
+                            const newDeco = {
+                                ...decoDefinition,
+                                x: x,
+                                y: y,
+                                type: deco.entityTypeId,
+                                id: `${deco.entityTypeId}_${x}_${y}_${Math.random()}`,
+                                discovered: true,
+                                isFixed: true,
+                                isDecorative: true,
+                            };
+                            gameState.map.entities.push(newDeco);
+                            // IMPORTANTE: Una vez que ponemos una decoración, salimos del bucle
+                            // para no poner múltiples decoraciones (ej. un árbol y una roca) en la misma celda.
+                            break; 
+                        }
+                    }
+                }
+            }
+        }
+    }
 
       function populateDecorativeElements(numberOfElements = 3000) {
         const decorativeKeys = Object.keys(entityTypes).filter(
@@ -4571,12 +4821,11 @@ let lastSuccessfulMoveTime = 0;
       }
 
       function renderMap(callerId = "unknown") {
-        // Añadido callerId para depuración
         const mapElement = document.getElementById("gameMap");
         const mapContainerElement = document.querySelector(".map-container");
 
         if (!mapElement || !mapContainerElement) {
-          return;
+            return;
         }
 
         const currentContainerWidth = mapContainerElement.clientWidth;
@@ -4585,175 +4834,128 @@ let lastSuccessfulMoveTime = 0;
         const playerScreenX = currentContainerWidth / 2 - currentTileSize / 2;
         const playerScreenY = currentContainerHeight / 2 - currentTileSize / 2;
         const mapExpectedScrollX =
-          -(gameState.player.x * currentTileSize) + playerScreenX;
+            -(gameState.player.x * currentTileSize) + playerScreenX;
         const mapExpectedScrollY =
-          -(gameState.player.y * currentTileSize) + playerScreenY;
+            -(gameState.player.y * currentTileSize) + playerScreenY;
 
         const viewWorldXStart = Math.floor(
-          -mapExpectedScrollX / currentTileSize
+            -mapExpectedScrollX / currentTileSize
         );
         const viewWorldYStart = Math.floor(
-          -mapExpectedScrollY / currentTileSize
+            -mapExpectedScrollY / currentTileSize
         );
         const tilesInViewX =
-          Math.ceil(currentContainerWidth / currentTileSize) + 2; // +2 para margen
+            Math.ceil(currentContainerWidth / currentTileSize) + 2;
         const tilesInViewY =
-          Math.ceil(currentContainerHeight / currentTileSize) + 2; // +2 para margen
+            Math.ceil(currentContainerHeight / currentTileSize) + 2;
         const viewWorldXEnd = viewWorldXStart + tilesInViewX;
         const viewWorldYEnd = viewWorldYStart + tilesInViewY;
 
         mapElement.innerHTML = "";
 
-        // 1. Renderizar TERRENO BASE
+        // 1. Renderizar TERRENO BASE (Lógica actualizada)
         for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
-          for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
-            if (
-              x < 0 ||
-              x >= gameState.map.width ||
-              y < 0 ||
-              y >= gameState.map.height
-            ) {
-              continue; // No dibujar fuera de los límites del mundo
+            for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
+                if (x < 0 || x >= gameState.map.width || y < 0 || y >= gameState.map.height) {
+                    continue;
+                }
+                const terrainId = getTerrainTypeAt(x, y);
+                const terrainData = G_TERRAIN_TYPES[terrainId];
+                if (terrainData) {
+                    const terrainTile = document.createElement("div");
+                    terrainTile.className = "tile terrain-tile";
+                    terrainTile.style.left = `${x * currentTileSize}px`;
+                    terrainTile.style.top = `${y * currentTileSize}px`;
+                    terrainTile.style.width = `${currentTileSize}px`;
+                    terrainTile.style.height = `${currentTileSize}px`;
+                    terrainTile.style.zIndex = "1";
+
+                    // === INICIO DE LA LÓGICA DE TEXTURAS ===
+                    if (terrainData.textureUrl) {
+                        // Si hay una textura, la usamos como fondo.
+                        terrainTile.style.backgroundImage = `url('${terrainData.textureUrl}')`;
+                        terrainTile.style.backgroundSize = 'cover'; // 'cover' para que llene la celda.
+                    } else {
+                        // Si no, usamos el color plano como fallback.
+                        terrainTile.style.backgroundColor = terrainData.color;
+                    }
+                    // Ya no necesitamos la lógica de variedad visual con símbolos.
+                    // === FIN DE LA LÓGICA DE TEXTURAS ===
+
+                    mapElement.appendChild(terrainTile);
+                }
             }
-            const terrainId = getTerrainTypeAt(x, y);
-            const terrainData = G_TERRAIN_TYPES[terrainId];
-            if (terrainData) {
-              const terrainTile = document.createElement("div");
-              terrainTile.className = "tile terrain-tile";
-              terrainTile.style.left = `${x * currentTileSize}px`;
-              terrainTile.style.top = `${y * currentTileSize}px`;
-              terrainTile.style.width = `${currentTileSize}px`;
-              terrainTile.style.height = `${currentTileSize}px`;
-
-              // --- INICIO VARIEDAD VISUAL TERRENO ---
-              let tileColor = terrainData.color;
-              let detailSymbol = "";
-              let detailOpacity = 0.15; // Opacidad para símbolos de detalle
-
-              // Generar un valor pseudoaleatorio basado en coordenadas para consistencia
-              const noiseVal = ((x * 31 + y * 13) % 100) / 100.0; // Simple hash
-
-              if (terrainId === "GRASSLAND") {
-                if (noiseVal < 0.1) {
-                  // 10% de tiles un poco más oscuros
-                  tileColor = "#2A8C4A"; // Un verde ligeramente más oscuro
-                } else if (noiseVal < 0.15) {
-                  // 5% con un "matojo"
-                  detailSymbol = "٬"; // Coma o apóstrofe como pequeño detalle
-                } else if (noiseVal < 0.2) {
-                  detailSymbol = "·";
-                }
-              } else if (terrainId === "FOREST") {
-                if (noiseVal < 0.15) {
-                  tileColor = "#166F3C"; // Más oscuro
-                } else if (noiseVal < 0.25) {
-                  detailSymbol = "∗"; // Un pequeño asterisco
-                }
-              } else if (terrainId === "DESERT") {
-                if (noiseVal < 0.08) {
-                  tileColor = "#FAD7A0"; // Ligeramente diferente
-                } else if (noiseVal < 0.15) {
-                  detailSymbol = "·";
-                }
-              }
-              // Añadir más reglas para otros tipos de terreno
-
-              terrainTile.style.backgroundColor = tileColor;
-              // --- FIN VARIEDAD VISUAL TERRENO ---
-
-              terrainTile.style.fontSize = `${currentTileSize * 0.6}px`;
-              terrainTile.style.display = "flex";
-              terrainTile.style.alignItems = "center";
-              terrainTile.style.justifyContent = "center";
-              terrainTile.style.zIndex = "1";
-
-              // Símbolo principal del terreno (más opaco)
-              const mainSymbolSpan = document.createElement("span");
-              mainSymbolSpan.textContent = terrainData.symbol;
-              mainSymbolSpan.style.opacity = "0.3";
-              terrainTile.appendChild(mainSymbolSpan);
-
-              // Símbolo de detalle (si existe, más transparente)
-              if (detailSymbol) {
-                const detailSymbolSpan = document.createElement("span");
-                detailSymbolSpan.textContent = detailSymbol;
-                detailSymbolSpan.style.position = "absolute"; // Para superponerlo
-                // Posicionarlo aleatoriamente dentro del tile de forma sutil
-                detailSymbolSpan.style.left = `${noiseVal * 50 + 25}%`; // entre 25% y 75%
-                detailSymbolSpan.style.top = `${((y * 7 + x * 3) % 50) + 25}%`; // diferente variación aleatoria
-                detailSymbolSpan.style.opacity = `${detailOpacity}`;
-                detailSymbolSpan.style.fontSize = `${currentTileSize * 0.4}px`; // Más pequeño
-                detailSymbolSpan.style.transform = "translate(-50%, -50%)"; // Centrar el símbolo de detalle
-                terrainTile.appendChild(detailSymbolSpan);
-              }
-              mapElement.appendChild(terrainTile);
-            }
-          }
         }
-
-        // 2. Renderizar ENTIDADES (Monstruos, NPCs, Recursos, Decorativos)
+        
+        // 2. Renderizar ENTIDADES (Lógica sin cambios)
         gameState.map.entities.forEach((entity) => {
-          // LOG para ver todas las entidades que se intentan renderizar y sus propiedades
-          // console.log(`[RenderMap] Checking entity: ${entity.name || entity.type}, X:${entity.x}, Y:${entity.y}, Discovered: ${entity.discovered}, Decorative: ${entity.isDecorative}, Fixed: ${entity.isFixed}, Symbol: ${entity.symbol}`);
+            if (entity.discovered) {
+                if (
+                    entity.x >= viewWorldXStart &&
+                    entity.x < viewWorldXEnd &&
+                    entity.y >= viewWorldYStart &&
+                    entity.y < viewWorldYEnd
+                ) {
+                    const entityContainer = document.createElement("div");
+                    entityContainer.style.position = 'absolute';
+                    entityContainer.style.left = `${entity.x * currentTileSize}px`;
+                    entityContainer.style.top = `${entity.y * currentTileSize}px`;
+                    entityContainer.style.width = `${currentTileSize}px`;
+                    entityContainer.style.height = `${currentTileSize}px`;
+                    entityContainer.style.display = 'flex';
+                    entityContainer.style.alignItems = 'center';
+                    entityContainer.style.justifyContent = 'center';
+                    entityContainer.style.zIndex = '5';
 
-          if (entity.discovered) {
-            if (
-              entity.x >= viewWorldXStart &&
-              entity.x < viewWorldXEnd &&
-              entity.y >= viewWorldYStart &&
-              entity.y < viewWorldYEnd
-            ) {
-              const tile = document.createElement("div");
+                    const definition = entityTypes[entity.originalEntityTypeId] || entityTypes[entity.type];
+                    const spriteUrl = entity.spriteUrl || (definition ? definition.spriteUrl : null);
 
-              const displayTypeKey = entity.type;
-              tile.className = `tile entity-on-map ${displayTypeKey.replace(
-                /\s/g,
-                "_"
-              )}`;
+                    if (spriteUrl) {
+                        entityContainer.style.backgroundImage = `url('${spriteUrl}')`;
+                        
+                        if (entity.originalEntityTypeId === 'secta_entrada_principal') {
+                            entityContainer.style.backgroundSize = '150%';
+                            entityContainer.style.top = `${(entity.y - 0.25) * currentTileSize}px`;
+                            entityContainer.style.height = `${currentTileSize * 1.25}px`;
+                        } else {
+                            entityContainer.style.backgroundSize = '80%';
+                        }
+                        
+                        entityContainer.style.backgroundPosition = 'center bottom';
+                        entityContainer.style.backgroundRepeat = 'no-repeat';
+                    } else {
+                        entityContainer.textContent = entity.symbol || (definition ? definition.symbol : "?");
+                        entityContainer.style.fontSize = `${currentTileSize * (entity.isDecorative ? 0.5 : 0.6)}px`;
+                    }
 
-              tile.style.left = `${entity.x * currentTileSize}px`;
-              tile.style.top = `${entity.y * currentTileSize}px`;
-              tile.style.width = `${currentTileSize}px`;
-              tile.style.height = `${currentTileSize}px`;
-              tile.style.fontSize = `${
-                currentTileSize * (entity.isDecorative ? 0.5 : 0.6)
-              }px`;
+                    if (entity.isDecorative) {
+                        entityContainer.style.opacity = "0.7";
+                        entityContainer.style.zIndex = "3";
+                    }
 
-              // Esta lógica para obtener el símbolo ya es robusta en tu código:
-              const definitionForSymbol =
-                entityTypes[entity.originalEntityTypeId] ||
-                entityTypes[entity.type];
-              tile.textContent =
-                entity.symbol ||
-                (definitionForSymbol ? definitionForSymbol.symbol : "?");
+                    mapElement.appendChild(entityContainer);
 
-              if (!tile.textContent || tile.textContent === "?") {
-                console.warn(
-                  `[RenderMap] Entity ${entity.name || entity.type} at (${
-                    entity.x
-                  },${
-                    entity.y
-                  }) has NO SYMBOL or symbol is '?'! Definition key for fallback: ${
-                    entity.originalEntityTypeId || entity.type
-                  }. Entity instance:`,
-                  JSON.parse(JSON.stringify(entity))
-                );
-              }
+                    const isHostile = G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss;
+                    const isImportantNPC = entity.npcId && !isHostile;
 
-              tile.style.zIndex = entity.isDecorative ? "3" : "5";
-              tile.style.backgroundColor = "transparent";
-              if (entity.isDecorative) {
-                tile.style.opacity = "0.7";
-                // MODIFICACIÓN: Log específico cuando se va a dibujar un decorativo
-                // console.log(`[RenderMap] Drawing DECORATIVE entity: ${entity.name || entity.type} (Symbol: ${tile.textContent}) at ${entity.x},${entity.y} with zIndex ${tile.style.zIndex} and opacity ${tile.style.opacity}`);
-              }
-
-              mapElement.appendChild(tile);
+                    if (isHostile || isImportantNPC) {
+                        const namePlate = document.createElement('div');
+                        namePlate.className = 'entity-name-plate';
+                        
+                        let displayText = entity.name;
+                        if (isHostile && entity.level) {
+                            displayText += ` (Nv. ${entity.level})`;
+                        }
+                        
+                        namePlate.textContent = displayText;
+                        entityContainer.appendChild(namePlate);
+                    }
+                }
             }
-          }
         });
-        updatePlayerVisualSize(); // Asegura que el tamaño del jugador también se actualice
-      }
+
+        updatePlayerVisualSize();
+    }
 
       function updatePlayerSpriteVisual() {
         // Asegúrate que el nombre sea este
@@ -6741,31 +6943,28 @@ let lastSuccessfulMoveTime = 0;
         const enemyInfoContainer = document.getElementById('enemyInBattleInfoContainer');
         const enemySpriteEl = document.getElementById('enemySprite');
         
-        // MOVER LA DECLARACIÓN DE enemyHpPercent AQUÍ ARRIBA
         let enemyHpPercent = 0;
-        if (enemy) { // Asegurarse que enemy exista antes de calcular
+        if (enemy) {
             enemyHpPercent = Math.max(0, (enemy.hp / (enemy.maxHp || enemy.hp)) * 100);
         }
 
         if (enemy && enemyInfoContainer && enemySpriteEl && battleScreenActive) {
             enemyInfoContainer.style.display = 'flex';
 
+            // === INICIO DE LA CORRECCIÓN CLAVE ===
+            // Calculamos la posición del contenedor de la barra de vida del enemigo
             const spriteTop = enemySpriteEl.offsetTop;
             const spriteLeft = enemySpriteEl.offsetLeft;
             const spriteWidth = enemySpriteEl.offsetWidth;
             const infoContainerHeight = enemyInfoContainer.offsetHeight;
 
-            if (isMobileView()) {
-                console.log("[Mobile Battle UI] Enemy Sprite - offsetTop:", spriteTop, "offsetLeft:", spriteLeft, "offsetWidth:", spriteWidth);
-                console.log("[Mobile Battle UI] Enemy InfoContainer - offsetHeight:", infoContainerHeight);
-                console.log("[Mobile Battle UI] Calculated top:", `${spriteTop - infoContainerHeight - 5}px`, "Calculated left:", `${spriteLeft + (spriteWidth / 2)}px`);
-            }
-
+            // Posicionamos el contenedor encima del sprite del enemigo
             enemyInfoContainer.style.top = `${spriteTop - infoContainerHeight - 5}px`;
             enemyInfoContainer.style.left = `${spriteLeft + (spriteWidth / 2)}px`;
+            // === FIN DE LA CORRECCIÓN CLAVE ===
 
             const enemyNameLevelEl = document.getElementById('enemyBattleNameLevel');
-            const enemySpriteHpFill = document.getElementById('enemyInBattleSpriteHpFill'); // Barra SOBRE el sprite
+            const enemySpriteHpFill = document.getElementById('enemyInBattleSpriteHpFill');
 
             if (enemyNameLevelEl) {
                 let enemyDisplayName = enemy.name;
@@ -6774,26 +6973,30 @@ let lastSuccessfulMoveTime = 0;
                 else if (enemy.isMiniBoss) enemyDisplayName += ` (Élite)`;
                 enemyNameLevelEl.textContent = enemyDisplayName;
             }
-            if (enemySpriteHpFill) enemySpriteHpFill.style.width = `${enemyHpPercent}%`; // Usa la variable ya calculada
+            if (enemySpriteHpFill) enemySpriteHpFill.style.width = `${enemyHpPercent}%`;
 
         } else if (enemyInfoContainer) {
             enemyInfoContainer.style.display = 'none';
         }
 
-        // --- Actualización del resto de la UI de batalla (nombres debajo, barras principales, etc.) ---
+        // --- Actualización del resto de la UI de batalla (paneles principales) ---
         if (battleScreenActive) {
             document.getElementById('playerBattleName').textContent = `Cultivador (Nv.${player.level})`;
             document.getElementById('playerBattleHp').textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
             document.getElementById('playerBattleHpBar').style.width = `${(player.hp / player.maxHp) * 100}%`;
             
-            // updatePlayerBarsInBattle(); // Esta llamada podría ser redundante si ya actualizamos las barras del jugador arriba.
-                                        // Mantenla si hace algo más o si la lógica de arriba se mueve.
+            if (enemy && enemySpriteEl) {
+                if (enemy.spriteUrl) {
+                    enemySpriteEl.style.backgroundImage = `url('${enemy.spriteUrl}')`;
+                    enemySpriteEl.textContent = '';
+                } else {
+                    enemySpriteEl.style.backgroundImage = 'none';
+                    enemySpriteEl.textContent = enemy.symbol || '?';
+                }
 
-            if (enemy && enemySpriteEl) { // Añadir chequeo para enemySpriteEl aquí también
-                enemySpriteEl.textContent = enemy.symbol || '?';
                 document.getElementById('enemyName').textContent = enemy.name;
                 document.getElementById('enemyHp').textContent = `${Math.floor(enemy.hp)}/${enemy.maxHp || enemy.hp}`;
-                document.getElementById('enemyHpBar').style.width = `${enemyHpPercent}%`; // Usa la variable ya calculada
+                document.getElementById('enemyHpBar').style.width = `${enemyHpPercent}%`;
             }
         }
     }
