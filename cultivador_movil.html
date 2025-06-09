@@ -215,6 +215,37 @@
             box-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
             animation: pulse-cultivation 2s infinite;
         }
+        .conversion-slot {
+            font-size: 28px;
+            border-style: solid;
+            color: #f4e4bc;
+            opacity: 0.6; /* Un poco tenue cuando está inactivo */
+            transition: all 0.3s;
+        }
+
+        .conversion-slot:hover {
+            opacity: 1;
+        }
+
+        .conversion-slot.active-conversion {
+            opacity: 1;
+            background-color: rgba(68, 68, 255, 0.3); /* Brillo azulado */
+            border-color: #6666ff;
+            box-shadow: 0 0 10px rgba(102, 102, 255, 0.7);
+            animation: pulse-conversion 2s infinite;
+        }
+
+        @keyframes pulse-conversion {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
 
         @keyframes pulse-cultivation {
             0% {
@@ -953,13 +984,7 @@
             🧘‍♀️ Cultivar
           </button>
           <button onclick="showTechniquePanel()">📖 Técnicas</button>
-          <button
-            id="toggleQiConversionButton"
-            onclick="toggleQiConversionMode()"
-            style="display: none"
-          >
-            ☯️ Activar Conversión Qi
-          </button>
+          
           <button onclick="saveGame()">💾 Guardar Partida</button>
           <button onclick="triggerFileUpload()">📁 Cargar Partida</button>
           <button onclick="showHelp()">❓ Ayuda</button>
@@ -1587,6 +1612,11 @@ let lastSuccessfulMoveTime = 0;
               y2: 69,
               type: "DESERT",
               name: "Desierto Abrasador",
+              decorations: [ // <-- NUEVA PROPIEDAD
+                    { entityTypeId: 'deco_desierto', density: 0.05 }, // 5% de las celdas tendrán un árbol grande
+                    
+             
+                ],
               spawnSettings: {
                 targetEntities: [
                   {
@@ -1641,9 +1671,9 @@ let lastSuccessfulMoveTime = 0;
               type: "SWAMP",
               name: "Ciénaga Sombría",
               decorations: [ // <-- NUEVA PROPIEDAD
-                    { entityTypeId: 'deco_arbol_grande', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
-                    { entityTypeId: 'deco_arbol_normal', density: 0.2 }, // 20% tendrán un árbol normal
-                    { entityTypeId: 'deco_roca_musgosa', density: 0.05 }  // 5% tendrán una roca
+                    { entityTypeId: 'deco_arbol_pantano', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
+                    { entityTypeId: 'deco_agua_estancada', density: 0.05 }
+             
                 ],
               spawnSettings: {
                 targetEntities: [
@@ -1754,7 +1784,8 @@ let lastSuccessfulMoveTime = 0;
             name: "Ruinas" 
         }, // Marrón/Gris para ruinas
         DESERT: { 
-            symbol: "🟨", 
+            symbol: "🟨",
+            textureUrl: "img/arena.png", 
             color: "#F9E79F", 
             name: "Desierto" 
         }, // Amarillo claro para desierto
@@ -2732,6 +2763,7 @@ let lastSuccessfulMoveTime = 0;
         shop: {
           symbol: "🏪",
           name: "Tienda Misteriosa",
+          spriteUrl: "img/shop.png",
           interaction: "browse",
           type: "shop", // 'type' es importante para la interacción
           // fixedX: 12, // Podrías tener esto
@@ -2752,10 +2784,10 @@ let lastSuccessfulMoveTime = 0;
         },
 
         // --- ELEMENTOS DECORATIVOS ---
-        deco_arbol_grande: {
+        deco_pino: {
           symbol: "🌳",
-          name: "Arbol Ancestral",
-          spriteUrl: "img/arbol.png",
+          name: "Pino",
+          spriteUrl: "img/pino.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2769,17 +2801,33 @@ let lastSuccessfulMoveTime = 0;
           discovered: true,
         },
         deco_arbol_normal: {
-          symbol: "🌳",
+          symbol: "",
           name: "Otro arbol",
-          spriteUrl: "img/arbol_grande.png",
+          spriteUrl: "img/arbol.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
         },
-        deco_roca_musgosa: {
+        deco_desierto: {
           symbol: "🪨",
           name: "Roca Musgosa",
-          spriteUrl: "img/arbol_grande.png",
+          spriteUrl: "img/deco_desierto.png",
+          isDecorative: true,
+          noInteraction: true,
+          discovered: true,
+        },
+        deco_agua_estancada: {
+          
+          name: "Agua Estancada",
+          spriteUrl: "img/agua_estancada.png",
+          isDecorative: true,
+          noInteraction: true,
+          discovered: true,
+        },
+        deco_arbol_pantano: {
+          symbol: "🌳",
+          name: "Arbol Pantano",
+          spriteUrl: "img/arbol_pantano.png",
           isDecorative: true,
           noInteraction: true,
           discovered: true,
@@ -2828,6 +2876,7 @@ let lastSuccessfulMoveTime = 0;
         rival_interno_1: {
           symbol: "😠",
           name: "Han Li (Guardián Interno)",
+          spriteUrl: "img/lobo_bosque.png",
           typeOverride: "monster",
           hp: 250,
           attack: 60,
@@ -2858,7 +2907,15 @@ let lastSuccessfulMoveTime = 0;
         cristal_qi: {
           symbol: "💎",
           name: "Cristal de Qi",
+          spriteUrl: "img/cristal_de_qi.png",
           reward: "Cristales de Qi",
+          interaction: "collect_resource",
+        },
+        piedras_espirituales: {
+          symbol: "💎",
+          name: "Piedra espiritual",
+          spriteUrl: "img/piedra_esp.png",
+          reward: "Piedras Espirituales",
           interaction: "collect_resource",
         },
         cultivation: {
@@ -2871,6 +2928,7 @@ let lastSuccessfulMoveTime = 0;
         resource_hierbas_bosque: {
           symbol: "🌿", // <--- ¡ASEGÚRATE DE QUE ESTO ESTÉ!
           name: "Hierbas del Bosque Profundo",
+          spriteUrl: "img/hierbas.png",
           type: "resource",
           reward: "Hierbas Medicinales",
           interaction: "collect_resource",
@@ -3035,6 +3093,7 @@ let lastSuccessfulMoveTime = 0;
         cultivator_rival_low: {
           symbol: "😠",
           name: "Cultivador Novato Hostil",
+          spriteUrl: "img/cultivador_hostil.png",
           hp: 150,
           level:5,
           attack: 50,
@@ -3359,7 +3418,7 @@ let lastSuccessfulMoveTime = 0;
           lootTable: [
             {
               itemName: "Piedras Espirituales",
-              quantity: [300, 500],
+              quantity: [20, 30],
               chance: 1.0,
             },
             {
@@ -3367,21 +3426,7 @@ let lastSuccessfulMoveTime = 0;
               quantity: [1, 1],
               chance: 0.9,
             },
-            {
-              itemName: "Rollo: Armadura de Tierra Impenetrable",
-              quantity: [1, 1],
-              chance: 0.3,
-            },
-            {
-              itemName: "Fragmento de Arma Celestial",
-              quantity: [1, 1],
-              chance: 0.15,
-            },
-            {
-              itemName: "Mineral de Hierro Espiritual",
-              quantity: [5, 10],
-              chance: 0.6,
-            },
+     
             { itemName: "Fragmentos de Jade", quantity: [3, 6], chance: 0.7 },
             {
               itemName: "Núcleo Elemental",
@@ -3392,7 +3437,7 @@ let lastSuccessfulMoveTime = 0;
             {
               itemName: "Rollo: Piel de Piedra",
               quantity: [1, 1],
-              chance: 0.25,
+              chance: 0.1,
             },
           ],
           nextBossId: null,
@@ -3402,13 +3447,13 @@ let lastSuccessfulMoveTime = 0;
 
       const itemData = {
         "Hierbas Medicinales": {
-          description: "Restaura un 30% de tu HP Máximo.",
+          description: "Restaura un 10 de HP.",
           effect: (ps) => {
             if (ps.hp >= ps.maxHp) return "Vida al máximo.";
-            const h = Math.floor(ps.maxHp * 0.3);
+            const h = 10;
             const o = ps.hp;
             ps.hp = Math.min(ps.maxHp, ps.hp + h);
-            return `Recuperado ${ps.hp - o} HP.`;
+            return `Usada Píldora, recuperado ${ps.hp - o} HP.`;
           },
           canUse: (ps) => ps.hp < ps.maxHp,
         },
@@ -3432,7 +3477,7 @@ let lastSuccessfulMoveTime = 0;
           canUse: () => true,
         },
         "Flor de Luna Escarchada": {
-          description: "Flor brillante usada en alquimia.",
+          description: "Flor brillante usada en alquimia.Item de misión",
           canUse: () => false,
         },
         "Raíz de Fuego Terrenal": {
@@ -3459,7 +3504,7 @@ let lastSuccessfulMoveTime = 0;
           canUse: () => true,
         },
         "Colmillo de Jabalí Alfa": {
-          description: "Colmillo intacto de Jabalí Alfa. Prueba de caza.",
+          description: "Colmillo intacto de Jabalí Alfa. Item de misión de caza.",
           canUse: () => false,
         },
         "Carne de Bestia Exótica": {
@@ -4868,7 +4913,7 @@ let lastSuccessfulMoveTime = 0;
 
         mapElement.innerHTML = "";
 
-        // 1. Renderizar TERRENO BASE (Lógica actualizada)
+        // 1. Renderizar TERRENO BASE
         for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
             for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
                 if (x < 0 || x >= gameState.map.width || y < 0 || y >= gameState.map.height) {
@@ -4885,24 +4930,19 @@ let lastSuccessfulMoveTime = 0;
                     terrainTile.style.height = `${currentTileSize}px`;
                     terrainTile.style.zIndex = "1";
 
-                    // === INICIO DE LA LÓGICA DE TEXTURAS ===
                     if (terrainData.textureUrl) {
-                        // Si hay una textura, la usamos como fondo.
                         terrainTile.style.backgroundImage = `url('${terrainData.textureUrl}')`;
-                        terrainTile.style.backgroundSize = 'cover'; // 'cover' para que llene la celda.
+                        terrainTile.style.backgroundSize = 'cover';
                     } else {
-                        // Si no, usamos el color plano como fallback.
                         terrainTile.style.backgroundColor = terrainData.color;
                     }
-                    // Ya no necesitamos la lógica de variedad visual con símbolos.
-                    // === FIN DE LA LÓGICA DE TEXTURAS ===
 
                     mapElement.appendChild(terrainTile);
                 }
             }
         }
         
-        // 2. Renderizar ENTIDADES (Lógica sin cambios)
+        // 2. Renderizar ENTIDADES
         gameState.map.entities.forEach((entity) => {
             if (entity.discovered) {
                 if (
@@ -4929,9 +4969,28 @@ let lastSuccessfulMoveTime = 0;
                         entityContainer.style.backgroundImage = `url('${spriteUrl}')`;
                         
                         if (entity.originalEntityTypeId === 'secta_entrada_principal') {
-                            entityContainer.style.backgroundSize = '150%';
-                            entityContainer.style.top = `${(entity.y - 0.25) * currentTileSize}px`;
-                            entityContainer.style.height = `${currentTileSize * 1.25}px`;
+                            entityContainer.style.backgroundSize = '120%';
+                            entityContainer.style.top = `${(entity.y - 1.5) * currentTileSize}px`;
+                            entityContainer.style.height = `${currentTileSize * 3}px`;
+                            // 1. Aumentamos el ancho del contenedor para que quepa el sprite
+                            entityContainer.style.width = `${currentTileSize * 3}px`;
+
+                        // 2. Ajustamos la posición izquierda para centrar el nuevo contenedor ancho
+                        // Posición original: entity.x * currentTileSize
+                        // Nuevo ancho: currentTileSize * 2.5
+                        // Para centrarlo, debemos desplazarlo a la izquierda la mitad de su ancho extra.
+                        // Ancho extra = (2.5 - 1) = 1.5. Mitad del ancho extra = 0.75.
+                        entityContainer.style.left = `${(entity.x - 0.75) * currentTileSize}px`;
+                        } else if (entity.originalEntityTypeId === 'shop') {
+                            entityContainer.style.backgroundSize = '120%';
+                            entityContainer.style.top = `${(entity.y - 1.2) * currentTileSize}px`;
+                            entityContainer.style.height = `${currentTileSize * 2}px`;
+                            entityContainer.style.width = `${currentTileSize * 2}px`;
+                            entityContainer.style.left = `${(entity.x - 0.75) * currentTileSize}px`;
+                        } else if (entity.originalEntityTypeId === 'deco_arbol_grande') {
+                            entityContainer.style.backgroundSize = '120%';
+                            entityContainer.style.top = `${(entity.y - 0.2) * currentTileSize}px`;
+                            entityContainer.style.height = `${currentTileSize * 1.2}px`;
                         } else {
                             entityContainer.style.backgroundSize = '80%';
                         }
@@ -5149,7 +5208,7 @@ let lastSuccessfulMoveTime = 0;
           "playerCoords"
         ).textContent = `X: ${player.x}, Y: ${player.y}`;
 
-        updateToggleQiConversionButtonVisibility(); // Asumo que esta función existe y es correcta
+        
         updateInventoryUI(); // Asumo que esta función existe y es correcta
         updateSectUI(); // Asumo que esta función existe y es correcta
 
@@ -5191,17 +5250,7 @@ let lastSuccessfulMoveTime = 0;
         });
       }
 
-      function updateToggleQiConversionButtonVisibility() {
-        const button = document.getElementById("toggleQiConversionButton");
-        if (gameState.player.canUseQiConversion) {
-          button.style.display = "inline-block";
-          button.textContent = gameState.player.isQiConversionActive
-            ? "☯️ Detener Conversión Qi"
-            : "☯️ Activar Conversión Qi";
-        } else {
-          button.style.display = "none";
-        }
-      }
+   
 
       function updateRefinementUI() {}
 
@@ -6078,71 +6127,81 @@ let lastSuccessfulMoveTime = 0;
 
       function startCultivationMode(type, targetId = null) {
         const player = gameState.player;
+
+        // 1. Detener cualquier cultivo anterior. Esto es crucial.
+        // La función stopCultivation se encargará de limpiar cualquier intervalo existente.
         if (player.isCultivating) {
-          stopCultivation();
+            stopCultivation();
         }
+        
+        console.log(`[Cultivation] Iniciando modo: ${type}, Target: ${targetId}`);
 
+        // 2. Configurar el nuevo estado de cultivo
         player.isCultivating = true;
-        player.cultivationMode.type = type;
-        player.cultivationMode.targetId = targetId;
-        player.cultivationMode.startTime = Date.now();
+        player.cultivationMode = {
+            type: type,
+            targetId: targetId,
+            startTime: Date.now(),
+            isConversionCultivation: false, // Siempre se resetea al iniciar un nuevo cultivo
+        };
 
-        // Si se inicia el modo de recuperación, reseteamos el progreso de su barra visual
-        if (type === "recovery") {
-          recoveryProgress = 0;
-          recoveryDirection = 1;
-        }
-
-        const cultivateBtnSidebar = document.getElementById("cultivateButton");
-        if (cultivateBtnSidebar) {
-          cultivateBtnSidebar.textContent = "🚫 Detener Cultivo";
-        } else {
-          console.error(
-            "Error en startCultivationMode: No se encontró 'cultivateButton'."
-          );
-        }
-
-        if (gameState.cultivationInterval)
-          clearInterval(gameState.cultivationInterval);
-        gameState.cultivationInterval = setInterval(
-          processCultivationTick,
-          1000
-        );
-
-        showActiveCultivationModal();
-        renderQuickSlotBar(); 
-      }
-
-      function stopCultivation() {
-        const player = gameState.player;
-        if (!player.isCultivating) return;
-        player.isCultivating = false;
-
+        // 3. Limpiar cualquier posible intervalo fantasma ANTES de crear uno nuevo.
         if (gameState.cultivationInterval) {
-          clearInterval(gameState.cultivationInterval);
-          gameState.cultivationInterval = null;
+            console.warn("[Cultivation] Se encontró un intervalo fantasma. Limpiando antes de iniciar.");
+            clearInterval(gameState.cultivationInterval);
         }
 
+        // 4. Crear el ÚNICO intervalo y guardar su ID.
+        gameState.cultivationInterval = setInterval(processCultivationTick, 1000);
+        console.log(`[Cultivation] Nuevo intervalo creado con ID: ${gameState.cultivationInterval}`);
+
+        // 5. Actualizar la UI
+        if (type === "recovery") {
+            recoveryProgress = 0;
+            recoveryDirection = 1;
+        }
+        showActiveCultivationModal();
+        renderQuickSlotBar();
+    }
+
+    function stopCultivation(showFeedbackModal = false, feedbackMessage = {}) {
+        const player = gameState.player;
+        
+        // Si no hay cultivo, no hay nada que hacer.
+        if (!player.isCultivating && !gameState.cultivationInterval) {
+            return;
+        }
+
+        console.log(`[Cultivation] Deteniendo cultivo. Intervalo a limpiar: ${gameState.cultivationInterval}`);
+
+        // 1. Limpiar el intervalo de forma segura.
+        if (gameState.cultivationInterval) {
+            clearInterval(gameState.cultivationInterval);
+            gameState.cultivationInterval = null; // Importantísimo ponerlo a null.
+        }
+
+        // 2. Resetear el estado del jugador a "no cultivando".
+        player.isCultivating = false;
+        if (player.cultivationMode.isConversionCultivation) {
+            player.isQiConversionActive = false;
+        }
+        player.cultivationMode = { type: null, targetId: null, startTime: 0, isConversionCultivation: false };
+
+        // 3. Actualizar la UI
         closeActiveCultivationModal();
+        renderQuickSlotBar();
+        updateUI(); // Llamada general para refrescar todo
 
-        const cultivateBtn = document.getElementById("cultivateButton");
-        if (cultivateBtn) cultivateBtn.textContent = "🧘‍♀️ Cultivar";
-
-        const durationSeconds = Math.floor(
-          (Date.now() - player.cultivationMode.startTime) / 1000
-        );
-        showModal(
-          "Cultivo Terminado",
-          `Has terminado de meditar/cultivar por ${durationSeconds} segundos.`
-        );
-        updateUI();
-        if (
-          document.getElementById("techniqueModal").style.display === "flex"
-        ) {
-          showTechniquePanel();
+        // 4. Mostrar feedback si se solicita
+        if (showFeedbackModal) {
+            showModal(feedbackMessage.title || "Cultivo Detenido", feedbackMessage.text || "Has dejado de cultivar.");
         }
-        renderQuickSlotBar(); 
-      }
+        
+        // 5. Actualizar el panel de técnicas si está abierto
+        if (document.getElementById("techniqueModal").style.display === "flex") {
+            showTechniquePanel();
+        }
+    }
 
       function showActiveCultivationModal() {
         const player = gameState.player;
@@ -6348,319 +6407,205 @@ let lastSuccessfulMoveTime = 0;
 
       function processCultivationTick() {
         const player = gameState.player;
-        if (!player.isCultivating) {
-          if (gameState.cultivationInterval)
-            clearInterval(gameState.cultivationInterval);
-          gameState.cultivationInterval = null;
-          return;
+
+        // Medida de seguridad: si por alguna razón el tick se ejecuta cuando no debería,
+        // se detiene a sí mismo.
+        if (!player.isCultivating || !gameState.cultivationInterval) {
+            console.warn("[Cultivation Tick] Tick ejecutado en estado inválido. Forzando detención.");
+            stopCultivation();
+            return;
         }
 
         const mode = player.cultivationMode.type;
         const targetId = player.cultivationMode.targetId;
 
-        if (mode === "recovery") {
-          // --- Recuperación General ---
-          if (player.hp < player.maxHp)
-            player.hp = Math.min(
-              player.maxHp,
-              player.hp + player.hpPerSecondBase
-            );
-
-          let manaGainThisTick = player.qiPerSecondBase;
-          if (
-            player.canUseQiConversion &&
-            player.isQiConversionActive &&
-            player.learnedTechniques["qi_to_hp_conversion_1"]
-          ) {
-            const conversionTechInfo = techniqueData["qi_to_hp_conversion_1"];
-            const playerConversionTech =
-              player.learnedTechniques["qi_to_hp_conversion_1"];
-            if (conversionTechInfo?.effect && playerConversionTech.level > 0) {
-              const effectDef = conversionTechInfo.effect;
-              const techLevel = playerConversionTech.level;
-              let currentManaCost =
-                effectDef.baseManaCostPerSecond -
-                (effectDef.manaCostReductionPerLevel || 0) * (techLevel - 1);
-              currentManaCost = Math.max(0.1, currentManaCost);
-              let currentHpGain =
-                effectDef.baseHpGainPerSecond +
-                (effectDef.hpGainIncreasePerLevel || 0) * (techLevel - 1);
-              if (player.mana >= currentManaCost && player.hp < player.maxHp) {
-                player.mana -= currentManaCost;
-                manaGainThisTick = 0;
-                player.hp = Math.min(player.maxHp, player.hp + currentHpGain);
-              }
+        if (mode === 'recovery') {
+            // ... (La lógica de recuperación de HP/Mana/EXP no cambia) ...
+            // ... (Puedes copiar y pegar tu lógica de recuperación aquí) ...
+            if (player.hp < player.maxHp) player.hp = Math.min(player.maxHp, player.hp + player.hpPerSecondBase);
+            let manaGainThisTick = player.qiPerSecondBase;
+            if (player.canUseQiConversion && player.isQiConversionActive && player.learnedTechniques["qi_to_hp_conversion_1"]) {
+                const conversionTechInfo = techniqueData["qi_to_hp_conversion_1"];
+                const playerConversionTech = player.learnedTechniques["qi_to_hp_conversion_1"];
+                if (conversionTechInfo?.effect && playerConversionTech.level > 0) {
+                    const effectDef = conversionTechInfo.effect;
+                    const techLevel = playerConversionTech.level;
+                    let currentManaCost = effectDef.baseManaCostPerSecond - (effectDef.manaCostReductionPerLevel || 0) * (techLevel - 1);
+                    currentManaCost = Math.max(0.1, currentManaCost);
+                    let currentHpGain = effectDef.baseHpGainPerSecond + (effectDef.hpGainIncreasePerLevel || 0) * (techLevel - 1);
+                    if (player.mana >= currentManaCost && player.hp < player.maxHp) {
+                        player.mana -= currentManaCost;
+                        manaGainThisTick = 0;
+                        player.hp = Math.min(player.maxHp, player.hp + currentHpGain);
+                    }
+                }
             }
-          }
-          if (player.mana < player.maxMana && manaGainThisTick > 0) {
-            player.mana = Math.min(
-              player.maxMana,
-              player.mana + manaGainThisTick
-            );
-          }
-          gainExperience(player.expPerSecondBase);
+            if (player.mana < player.maxMana && manaGainThisTick > 0) player.mana = Math.min(player.maxMana, player.mana + manaGainThisTick);
+            gainExperience(player.expPerSecondBase);
+            const increment = 100 / RECOVERY_CYCLE_DURATION;
+            recoveryProgress += recoveryDirection * increment;
+            if (recoveryProgress >= 100) { recoveryProgress = 100; recoveryDirection = -1; } 
+            else if (recoveryProgress <= 0) { recoveryProgress = 0; recoveryDirection = 1; }
+        } else if (mode === 'technique' && targetId) {
+            const playerTech = player.learnedTechniques[targetId];
+            const techData = techniqueData[targetId];
 
-          // --- Lógica para la barra de progreso de ciclo de recuperación ---
-          const increment = 100 / RECOVERY_CYCLE_DURATION;
-          recoveryProgress += recoveryDirection * increment;
-          if (recoveryProgress >= 100) {
-            recoveryProgress = 100;
-            recoveryDirection = -1;
-          } else if (recoveryProgress <= 0) {
-            recoveryProgress = 0;
-            recoveryDirection = 1;
-          }
+            if (playerTech && techData?.cultivationSettings && playerTech.level < techData.maxLevel) {
+                playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + 1;
+                gainExperience(player.expPerSecondBase * 0.2);
 
-          // Actualizar UI del ciclo de recuperación si el modal está abierto
-          if (
-            document.getElementById("activeCultivationModal").style.display ===
-            "flex"
-          ) {
-            const recoveryProgressBar = document.getElementById(
-              "recoveryProgressBar"
-            );
-            const recoveryCycleText =
-              document.getElementById("recoveryCycleText");
-            if (recoveryProgressBar)
-              recoveryProgressBar.style.width = `${recoveryProgress}%`;
-            if (recoveryCycleText)
-              recoveryCycleText.textContent =
-                recoveryDirection === 1
-                  ? "Inhalando Qi..."
-                  : "Exhalando impurezas...";
-          }
-        } else if (mode === "technique" && targetId) {
-          // ... (lógica de cultivo de técnica sin cambios aquí para las barras del modal,
-          //      ya que esas barras son principalmente para 'recovery')
-          const playerTech = player.learnedTechniques[targetId];
-          const techData = techniqueData[targetId];
-          if (
-            playerTech &&
-            techData &&
-            techData.cultivationSettings &&
-            playerTech.level < techData.maxLevel
-          ) {
-            playerTech.currentCultivationProgress =
-              (playerTech.currentCultivationProgress || 0) + 1;
-            gainExperience(player.expPerSecondBase * 0.2);
-            if (
-              playerTech.currentCultivationProgress >=
-              playerTech.cultivationTimeToNextLevel
-            ) {
-              playerTech.level++;
-              playerTech.currentCultivationProgress = 0;
-              if (playerTech.level < techData.maxLevel) {
-                playerTech.cultivationTimeToNextLevel = Math.floor(
-                  techData.cultivationSettings.baseTimeToLevelUp *
-                    (techData.cultivationSettings.levelTimeMultiplier *
-                      playerTech.level)
-                );
-                playerTech.cultivationTimeToNextLevel = Math.max(
-                  techData.cultivationSettings.baseTimeToLevelUp,
-                  playerTech.cultivationTimeToNextLevel
-                );
-              } else {
-                playerTech.cultivationTimeToNextLevel = Infinity;
-              }
-              applyTechniqueEffect(targetId, playerTech.level);
-              recalculatePlayerStats();
-              let message = `¡Has cultivado '${techData.name}' al Nivel ${playerTech.level}!`;
-              if (playerTech.level >= techData.maxLevel) {
-                message += " (¡Nivel Máximo alcanzado!)";
-              }
-              stopCultivation();
-              showModal(
-                "¡Técnica Mejorada!",
-                message +
-                  "\n\nEl cultivo se ha detenido. Puedes reiniciarlo si lo deseas."
-              );
-              if (
-                document.getElementById("techniqueModal").style.display ===
-                "flex"
-              )
-                showTechniquePanel();
+                if (playerTech.currentCultivationProgress >= playerTech.cultivationTimeToNextLevel) {
+                    playerTech.level++;
+                    playerTech.currentCultivationProgress = 0;
+                    
+                    if (playerTech.level < techData.maxLevel) {
+                        playerTech.cultivationTimeToNextLevel = Math.floor(
+                            techData.cultivationSettings.baseTimeToLevelUp *
+                            Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level)
+                        );
+                    } else {
+                        playerTech.cultivationTimeToNextLevel = Infinity;
+                    }
+
+                    applyTechniqueEffect(targetId, playerTech.level);
+                    recalculatePlayerStats();
+                    
+                    let messageText = `¡Has cultivado '${techData.name}' al Nivel ${playerTech.level}!`;
+                    if (playerTech.level >= techData.maxLevel) {
+                        messageText += " (¡Nivel Máximo alcanzado!)";
+                    }
+                    messageText += "\n\nEl cultivo se ha detenido. Puedes reiniciarlo si lo deseas.";
+
+                    // LLAMAMOS a la nueva función stopCultivation con la opción de mostrar un modal.
+                    stopCultivation(true, { title: "¡Técnica Mejorada!", text: messageText });
+                    
+                    // IMPORTANTE: NO HAY MÁS CÓDIGO DESPUÉS DE ESTO EN ESTE BLOQUE IF.
+                    // stopCultivation ya se encarga de todo.
+                    return; // Salimos del tick actual.
+                }
+            } else {
+                // Si la técnica ya está al máximo o hay un error, detenemos el cultivo.
+                stopCultivation(true, { title: "Cultivo Detenido", text: `Has dejado de cultivar ${techData.name}.` });
+                return;
             }
-          } else if (
-            playerTech &&
-            techData &&
-            playerTech.level >= techData.maxLevel
-          ) {
-            stopCultivation();
-          }
-        } else if (mode === "skill" && targetId) {
-          // ...
         }
 
+        // Actualizar la UI solo si el cultivo continúa.
         updateUI();
-        if (
-          document.getElementById("activeCultivationModal").style.display ===
-          "flex"
-        ) {
-          showActiveCultivationModal(); // Refresca el modal, incluyendo la nueva barra de recuperación
+        if (document.getElementById("activeCultivationModal").style.display === "flex") {
+            showActiveCultivationModal();
         }
-      }
+    }
 
       function boostCultivationProgress() {
         const player = gameState.player;
         const mode = player.cultivationMode;
 
-        if (
-          !player.isCultivating ||
-          mode.type !== "technique" ||
-          !mode.targetId
-        ) {
-          showModal(
-            "Error de Aceleración",
-            "Solo puedes acelerar el cultivo activo de una técnica específica."
-          );
-          return;
-        }
-
+        if (!player.isCultivating || mode.type !== 'technique' || !mode.targetId) return;
         if ((gameState.inventory["Piedras Espirituales"] || 0) < 1) {
-          showModal(
-            "Piedras Insuficientes",
-            "No tienes suficientes Piedras Espirituales para acelerar."
-          );
-          return;
+            showModal("Piedras Insuficientes", "No tienes suficientes Piedras Espirituales.");
+            return;
         }
 
         const techId = mode.targetId;
         const playerTech = player.learnedTechniques[techId];
         const techData = techniqueData[techId];
 
-        if (
-          !playerTech ||
-          !techData ||
-          !techData.cultivationSettings ||
-          playerTech.level >= techData.maxLevel
-        ) {
-          // Añadida comprobación de techData.cultivationSettings
-          showModal(
-            "Límite Alcanzado",
-            "Esta técnica ya está en su nivel máximo, no se puede cultivar más, o faltan datos de cultivo."
-          );
-          const boostButton = document.getElementById("boostCultivationButton");
-          if (boostButton) boostButton.disabled = true;
-          return;
+        if (!playerTech || !techData || !techData.cultivationSettings || playerTech.level >= techData.maxLevel) {
+            showModal("Límite Alcanzado", "Esta técnica ya está en su nivel máximo.");
+            return;
         }
 
-        // Consumir piedra
+        // Consumir piedra y añadir progreso
         gameState.inventory["Piedras Espirituales"]--;
-
-        // Añadir progreso (10 segundos)
-        playerTech.currentCultivationProgress =
-          (playerTech.currentCultivationProgress || 0) + 10;
+        playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + 10;
         gainExperience(player.expPerSecondBase * 0.2 * 2);
 
         let leveledUpThisBoost = false;
         let firstLevelUpMessage = "";
 
-        // Asegurarse de que cultivationTimeToNextLevel está inicializado si el nivel es 0
-        if (
-          playerTech.level === 0 &&
-          (!playerTech.cultivationTimeToNextLevel ||
-            playerTech.cultivationTimeToNextLevel === Infinity)
-        ) {
-          playerTech.cultivationTimeToNextLevel =
-            techData.cultivationSettings.baseTimeToLevelUp;
-        }
-
+        // Bucle para manejar múltiples subidas de nivel con una sola piedra si se da el caso
         while (
-          playerTech.currentCultivationProgress >=
-            playerTech.cultivationTimeToNextLevel &&
-          playerTech.level < techData.maxLevel
+            playerTech.currentCultivationProgress >= playerTech.cultivationTimeToNextLevel &&
+            playerTech.level < techData.maxLevel
         ) {
-          playerTech.level++;
-          playerTech.currentCultivationProgress -=
-            playerTech.cultivationTimeToNextLevel;
+            playerTech.currentCultivationProgress -= playerTech.cultivationTimeToNextLevel;
+            playerTech.level++;
+            leveledUpThisBoost = true;
 
-          if (playerTech.level < techData.maxLevel) {
-            playerTech.cultivationTimeToNextLevel = Math.floor(
-              techData.cultivationSettings.baseTimeToLevelUp *
-                (techData.cultivationSettings.levelTimeMultiplier *
-                  playerTech.level)
-            );
-            // La siguiente línea es crucial: Asegura que el tiempo calculado no sea MENOR que el baseTimeToLevelUp.
-            // Y aquí estaba el error: se usaba baseTimeToNextLevel en lugar de baseTimeToLevelUp
-            playerTech.cultivationTimeToNextLevel = Math.max(
-              techData.cultivationSettings.baseTimeToLevelUp,
-              playerTech.cultivationTimeToNextLevel
-            ); // <-- CORRECCIÓN IMPORTANTE AQUÍ
-          } else {
-            playerTech.currentCultivationProgress = 0;
-            playerTech.cultivationTimeToNextLevel = Infinity;
-          }
-
-          applyTechniqueEffect(techId, playerTech.level);
-          recalculatePlayerStats();
-
-          if (!leveledUpThisBoost) {
-            firstLevelUpMessage = `¡Aceleraste '${techData.name}' al Nivel ${playerTech.level}!`;
-            if (playerTech.level >= techData.maxLevel) {
-              firstLevelUpMessage += " (¡Nivel Máximo alcanzado!)";
+            if (!firstLevelUpMessage) { // Solo guardamos el mensaje del primer nivel que se subió
+                firstLevelUpMessage = `¡Aceleraste '${techData.name}' al Nivel ${playerTech.level}!`;
+                if (playerTech.level >= techData.maxLevel) {
+                    firstLevelUpMessage += " (¡Nivel Máximo alcanzado!)";
+                }
             }
-          }
-          leveledUpThisBoost = true;
-        }
 
-        if (leveledUpThisBoost) {
-          stopCultivation();
-          showModal(
-            "¡Técnica Mejorada con Aceleración!",
-            firstLevelUpMessage +
-              "\n\nEl cultivo se ha detenido. Puedes reiniciarlo."
-          );
-        } else if (playerTech.level >= techData.maxLevel) {
-          stopCultivation();
-          showModal(
-            "Nivel Máximo Alcanzado",
-            `La técnica ${techData.name} ya está en su máximo potencial. El cultivo se ha detenido.`
-          );
-        }
+            // Actualizar tiempo para el siguiente nivel
+            if (playerTech.level < techData.maxLevel) {
+                playerTech.cultivationTimeToNextLevel = Math.floor(
+                    techData.cultivationSettings.baseTimeToLevelUp *
+                    Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level)
+                );
+            } else {
+                playerTech.cultivationTimeToNextLevel = Infinity;
+                playerTech.currentCultivationProgress = 0; // Resetear progreso al llegar a max
+            }
 
+            applyTechniqueEffect(techId, playerTech.level);
+        }
+        
+        recalculatePlayerStats();
         updateUI();
-        // Es importante llamar a showActiveCultivationModal() DESPUÉS de stopCultivation() si el cultivo se detuvo,
-        // o si no se detuvo, para que refleje el estado actual.
-        // Si se detuvo, el modal se cerrará por stopCultivation(). Si el modal no está abierto, esta llamada no hará nada.
-        if (
-          document.getElementById("activeCultivationModal").style.display ===
-          "flex"
-        ) {
-          showActiveCultivationModal();
+
+        // --- LÓGICA DE DETENCIÓN Y NOTIFICACIÓN ---
+        if (leveledUpThisBoost) {
+            // Si se subió de nivel, SIEMPRE detenemos el cultivo y mostramos el mensaje.
+            stopCultivation();
+            showModal("¡Técnica Mejorada con Aceleración!", firstLevelUpMessage + "\n\nEl cultivo se ha detenido.");
+        } else if (playerTech.level >= techData.maxLevel) {
+            // Si no se subió de nivel pero se alcanzó el progreso máximo, también detenemos.
+            stopCultivation();
+            showModal("Nivel Máximo Alcanzado", `La técnica ${techData.name} ya está en su máximo potencial.`);
+        } else {
+            // Si no se subió de nivel, solo actualizamos el modal de cultivo si está abierto.
+            if (document.getElementById("activeCultivationModal").style.display === "flex") {
+                showActiveCultivationModal();
+            }
         }
 
-        if (
-          document.getElementById("techniqueModal").style.display === "flex"
-        ) {
-          showTechniquePanel();
+        // Actualizamos el panel de técnicas si está abierto
+        if (document.getElementById("techniqueModal").style.display === "flex") {
+            showTechniquePanel();
         }
-      }
+    }
+      function toggleQiConversion() {
+        const player = gameState.player;
 
-      function toggleQiConversionMode() {
-        if (!gameState.player.canUseQiConversion) {
-          showModal(
-            "Habilidad Bloqueada",
-            "Debes dominar la Técnica de Conversión de Qi."
-          );
-          return;
+        // Si CUALQUIER tipo de cultivo está activo...
+        if (player.isCultivating) {
+            // Y el cultivo activo es específicamente el de conversión...
+            if (player.cultivationMode.isConversionCultivation) {
+                // ...entonces lo detenemos.
+                stopCultivation();
+            } else {
+                // Si es otro tipo de cultivo (ej. de técnica), avisamos al jugador.
+                showModal("Acción no permitida", "Debes detener tu cultivo de técnica actual para iniciar la conversión de Qi.");
+            }
+            return;
         }
-        if (gameState.player.isCultivating) {
-          showModal(
-            "Acción no Permitida",
-            "Detén tu cultivo antes de cambiar conversión."
-          );
-          return;
-        }
-        gameState.player.isQiConversionActive =
-          !gameState.player.isQiConversionActive;
-        updateToggleQiConversionButtonVisibility();
-        showModal(
-          "Modo de Cultivo",
-          `Conversión de Qi ${
-            gameState.player.isQiConversionActive ? "Activada" : "Desactivada"
-          }.`
-        );
-      }
+
+        // Si no hay ningún cultivo activo, iniciamos el de conversión.
+        console.log("Iniciando cultivo con conversión de Qi...");
+        
+        // Activamos ambos flags: el de estado global y el del modo específico.
+        player.isQiConversionActive = true; 
+        
+        // Iniciamos el modo de cultivo de recuperación, pero con una marca especial.
+        startCultivationMode('recovery'); 
+        player.cultivationMode.isConversionCultivation = true; // <-- Marca especial
+    }
+
+      
 
       function useItem(itemName) {
         if (gameState.battle.active) {
@@ -9124,68 +9069,76 @@ function closeBattleReviewModal() {
         });
     */
     function renderQuickSlotBar() {
-    const bar = document.getElementById("quickSlotBar");
-    if (!bar) return;
-    bar.innerHTML = ""; // Limpiar la barra
+        const bar = document.getElementById("quickSlotBar");
+        if (!bar) return;
+        bar.innerHTML = ""; // Limpiar la barra
 
-    // Renderizar los 5 slots de ítems como antes
-    gameState.player.quickSlots.forEach((itemName, index) => {
-        const slot = document.createElement("div");
-        slot.className = "quick-slot";
-        
-        const keyHint = document.createElement("span");
-        keyHint.className = "slot-key-hint";
-        keyHint.textContent = index + 1;
-        slot.appendChild(keyHint);
-
-        if (itemName && itemData[itemName]) {
-            const item = itemData[itemName];
-            const itemCount = gameState.inventory[itemName] || 0;
-
-            slot.innerHTML += getItemIcon(itemName);
+        // Renderizar los 5 slots de ítems (sin cambios aquí)
+        gameState.player.quickSlots.forEach((itemName, index) => {
+            const slot = document.createElement("div");
+            slot.className = "quick-slot";
             
-            const countDisplay = document.createElement("span");
-            countDisplay.className = "slot-item-count";
-            countDisplay.textContent = itemCount;
-            slot.appendChild(countDisplay);
+            const keyHint = document.createElement("span");
+            keyHint.className = "slot-key-hint";
+            keyHint.textContent = index + 1;
+            slot.appendChild(keyHint);
 
-            if (itemCount === 0) {
-                slot.style.opacity = 0.5;
-                slot.title = `${itemName} (Agotado)`;
+            if (itemName && itemData[itemName]) {
+                const itemCount = gameState.inventory[itemName] || 0;
+                slot.innerHTML += getItemIcon(itemName);
+                const countDisplay = document.createElement("span");
+                countDisplay.className = "slot-item-count";
+                countDisplay.textContent = itemCount;
+                slot.appendChild(countDisplay);
+
+                if (itemCount === 0) {
+                    slot.style.opacity = 0.5;
+                    slot.title = `${itemName} (Agotado)`;
+                } else {
+                    slot.title = `Usar ${itemName} (x${itemCount})`;
+                    slot.onclick = () => useQuickSlotItem(index);
+                }
             } else {
-                slot.title = `Usar ${itemName} (x${itemCount})`;
-                slot.onclick = () => useQuickSlotItem(index);
+                slot.classList.add("empty");
+                slot.title = "Haz clic para asignar un objeto";
+                slot.onclick = () => openItemAssignmentModal(index);
+            }
+            bar.appendChild(slot);
+        });
+
+        // Renderizar el botón de Cultivar (sin cambios aquí)
+        const cultivateSlot = document.createElement("div");
+        cultivateSlot.className = "quick-slot cultivate-slot";
+        cultivateSlot.title = "Cultivar (🧘)";
+        cultivateSlot.innerHTML = '🧘';
+        cultivateSlot.onclick = () => toggleCultivation();
+        if (gameState.player.isCultivating) {
+            cultivateSlot.classList.add('active-cultivation');
+            cultivateSlot.title = "Ver/Detener Cultivo";
+        }
+        bar.appendChild(cultivateSlot);
+
+        // === INICIO DE LA NUEVA LÓGICA PARA EL BOTÓN DE CONVERSIÓN ===
+        // Solo mostramos el botón si el jugador puede usar la conversión de Qi
+        if (gameState.player.canUseQiConversion) {
+            const conversionSlot = document.createElement("div");
+            conversionSlot.className = "quick-slot conversion-slot";
+            
+            conversionSlot.innerHTML = '☯️';
+            conversionSlot.onclick = () => toggleQiConversion();
+
+            // La apariencia "activa" ahora depende de si el modo de cultivo es de conversión.
+            if (gameState.player.isCultivating && gameState.player.cultivationMode.isConversionCultivation) {
+                conversionSlot.classList.add('active-conversion');
+                conversionSlot.title = "Conversión de Maná a Vida ACTIVA (clic para detener)";
+            } else {
+                conversionSlot.title = "Iniciar Conversión de Maná a Vida";
             }
 
-        } else {
-            slot.classList.add("empty");
-            slot.title = "Haz clic para asignar un objeto";
-            slot.onclick = () => openItemAssignmentModal(index);
+            bar.appendChild(conversionSlot);
         }
-        bar.appendChild(slot);
-    });
-
-    // === INICIO DE LA NUEVA LÓGICA ===
-    // Añadir el botón de Cultivar como un sexto slot
-    const cultivateSlot = document.createElement("div");
-    cultivateSlot.className = "quick-slot cultivate-slot"; // Añadimos una clase extra para estilos específicos
-    cultivateSlot.title = "Cultivar (🧘)";
-    
-    // El contenido del botón será el emoji de cultivar
-    cultivateSlot.innerHTML = '🧘';
-
-    // Asignar la función de cultivo al hacer clic
-    cultivateSlot.onclick = () => toggleCultivation();
-
-    // Si el jugador ya está cultivando, podemos darle un estilo diferente
-    if (gameState.player.isCultivating) {
-        cultivateSlot.classList.add('active-cultivation');
-        cultivateSlot.title = "Ver/Detener Cultivo";
+        // === FIN DE LA NUEVA LÓGICA ===
     }
-
-    bar.appendChild(cultivateSlot);
-    // === FIN DE LA NUEVA LÓGICA ===
-}
 
     function useQuickSlotItem(slotIndex) {
         const itemName = gameState.player.quickSlots[slotIndex];
