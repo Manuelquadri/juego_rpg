@@ -6259,56 +6259,91 @@ let lastSuccessfulMoveTime = 0;
  * la subida de nivel de las mismas.
  */
     function processCultivationTick() {
-    console.log(`[Cultivo LOG] ==> TICK EJECUTADO (Intervalo ID: ${gameState.cultivationInterval})`);
-    
-    const player = gameState.player;
-    if (!player.isCultivating) {
-        console.error("[Cultivo LOG] ¡ERROR! Tick ejecutado pero el estado es isCultivating=false. Deteniendo.");
-        stopCultivation();
-        return;
-    }
+      const player = gameState.player;
 
-    const mode = player.cultivationMode.type;
-    const targetId = player.cultivationMode.targetId;
+      // Medida de seguridad: si el tick se ejecuta cuando no debería, se detiene.
+      if (!player.isCultivating || !gameState.cultivationInterval) {
+          stopCultivation();
+          return;
+      }
 
-    if (mode === 'technique' && targetId) {
-        const playerTech = player.learnedTechniques[targetId];
-        const techData = techniqueData[targetId];
-        if (playerTech && techData && playerTech.level < techData.maxLevel) {
-            playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + 1;
-            const progress = playerTech.currentCultivationProgress;
-            const required = playerTech.cultivationTimeToNextLevel || Infinity;
+      const mode = player.cultivationMode.type;
+      const targetId = player.cultivationMode.targetId;
 
-            if (progress >= required) {
-                console.log(`%c[Cultivo LOG] *** LEVEL-UP DETECTADO ***`, 'color: #00ff00; font-weight: bold;');
-                playerTech.level++;
-                playerTech.currentCultivationProgress = 0;
-                
-                if (playerTech.level < techData.maxLevel) {
-                    playerTech.cultivationTimeToNextLevel = Math.floor(techData.cultivationSettings.baseTimeToLevelUp * Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level));
-                } else {
-                    playerTech.cultivationTimeToNextLevel = Infinity;
-                }
-                
-                applyTechniqueEffect(targetId, playerTech.level);
-                recalculatePlayerStats();
-                stopCultivation(true, { title: "¡Técnica Mejorada!", text: `¡'${techData.name}' ha subido al Nivel ${playerTech.level}!` });
-                return; // Salida crucial
-            }
-        } else {
-            stopCultivation(true, { title: "Cultivo Detenido", text: "La técnica ha alcanzado su máximo potencial." });
-            return; // Salida crucial
-        }
-    } else if (mode === 'recovery') {
-        if (player.hp < player.maxHp) player.hp = Math.min(player.maxHp, player.hp + player.hpPerSecondBase);
-        if (player.mana < player.maxMana) player.mana = Math.min(player.maxMana, player.mana + player.qiPerSecondBase);
-        gainExperience(player.expPerSecondBase);
-    }
+      // --- CULTIVO DE TÉCNICA (sin cambios, ya funciona bien) ---
+      if (mode === 'technique' && targetId) {
+          const playerTech = player.learnedTechniques[targetId];
+          const techData = techniqueData[targetId];
+          if (playerTech && techData && playerTech.level < techData.maxLevel) {
+              playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + 1;
+              const progress = playerTech.currentCultivationProgress;
+              const required = playerTech.cultivationTimeToNextLevel || Infinity;
 
-    // Si el cultivo no se detuvo, actualizamos la UI.
-    updateUI();
-    showActiveCultivationModal(); // Actualiza el modal en cada tick.
-}
+              if (progress >= required) {
+                  playerTech.level++;
+                  playerTech.currentCultivationProgress = 0;
+                  playerTech.cultivationTimeToNextLevel = playerTech.level < techData.maxLevel ? Math.floor(techData.cultivationSettings.baseTimeToLevelUp * Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level)) : Infinity;
+                  applyTechniqueEffect(targetId, playerTech.level);
+                  recalculatePlayerStats();
+                  stopCultivation(true, { title: "¡Técnica Mejorada!", text: `¡'${techData.name}' ha subido al Nivel ${playerTech.level}!` });
+                  return;
+              }
+          } else {
+              stopCultivation(true, { title: "Cultivo Detenido", text: "La técnica ha alcanzado su máximo potencial." });
+              return;
+          }
+
+      // --- CULTIVO DE RECUPERACIÓN ---
+      } else if (mode === 'recovery') {
+          
+          // =========================================================================
+          // === CORRECCIÓN CLAVE: Lógica de Conversión de Qi (SI ESTÁ ACTIVA) ===
+          // =========================================================================
+          if (player.cultivationMode.isConversionCultivation) {
+              const conversionTechInfo = techniqueData["qi_to_hp_conversion_1"];
+              const playerConversionTech = player.learnedTechniques["qi_to_hp_conversion_1"];
+              
+              if (conversionTechInfo?.effect && playerConversionTech?.level > 0) {
+                  const effectDef = conversionTechInfo.effect;
+                  const techLevel = playerConversionTech.level;
+                  
+                  const manaCost = Math.max(0.1, effectDef.baseManaCostPerSecond - (effectDef.manaCostReductionPerLevel || 0) * (techLevel - 1));
+                  const hpGain = effectDef.baseHpGainPerSecond + (effectDef.hpGainIncreasePerLevel || 0) * (techLevel - 1);
+                  
+                  // Si se puede convertir, se hace y se termina el tick.
+                  if (player.mana >= manaCost && player.hp < player.maxHp) {
+                      player.mana -= manaCost; // <-- Se resta el maná.
+                      player.hp = Math.min(player.maxHp, player.hp + hpGain);
+                      // IMPORTANTE: No se ejecuta nada más de recuperación en este tick.
+                  } else {
+                      // Si no se puede, se detiene el cultivo con un mensaje.
+                      stopCultivation(true, { title: "Conversión Detenida", text: "Maná insuficiente o vida al máximo." });
+                      return; // Salimos del tick para no hacer nada más.
+                  }
+              } else {
+                  // Si por alguna razón falta la técnica, se detiene para evitar errores.
+                  stopCultivation(true, { title: "Error de Técnica", text: "No se encontró la técnica de Conversión de Qi." });
+                  return;
+              }
+          
+          // ==================================================================================
+          // === Lógica de Meditación Restauradora Normal (SOLO SI LA CONVERSIÓN NO ESTÁ ACTIVA) ===
+          // ==================================================================================
+          } else {
+              if (player.hp < player.maxHp) {
+                  player.hp = Math.min(player.maxHp, player.hp + player.hpPerSecondBase);
+              }
+              if (player.mana < player.maxMana) {
+                  player.mana = Math.min(player.maxMana, player.mana + player.qiPerSecondBase);
+              }
+              gainExperience(player.expPerSecondBase);
+          }
+      }
+
+      // Al final del tick, se actualiza la UI con los nuevos valores.
+      updateUI();
+      showActiveCultivationModal();
+  }
 
       /**
      * Acelera el progreso del cultivo de una técnica usando Piedras Espirituales.
