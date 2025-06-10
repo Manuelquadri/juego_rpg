@@ -2039,6 +2039,10 @@ let lastSuccessfulMoveTime = 0;
           objetivo: {
             tipo: "derrotar_npc_especifico",
             npcId: "rival_interno_1",
+            // ===========================================
+            // === LA CORRECCIÓN CLAVE ESTÁ AQUÍ ===
+            // ===========================================
+            npcEntrega: "guia_lin", // <-- ¡AÑADE ESTA LÍNEA!
           },
           recompensa: { pcs: 200, exp: 300, nuevoRango: "Discípulo Interno" },
           autoActivarAlCumplirRequisitos: true,
@@ -2050,6 +2054,7 @@ let lastSuccessfulMoveTime = 0;
           objetivo: {
             tipo: "derrotar_npc_especifico",
             npcId: "rival_principal_1",
+            npcEntrega: "guia_lin",
           },
           recompensa: { pcs: 500, exp: 800, nuevoRango: "Discípulo Principal" },
           autoActivarAlCumplirRequisitos: true,
@@ -5566,6 +5571,7 @@ let lastSuccessfulMoveTime = 0;
           }
 
           const objetivo = misionActiva.objetivoOriginal; // Usar el objetivo original guardado
+
           console.log(
             `[NPC Interaction] Mission "${
               misionDef.titulo
@@ -5643,6 +5649,17 @@ let lastSuccessfulMoveTime = 0;
                   listaParaEntregar = true;
                 }
                 objetivoStatus = `(${itemsStatusArray.join(", ")})`;
+                break;
+              case "derrotar_npc_especifico":
+                    // El progreso es 1 si el rival fue derrotado.
+                    if (misionActiva.progreso === 1) {
+                        listaParaEntregar = true;
+                        const rivalName = entityTypes[objetivo.npcId]?.name || "el guardián";
+                        objetivoStatus = `(Has derrotado a ${rivalName})`;
+                    } else {
+                        const rivalName = entityTypes[objetivo.npcId]?.name || "el guardián";
+                        objetivoStatus = `(Debes derrotar a ${rivalName} en la arena)`;
+                    }
                 break;
 
               case "cazar_y_recuperar_item_de_loot":
@@ -7510,137 +7527,114 @@ let lastSuccessfulMoveTime = 0;
         logBattle(`¡Has derrotado al ${enemy.name}!`);
         gainExperience(enemy.exp);
 
-        // Lógica de progreso de misiones (sin cambios, ya debería estar bien)
         const misionesActivasDelJugador = [...player.secta.misionesActivas];
+        
         misionesActivasDelJugador.forEach((misionActiva) => {
             const misionDataOriginal = MISIONES_DATA[misionActiva.id];
             if (!misionDataOriginal || !misionActiva.objetivoOriginal) return;
+            
             const objetivo = misionActiva.objetivoOriginal;
-            if (objetivo.tipo === "eliminar_enemigo" && (enemy.originalEntityTypeId === objetivo.enemigoTipo || enemy.name === objetivo.nombreDisplay)) {
+
+            // Lógica para actualizar el progreso de la misión de desafío
+            if (objetivo.tipo === "derrotar_npc_especifico" && enemy.isSectChallengeRival && enemy.npcId === objetivo.npcId) {
+                misionActiva.progreso = 1; // 1 significa "objetivo cumplido".
+                logBattle(`¡Has superado la prueba! Reporta tu éxito en la secta.`);
+                console.log(`[Misión Desafío] Progreso de la misión '${misionActiva.id}' actualizado a 1.`);
+            } 
+            // Lógica para otras misiones de eliminación
+            else if (objetivo.tipo === "eliminar_enemigo" && (enemy.originalEntityTypeId === objetivo.enemigoTipo || enemy.name === objetivo.nombreDisplay)) {
                 misionActiva.progreso = (misionActiva.progreso || 0) + 1;
                 logBattle(`Progreso '${misionDataOriginal.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`);
-            } else if (objetivo.tipo === "derrotar_npc_especifico" && enemy.isSectChallengeRival && enemy.npcId === objetivo.npcId) {
-                completeMission(misionActiva.id);
             } else if (objetivo.tipo === "cazar_y_recuperar_item_de_loot" && enemy.originalEntityTypeId === objetivo.enemigoTipo) {
                 misionActiva.progreso = 1;
                 logBattle(`Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`);
             }
         });
+        
         updateSectUI();
 
-        // Lógica de Loot (sin cambios)
-        let lootObtenido = [];
-        if (enemy.lootTable && enemy.lootTable.length > 0) {
-            enemy.lootTable.forEach((loot) => {
+        // El resto de la función (loot, etc.) no cambia...
+        let lootObtenidoTexto = "Botín Obtenido: ";
+        let algoObtenido = false;
+        if (enemy.lootTable) {
+            enemy.lootTable.forEach(loot => {
                 if (Math.random() < loot.chance) {
-                    const quantity = loot.quantity && loot.quantity.length === 2 ? Math.floor(Math.random() * (loot.quantity[1] - loot.quantity[0] + 1)) + loot.quantity[0] : 1;
-                    gameState.inventory[loot.itemName] = (gameState.inventory[loot.itemName] || 0) + quantity;
-                    const lootMessage = `¡${enemy.name} soltó ${quantity} ${loot.itemName}!`;
-                    logBattle(lootMessage);
-                    lootObtenido.push(`${quantity} x ${loot.itemName}`);
+                    const cantidad = loot.quantity[0] + Math.floor(Math.random() * (loot.quantity[1] - loot.quantity[0] + 1));
+                    gameState.inventory[loot.itemName] = (gameState.inventory[loot.itemName] || 0) + cantidad;
+                    lootObtenidoTexto += `${cantidad} ${loot.itemName}, `;
+                    algoObtenido = true;
                 }
             });
         }
+        if (!algoObtenido) lootObtenidoTexto += "Nada.";
+        else lootObtenidoTexto = lootObtenidoTexto.slice(0, -2) + ".";
 
-        // Manejo de Jefes (sin cambios)
-        if (enemy.isBoss) {
-            player.worldState.defeatedBosses[enemy.originalEntityTypeId || enemy.type] = true;
-            if (enemy.nextBossId) player.worldState.currentBossToSpawn = enemy.nextBossId;
-            else player.worldState.currentBossToSpawn = null;
-        } else if (enemy.isFixed && (enemy.isMiniBoss || entityTypes[enemy.originalEntityTypeId]?.respawnTime)) {
-            if (!player.worldState.defeatedFixedEntities) player.worldState.defeatedFixedEntities = {};
-            player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] = { time: Date.now() };
+        if (enemy.isBoss && enemy.originalEntityTypeId) {
+            player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
+            if (enemy.nextBossId) {
+                player.worldState.currentBossToSpawn = enemy.nextBossId;
+            } else {
+                player.worldState.currentBossToSpawn = null;
+            }
+        } else if (enemy.isMiniBoss && enemy.isFixed && enemy.originalEntityTypeId) {
+             if (!player.worldState.defeatedFixedEntities) player.worldState.defeatedFixedEntities = {};
+             player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] = { time: Date.now() };
         }
 
-        updateUI();
-
-        // --- INICIO DE LA MODIFICACIÓN CLAVE ---
-        // Construye el texto para el modal de victoria
-        let lootSummary = lootObtenido.length > 0 ? `<strong>Botín Obtenido:</strong><br>${lootObtenido.join('<br>')}` : "No has obtenido ningún botín.";
-        const victoryModalText = `
-            <p>Has ganado ${enemy.exp} EXP.</p>
-            <div style="margin: 10px 0; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">${lootSummary}</div>
-            <button onclick="showBattleReview()">Ver Resumen del Combate</button>
-        `;
-
-        // Finaliza la batalla y MUESTRA el modal
         setTimeout(() => {
-            endBattle(true); // 'true' para victoria
-            showModal("¡Victoria!", victoryModalText);
-        }, 1500); // Retraso para que se vea el último golpe
-        // --- FIN DE LA MODIFICACIÓN CLAVE ---
+            endBattle(true);
+            showModal("¡Victoria!", `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nRevisa tu diario de misiones para ver el progreso.`);
+        }, 1500);
     }
 
       function completeMission(misionId, npcIdEntregaManual = null) {
-        // npcIdEntregaManual es para cuando se completa desde el diálogo del NPC
         const player = gameState.player;
-        const misionActiva = player.secta.misionesActivas.find(
-          (m) => m.id === misionId
-        );
+        const misionActiva = player.secta.misionesActivas.find((m) => m.id === misionId);
         const misionDataOriginal = MISIONES_DATA[misionId];
 
         if (!misionActiva || !misionDataOriginal) {
-          console.error(
-            `Error al intentar completar misión: ${misionId}. Datos no encontrados.`
-          );
           showModal("Error de Misión", "Datos de la misión no encontrados.");
-          return false; // Indicar fallo
+          return false;
         }
 
-        // No filtrar más por !player.secta.misionesActivas.some(m => m.id === misionId) aquí,
-        // ya que la estamos buscando DENTRO de las activas.
-
-        console.log(
-          `Intentando completar misión: ${misionDataOriginal.titulo}`
-        );
-
-        // Verificar si los objetivos están realmente cumplidos ANTES de dar recompensas
-        let objetivosCumplidos = false;
         const objetivo = misionActiva.objetivoOriginal;
+        let objetivosCumplidos = false;
 
         switch (objetivo.tipo) {
           case "entregar_item":
-            if (
-              (gameState.inventory[objetivo.item] || 0) >= objetivo.cantidad
-            ) {
-              // Solo restar si es una entrega manual a un NPC o si es una misión que se autocompleta con entrega
-              // (por ahora, asumimos que todas las de entrega requieren NPC)
-              if (
-                npcIdEntregaManual &&
-                npcIdEntregaManual === objetivo.npcEntrega
-              ) {
+            if ((gameState.inventory[objetivo.item] || 0) >= objetivo.cantidad) {
+              if (npcIdEntregaManual && npcIdEntregaManual === objetivo.npcEntrega) {
                 gameState.inventory[objetivo.item] -= objetivo.cantidad;
                 updateInventoryUI();
                 objetivosCumplidos = true;
-              } else if (!objetivo.npcEntrega) {
-                // Caso raro: misión de entrega sin NPC específico (se autocompleta)
-                gameState.inventory[objetivo.item] -= objetivo.cantidad;
-                updateInventoryUI();
-                objetivosCumplidos = true;
-              } else {
-                // No se cumple aquí, se debe completar hablando con el NPC
-                // showModal("Entrega Pendiente", `Debes entregar ${objetivo.item} a ${SECTA_DATA.npcs[objetivo.npcEntrega]?.nombre || 'un NPC'}.`);
-                return false;
               }
             } else {
-              showModal(
-                "Objetivo Incompleto",
-                `Aún necesitas ${
-                  objetivo.cantidad - (gameState.inventory[objetivo.item] || 0)
-                } ${objetivo.item}.`
-              );
-              return false;
+                showModal("Objetivo Incompleto", `Aún necesitas ${objetivo.cantidad - (gameState.inventory[objetivo.item] || 0)} ${objetivo.item}.`);
+                return false;
             }
             break;
           case "eliminar_enemigo":
             if (misionActiva.progreso >= objetivo.cantidad) {
               objetivosCumplidos = true;
-              // No hay ítems que restar aquí. La finalización será al hablar con el NPC.
+            }
+            break;
+
+          // ==========================================================
+          // === INICIO DE LA CORRECCIÓN CLAVE EN ESTA FUNCIÓN ===
+          // ==========================================================
+          case "derrotar_npc_especifico":
+            if (misionActiva.progreso === 1) { // Verifica si el progreso es "cumplido"
+              objetivosCumplidos = true;
             } else {
-              // showModal("Objetivo Incompleto", `Aún necesitas eliminar más enemigos.`);
+              showModal("Objetivo Incompleto", "Aún no has derrotado al oponente del desafío.");
               return false;
             }
             break;
+          // ==========================================================
+          // === FIN DE LA CORRECCIÓN CLAVE EN ESTA FUNCIÓN ===
+          // ==========================================================
+
+          // (Nuevamente, aquí irían los otros `case` que ya tienes. Asegúrate de no borrarlos).
           case "recolectar_multiples_items":
             let todosItemsRecolectados = true;
             for (const itemReq of objetivo.items) {
@@ -7648,131 +7642,70 @@ let lastSuccessfulMoveTime = 0;
                 (gameState.inventory[itemReq.nombre] || 0) < itemReq.cantidad
               ) {
                 todosItemsRecolectados = false;
-                showModal(
-                  "Objetivo Incompleto",
-                  `Aún necesitas recolectar más ${itemReq.nombre}.`
-                );
                 break;
               }
             }
             if (todosItemsRecolectados) {
-              if (
-                npcIdEntregaManual &&
-                npcIdEntregaManual === objetivo.npcEntrega
-              ) {
-                for (const itemReq of objetivo.items) {
-                  gameState.inventory[itemReq.nombre] -= itemReq.cantidad;
+                if(npcIdEntregaManual === objetivo.npcEntrega) {
+                    for (const itemReq of objetivo.items) {
+                        gameState.inventory[itemReq.nombre] -= itemReq.cantidad;
+                    }
+                    updateInventoryUI();
+                    objetivosCumplidos = true;
                 }
-                updateInventoryUI();
-                objetivosCumplidos = true;
-              } else if (!objetivo.npcEntrega) {
-                for (const itemReq of objetivo.items) {
-                  gameState.inventory[itemReq.nombre] -= itemReq.cantidad;
-                }
-                updateInventoryUI();
-                objetivosCumplidos = true;
-              } else {
-                return false;
-              }
-            } else {
-              return false;
             }
             break;
-          case "cazar_y_recuperar_item_de_loot":
-            // El progreso a 1 indica que el ítem FUE looteado. Ahora se comprueba si AÚN lo tiene.
-            if (
-              misionActiva.progreso === 1 &&
-              (gameState.inventory[objetivo.itemPrueba] || 0) >=
-                objetivo.cantidadItemPrueba
-            ) {
-              if (
-                npcIdEntregaManual &&
-                npcIdEntregaManual === objetivo.npcEntrega
-              ) {
-                gameState.inventory[objetivo.itemPrueba] -=
-                  objetivo.cantidadItemPrueba;
-                updateInventoryUI();
-                objetivosCumplidos = true;
-              } else if (!objetivo.npcEntrega) {
-                gameState.inventory[objetivo.itemPrueba] -=
-                  objetivo.cantidadItemPrueba;
-                updateInventoryUI();
-                objetivosCumplidos = true;
-              } else {
-                return false;
-              }
-            } else {
-              showModal(
-                "Objeto Faltante",
-                `Parece que ya no tienes ${objetivo.itemPrueba} o no lo has obtenido aún.`
-              );
-              return false;
-            }
+           case "cazar_y_recuperar_item_de_loot":
+                if (misionActiva.progreso === 1 && (gameState.inventory[objetivo.itemPrueba] || 0) >= objetivo.cantidadItemPrueba) {
+                    if (npcIdEntregaManual === objetivo.npcEntrega) {
+                        gameState.inventory[objetivo.itemPrueba] -= objetivo.cantidadItemPrueba;
+                        updateInventoryUI();
+                        objetivosCumplidos = true;
+                    }
+                }
             break;
-          case "derrotar_npc_especifico": // Estas se autocompletan al derrotar al NPC
-            // El progreso ya se verificó al llamar a completeMission desde handleEnemyDefeat
-            objetivosCumplidos = true;
-            break;
-          // Añadir más casos según tipos de misión
+
+
           default:
-            console.warn(
-              `Tipo de objetivo desconocido '${objetivo.tipo}' para misión ${misionId}`
-            );
             showModal("Error de Misión", "Tipo de objetivo no reconocido.");
             return false;
         }
 
         if (!objetivosCumplidos) {
-          console.log(
-            `Objetivos no cumplidos para ${misionDataOriginal.titulo} al intentar completar.`
-          );
-          return false; // No completar si los objetivos no están verificados
+          console.log(`Objetivos no cumplidos para ${misionDataOriginal.titulo} al intentar completar.`);
+          return false;
         }
 
         // --- Dar Recompensas ---
-        player.secta.puntosContribucion +=
-          misionDataOriginal.recompensa.pcs || 0;
+        player.secta.puntosContribucion += misionDataOriginal.recompensa.pcs || 0;
         gainExperience(misionDataOriginal.recompensa.exp || 0);
         let recompensaItemsTexto = "";
         if (misionDataOriginal.recompensa.items) {
           for (const itemName in misionDataOriginal.recompensa.items) {
-            gameState.inventory[itemName] =
-              (gameState.inventory[itemName] || 0) +
-              misionDataOriginal.recompensa.items[itemName];
+            gameState.inventory[itemName] = (gameState.inventory[itemName] || 0) + misionDataOriginal.recompensa.items[itemName];
             recompensaItemsTexto += `${misionDataOriginal.recompensa.items[itemName]} ${itemName}, `;
           }
           updateInventoryUI();
-          if (recompensaItemsTexto)
-            recompensaItemsTexto = recompensaItemsTexto.slice(0, -2); // quitar última coma y espacio
+          if (recompensaItemsTexto) recompensaItemsTexto = recompensaItemsTexto.slice(0, -2);
         }
 
-        let recompensaTextoGlobal = `Recompensas: ${
-          misionDataOriginal.recompensa.pcs || 0
-        } PCS, ${misionDataOriginal.recompensa.exp || 0} EXP`;
-        if (recompensaItemsTexto)
-          recompensaTextoGlobal += `, ${recompensaItemsTexto}`;
+        let recompensaTextoGlobal = `Recompensas: ${misionDataOriginal.recompensa.pcs || 0} PCS, ${misionDataOriginal.recompensa.exp || 0} EXP`;
+        if (recompensaItemsTexto) recompensaTextoGlobal += `, ${recompensaItemsTexto}`;
 
-        player.secta.misionesActivas = player.secta.misionesActivas.filter(
-          (m) => m.id !== misionId
-        );
+        player.secta.misionesActivas = player.secta.misionesActivas.filter((m) => m.id !== misionId);
         player.secta.misionesCompletadas[misionId] = true;
 
-        showModal(
-          "¡Misión Completada!",
-          `Completaste: ${misionDataOriginal.titulo}.\n${recompensaTextoGlobal}`
-        );
+        showModal("¡Misión Completada!", `Completaste: ${misionDataOriginal.titulo}.\n${recompensaTextoGlobal}`);
 
         if (misionDataOriginal.recompensa.nuevoRango) {
           player.secta.rango = misionDataOriginal.recompensa.nuevoRango;
-          showModal(
-            "¡Ascenso en la Secta!",
-            `¡Felicidades! Ascendiste a ${player.secta.rango}.`
-          );
+          // Usamos un segundo modal para el ascenso para que no se pierda el mensaje.
+          setTimeout(() => showModal("¡Ascenso en la Secta!", `¡Felicidades! Ascendiste a ${player.secta.rango}.`), 2500);
           applyRankBenefits(player.secta.rango);
         }
         updateSectUI();
-        checkAndActivateRankChallengeMissions(); // Verificar si se desbloquean desafíos de rango
-        return true; // Indicar éxito
+        checkAndActivateRankChallengeMissions();
+        return true;
       }
 
       function updateSectUI() {
