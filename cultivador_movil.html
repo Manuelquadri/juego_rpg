@@ -1264,7 +1264,17 @@
           </button>
         </div>
       </div>
-
+      <!-- Modal genérico para confirmaciones (Sí/No) -->
+    <div class="modal" id="confirmationModal">
+      <div class="modal-content" style="max-width: 450px;">
+        <h3 id="confirmationModalTitle">Confirmar Acción</h3>
+        <p id="confirmationModalText" style="margin: 15px 0; line-height: 1.5;">¿Estás seguro?</p>
+        <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+          <button id="confirmBtn" style="background-color: #4CAF50;">Confirmar</button>
+          <button id="cancelBtn" onclick="closeConfirmationModal()" style="background-color: #f44336;">Cancelar</button>
+        </div>
+      </div>
+    </div>
       <!-- Modal para Misiones -->
       <div class="modal" id="missionsModal">
           <div class="modal-content" style="max-width: 600px; text-align: left;">
@@ -1517,16 +1527,19 @@
             "Cristales de Qi": 0,
           },
           map: {
-            width: 200, // Más pequeño para pruebas iniciales
-            height: 200,
+            width: 600, // Más pequeño para pruebas iniciales
+            height: 600,
             defaultTerrain: "GRASSLAND",
             terrainZones: [
               // Ejemplo de Zona de Inicio cerca de la Secta (PRADERA)
               {
-                x1: 10,
-                y1: 10,
+                x1: 0,
+                y1: 25,
                 x2: 29,
-                y2: 29,
+                y2: 39,
+                //ZONAS
+
+                
                 type: "GRASSLAND",
                 name: "Praderas de la Secta",
                 spawnSettings: {
@@ -1584,7 +1597,7 @@
               {
                 x1: 10,
                 y1: 40,
-                x2: 89,
+                x2: 90,
                 y2: 69,
                 type: "DESERT",
                 name: "Desierto Abrasador",
@@ -1614,24 +1627,21 @@
               },
               // RUINAS
               {
-                x1: 10,
-                y1: 100,
-                x2: 45,
-                y2: 250,
+                x1: 500, y1: 500,
+                x2: 550, y2: 550,
                 type: "RUINS",
-                name: "Ruinas antiguas",
+                name: "Corazón de las Ruinas Olvidadas",
+                decorations: [ // <-- NUEVA PROPIEDAD
+                      
+                      { entityTypeId: 'deco_ruina_pilar', density: 0.02 }, 
+                     
+                  ],
+                isIsolated: true,          // Marca esta zona como un "mapa" separado
+                ambientColor: '#1a1a1a',   // Color del "vacío" alrededor de la zona
                 spawnSettings: {
                   targetEntities: [
-                    {
-                      entityTypeId: "boss_ancient_golem",
-                      count: 20,
-                      currentCount: 0,
-                    },
-                    {
-                      entityTypeId: "esqueleto_podrido",
-                      count: 25,
-                      currentCount: 0,
-                    },
+                    { entityTypeId: "esqueleto_podrido", count: 25, currentCount: 0 },
+                    { entityTypeId: "boss_ancient_golem", count: 25, currentCount: 0 }, 
                   ],
                   respawnTimer: 0,
                   respawnCooldown: 400,
@@ -1668,9 +1678,50 @@
               {
                 x1: 0,
                 y1: 0,
-                x2: 199,
+                x2: 190,
+                y2: 8,
+                type: "MOUNTAIN_SUP",
+                name: "Montañas del Norte",
+              }, // Sin spawnSettings = no spawns
+              {
+                x1:-20,
+                y1: 0,
+                x2: 0,
+                y2: 600,
+                type: "MOUNTAIN_SUP",
+                name: "Montañas del Norte",
+              }, // Sin spawnSettings = no spawns
+              {
+                x1: 92,
+                y1: 0,
+                x2: 190,
+                y2: 600,
+                type: "MOUNTAIN_SUP",
+                name: "Montañas del Norte",
+              }, // Sin spawnSettings = no spawns
+              {
+                x1: 91,
+                y1: 9,
+                x2: 91,
                 y2: 9,
-                type: "MOUNTAIN",
+                type: "MOUNTAIN_SUP_DER",
+                name: "Montañas del Norte",
+              }, // Sin spawnSettings = no spawns
+          
+              {
+                x1: 0,
+                y1: 9,
+                x2: 90,
+                y2: 9,
+                type: "MOUNTAIN_FRENTE",
+                name: "Montañas del Norte",
+              }, // Sin spawnSettings = no spawns
+              {
+                x1: 91,
+                y1: 10,
+                x2: 91,
+                y2: 600,
+                type: "MOUNTAIN_DER",
                 name: "Montañas del Norte",
               }, // Sin spawnSettings = no spawns
               // ...
@@ -1684,6 +1735,7 @@
                 name: "Arena de la Secta",
                 // No necesita spawnSettings por ahora, a menos que quieras pequeños mobs decorativos allí.
               },
+              
             ],
             terrainGrid: null,
             entities: [],
@@ -1732,6 +1784,10 @@
         const G_SAFE_RESPAWN_Y = 10;
         const G_SAFE_RESPAWN_SEARCH_RADIUS = 3;
         const G_TERRAIN_TYPES = {
+          VOID: {
+            textureUrl: "img/mont_sup.png", // ¡Asegúrate de que esta imagen exista!
+            name: "Vacío"
+          },
           GRASSLAND: { 
               symbol: "🟩", 
               textureUrl: "img/grassland.png",
@@ -1745,17 +1801,37 @@
               color: "#1E824C", 
               name: "Bosque" 
           }, // Verde oscuro para bosques
-          MOUNTAIN: { 
+          MOUNTAIN_FRENTE: { 
               symbol: "⛰️", 
+              textureUrl: "img/mont_frente.png",
               color: "#A9A9A9", 
               name: "Montaña" 
           }, // Gris para montañas
+          MOUNTAIN_SUP: { 
+              symbol: "⛰️", 
+              textureUrl: "img/mont_sup.png",
+              color: "#A9A9A9", 
+              name: "Montaña" 
+          }, 
+            MOUNTAIN_SUP_DER: { 
+              symbol: "⛰️", 
+              textureUrl: "img/mont_sup_der.png",
+              color: "#A9A9A9", 
+              name: "Montaña" 
+          }, 
+           MOUNTAIN_DER: { 
+              symbol: "⛰️", 
+              textureUrl: "img/mont_der.png",
+              color: "#A9A9A9", 
+              name: "Montaña" 
+          }, 
           WATER: { 
               symbol: "🟦", 
               color: "#4A86E8", 
               name: "Agua" }, // Azul para agua (intransitable)
           RUINS: { 
               symbol: "🏛️", 
+              textureUrl: "img/suelo_ruinas.png",
               color: "#706050", 
               name: "Ruinas" 
           }, // Marrón/Gris para ruinas
@@ -1802,7 +1878,10 @@
           up: 3 * PLAYER_SPRITE_FRAME_HEIGHT, // Fila 4 (índice 3) para caminar hacia arriba
         };
         // Podríamos añadir una propiedad 'walkable' a cada tipo de terreno
-        G_TERRAIN_TYPES.MOUNTAIN.walkable = false; // Ejemplo, montañas podrían ser no transitables
+        G_TERRAIN_TYPES.MOUNTAIN_FRENTE.walkable = false; // Ejemplo, montañas podrían ser no transitables 
+        G_TERRAIN_TYPES.MOUNTAIN_SUP.walkable = false; // Ejemplo, montañas podrían ser no transitables
+        G_TERRAIN_TYPES.MOUNTAIN_SUP_DER.walkable = false; // Ejemplo, montañas podrían ser no transitables
+        G_TERRAIN_TYPES.MOUNTAIN_DER.walkable = false; // Ejemplo, montañas podrían ser no transitables
         G_TERRAIN_TYPES.WATER.walkable = false;
         // Por defecto, asumimos que son transitables si no se especifica 'walkable: false'
         const G_BLOCKING_ENTITY_TYPES = [
@@ -1984,22 +2063,7 @@
             npcInicio: "guia_lin",
             requisitoRango: "Discípulo Externo",
           },
-          mision_investigar_anomalia_1: {
-            titulo: "Anomalía en el Bosque Susurrante",
-            descripcion:
-              "Se han reportado extraños susurros y una energía inquietante proveniente del Bosque Susurrante al este. Investiga la fuente de la perturbación y reporta tus hallazgos.",
-            objetivo: {
-              tipo: "explorar_y_reportar",
-              areaClave: "BosqueSusurranteAnomalia",
-              npcReporte: "guia_lin",
-            },
-            recompensa: {
-              pcs: 100,
-              exp: 200,
-              items: { "Talismán de Percepción": 1 },
-            },
-            npcInicio: "guia_lin",
-          },
+          
           mision_cazar_bestia_especifica_1: {
             titulo: "La Amenaza del Jabalí Colmilludo",
             descripcion:
@@ -2190,6 +2254,27 @@
             },
             npcInicio: "guia_lin",
             requisitoNivel: 5,
+          },
+          mision_cazar_bestia_especifica_1: {
+            titulo: "Elimina el golem de piedra",
+            descripcion:
+              "Elimina al golem de piedra Geo al sur de la pradera de la secta.Regresa con el Guía Lin luego de eliminarlo.",
+            objetivo: {
+              objetivo: {
+              tipo: "eliminar_enemigo",
+              enemigoTipo: "cultivator_rival_low",
+              cantidad: 1,
+              nombreDisplay: "Cultivador Novato Hostil",
+              npcEntrega: "guia_lin",
+            },
+            },
+            recompensa: {
+              pcs: 150,
+              exp: 300,
+              items: { "Piedras Espirituales": 70, "Carne de Bestia Exótica": 3 },
+            },
+            npcInicio: "guia_lin",
+            requisitoNivel: 10,
           },
         };
 
@@ -2611,6 +2696,7 @@
             // fixedY: 15, // Si tenías esto antes
             // ASEGÚRATE DE TENER ESTO EN SU LUGAR:
             fixedLocation: { x: 15, y: 15 }, // O las coordenadas correctas para tu secta
+            discovered: true,
           },
 
           // --- ELEMENTOS DECORATIVOS ---
@@ -2665,7 +2751,7 @@
           deco_ruina_pilar: {
             symbol: "🏛",
             name: "Pilar Caído",
-            spriteUrl: "img/arbol_grande.png",
+            spriteUrl: "img/columnas.png",
             isDecorative: true,
             noInteraction: true,
             discovered: true,
@@ -2679,14 +2765,7 @@
           }, // Diferente de tu lugar de cultivo
           // ... añade más según necesites
           //NPCS
-          master: {
-            symbol: "👴",
-            name: "Maestro Anciano",
-            spriteUrl: "img/guia_lin.png",
-            teaching: "técnica",
-            expGain: 50,
-            interaction: "learn_from_master",
-          },
+       
           npc_secta_guia: {
             symbol: "👨‍🏫",
             name: "Guía Lin",
@@ -2694,6 +2773,7 @@
             interaction: "talk_secta_npc",
             npcId: "guia_lin",
             fixedLocation: { x: 13, y: 15 },
+            discovered: true,
           },
           npc_secta_admin: {
             symbol: " 👴",
@@ -2702,6 +2782,7 @@
             interaction: "talk_secta_npc",
             npcId: "admin_yao",
             fixedLocation: { x: 17, y: 15 },
+            discovered: true,
           },
           rival_interno_1: {
             symbol: "😠",
@@ -2763,6 +2844,30 @@
             reward: "Hierbas Medicinales",
             interaction: "collect_resource",
           },
+
+           // === NUEVAS ENTIDADES DE TRANSICIÓN ===
+          transition_ruins_entrance: {
+            symbol: "🌀",
+            name: "Entrada a las Ruinas",
+            spriteUrl: "img/entrada_ruinas.png", // Crea o usa una imagen para el portal
+            interaction: "transition",
+            fixedLocation: { x: 45, y: 45 }, // Ubicación en el mundo principal
+            targetX: 501, // Coordenada X de destino (dentro de la zona de ruinas)
+            targetY: 501, // Coordenada Y de destino
+            discovered: true,
+          },
+          transition_ruins_exit: {
+            symbol: "🌀",
+            name: "Salida de las Ruinas",
+            spriteUrl: "img/portal.png",
+            interaction: "transition",
+            fixedLocation: { x: 501, y: 500 }, // Ubicación DENTRO de las ruinas
+            targetX: 45,  // Coordenada X de destino (de vuelta al mundo principal)
+            targetY: 46,  // Coordenada Y de destino (aparece al lado de la entrada)
+            discovered: true,
+          },
+
+
           //ENEMIGOS
           monster: {
             symbol: "👹",
@@ -3080,6 +3185,7 @@
           esqueleto_podrido: {
             symbol: "💀",
             name: "Esqueleto podrido",
+            spriteUrl: "img/esqueleto_1.png",
             typeOverride: "monster",
             hp: 180,
             level:10,
@@ -3090,16 +3196,19 @@
             lootTable: [
               {
                 itemName: "Piedras Espirituales",
-                quantity: [10, 30],
+                quantity: [10, 20],
                 chance: 0.5,
               },
-              { itemName: "Daga Oxidada", quantity: [1, 1], chance: 0.2 },
+              
             ],
-          },
+          }
+          
+          ,
           //MINIBOSSES
           jabali_colmilludo_alfa: {
             symbol: "🐗",
             name: "Jabalí Colmilludo Alfa",
+            spriteUrl: "img/jabali.png",
             typeOverride: "monster",
             hp: 300,
             level:10,
@@ -3122,7 +3231,51 @@
               { itemName: "Piel Resistente", quantity: [1, 2], chance: 0.4 },
               { itemName: "Piedras Espirituales", quantity: [4, 10], chance: 1 },
             ],
-            fixedLocation: { x: 5, y: 23 },
+            fixedLocation: { x: 48, y: 23 },
+          },
+          golem_de_piedra: {
+            symbol: "🗿",
+            name: "Golem Ancestral de Jade",
+            spriteUrl: "img/golem_jade.png",
+            typeOverride: "monster",
+            hp: 800,
+            level:11,
+            attack: 35,
+            defense: 50,
+            exp: 500,
+            maxHp: 800,
+            isBoss: true,
+            abilities: [
+              {
+                name: "Golpe Sísmico",
+                damageMultiplier: 2.0,
+                chance: 0.2,
+                type: "area_attack_simulated",
+              },
+              { name: "Restauración Pétrea", healPercentage: 0.2, chance: 0.1 },
+            ],
+            lootTable: [
+              {
+                itemName: "Piedras Espirituales",
+                quantity: [20, 30],
+                chance: 1.0,
+              },
+              {
+                itemName: "Corazón de Golem de Jade",
+                quantity: [1, 1],
+                chance: 0.9,
+              },
+      
+              { itemName: "Fragmentos de Jade", quantity: [3, 6], chance: 0.7 },
+              {
+                itemName: "Núcleo Elemental",
+                quantity: [1, 2],
+                chance: 0.3,
+                extraData: { elementalType: "earth" },
+              },
+              
+            ],
+            
           },
 
           lider_renegado_1: {
@@ -3165,7 +3318,7 @@
             name: "General Demonio de la Sombra",
             typeOverride: "monster",
             hp: 500,
-            level:20,
+            level:10,
             attack: 45,
             defense: 20,
             exp: 300,
@@ -3190,31 +3343,7 @@
                 quantity: [1, 1],
                 chance: 0.25,
               },
-              {
-                itemName: "Fragmento de Arma Celestial",
-                quantity: [1, 1],
-                chance: 0.1,
-              },
-              {
-                itemName: "Rollo: Cambio Temporal",
-                quantity: [1, 1],
-                chance: 0.25,
-              },
-              {
-                itemName: "Rollo: Ritual de Sangre",
-                quantity: [1, 1],
-                chance: 0.2,
-              },
-              {
-                itemName: "Rollo: Aura de Pureza",
-                quantity: [1, 1],
-                chance: 0.22,
-              },
-              {
-                itemName: "Rollo: Invocar Elemental",
-                quantity: [1, 1],
-                chance: 0.18,
-              },
+             
               {
                 itemName: "Rollo: Barrera Mística",
                 quantity: [1, 1],
@@ -3228,9 +3357,10 @@
           boss_ancient_golem: {
             symbol: "🗿",
             name: "Golem Ancestral de Jade",
+            spriteUrl: "img/golem_jade.png",
             typeOverride: "monster",
             hp: 800,
-            level:25,
+            level:11,
             attack: 35,
             defense: 50,
             exp: 500,
@@ -3264,14 +3394,10 @@
                 chance: 0.3,
                 extraData: { elementalType: "earth" },
               },
-              {
-                itemName: "Rollo: Piel de Piedra",
-                quantity: [1, 1],
-                chance: 0.1,
-              },
+              
             ],
             nextBossId: null,
-            fixedLocation: { x: 20, y: 13 },
+            fixedLocation: { x: 72, y: 51 },
           },
         };
 
@@ -4011,7 +4137,7 @@
           showTouchControls();
           updateTopNavVisibility();
       }
-
+//ENEMIGOS Y NPC FIJOS
         function ensureFixedEntities() {
           const player = gameState.player;
           let entities = gameState.map.entities;
@@ -4021,9 +4147,12 @@
             "secta_entrada_principal",
             "npc_secta_guia",
             "npc_secta_admin",
-            // ===> AÑADE TU JABALÍ AQUÍ <===
+      
             "jabali_colmilludo_alfa",
-            // ===> FIN DE LA ADICIÓN <===
+            "boss_ancient_golem",
+            "transition_ruins_entrance",
+            "transition_ruins_exit",
+            
             // Puedes añadir otros IDs de entidades fijas aquí directamente
           ];
 
@@ -4800,7 +4929,18 @@
           if (!mapElement || !mapContainerElement) {
               return;
           }
-
+          // --- INICIO DE LA LÓGICA DE AISLAMIENTO DE ZONA ---
+        const currentZone = getPlayerCurrentZone();
+        let currentAmbientColor = '#1a3d2e'; // Color por defecto del mundo principal
+        
+        if (currentZone && currentZone.isIsolated) {
+            // Si estamos en una zona aislada, cambiamos el fondo a un color de "vacío"
+            mapContainerElement.style.backgroundColor = currentZone.ambientColor || '#000';
+        } else {
+            // Si estamos en el mundo principal, el fondo es el definido en el CSS
+            mapContainerElement.style.backgroundColor = '#1a3d2e'; // O el color original de tu .map-container
+        }
+        // --- FIN DE LA LÓGICA DE AISLAMIENTO DE ZONA ---
           const currentContainerWidth = mapContainerElement.clientWidth;
           const currentContainerHeight = mapContainerElement.clientHeight;
 
@@ -4827,33 +4967,62 @@
           mapElement.innerHTML = "";
 
           // 1. Renderizar TERRENO BASE
-          for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
-              for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
-                  if (x < 0 || x >= gameState.map.width || y < 0 || y >= gameState.map.height) {
-                      continue;
-                  }
-                  const terrainId = getTerrainTypeAt(x, y);
-                  const terrainData = G_TERRAIN_TYPES[terrainId];
-                  if (terrainData) {
-                      const terrainTile = document.createElement("div");
-                      terrainTile.className = "tile terrain-tile";
-                      terrainTile.style.left = `${x * currentTileSize}px`;
-                      terrainTile.style.top = `${y * currentTileSize}px`;
-                      terrainTile.style.width = `${currentTileSize}px`;
-                      terrainTile.style.height = `${currentTileSize}px`;
-                      terrainTile.style.zIndex = "1";
+        for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
+            for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
+              let shouldDrawVoid = false;
 
-                      if (terrainData.textureUrl) {
-                          terrainTile.style.backgroundImage = `url('${terrainData.textureUrl}')`;
-                          terrainTile.style.backgroundSize = 'cover';
-                      } else {
-                          terrainTile.style.backgroundColor = terrainData.color;
-                      }
+                if (currentZone && currentZone.isIsolated) {
+                    if (x < currentZone.x1 || x > currentZone.x2 || y < currentZone.y1 || y > currentZone.y2) {
+                        shouldDrawVoid = true;
+                    }
+                } else {
+                    // Si no estamos en una zona aislada, el "vacío" es cualquier cosa fuera de los límites del mapa.
+                    if (x < 0 || x >= gameState.map.width || y < 0 || y >= gameState.map.height) {
+                        shouldDrawVoid = true;
+                    }
+                }
+                if (shouldDrawVoid) {
+                    const voidTile = document.createElement("div");
+                    voidTile.className = "tile void-tile";
+                    voidTile.style.left = `${x * currentTileSize}px`;
+                    voidTile.style.top = `${y * currentTileSize}px`;
+                    voidTile.style.width = `${currentTileSize}px`;
+                    voidTile.style.height = `${currentTileSize}px`;
+                    voidTile.style.backgroundColor = currentAmbientColor; // Rellena con el color de ambiente
+                    voidTile.style.zIndex = "0";
+                    const voidTerrainData = G_TERRAIN_TYPES.VOID;
+                    if (voidTerrainData && voidTerrainData.textureUrl) {
+                        voidTile.style.backgroundImage = `url('${voidTerrainData.textureUrl}')`;
+                        voidTile.style.backgroundSize = 'cover';
+                    } else {
+                        // Si la textura del vacío no se encuentra, vuelve a usar el color ambiental
+                        voidTile.style.backgroundColor = currentAmbientColor;
+                    }
+                    mapElement.appendChild(voidTile);
+                    continue; // Pasa al siguiente tile del bucle
+                }
+                const terrainId = getTerrainTypeAt(x, y);
+                const terrainData = G_TERRAIN_TYPES[terrainId];
+                if (terrainData) {
+                    const terrainTile = document.createElement("div");
+                    terrainTile.className = "tile terrain-tile";
+                    terrainTile.style.left = `${x * currentTileSize}px`;
+                    terrainTile.style.top = `${y * currentTileSize}px`;
+                    terrainTile.style.width = `${currentTileSize}px`;
+                    terrainTile.style.height = `${currentTileSize}px`;
+                    terrainTile.style.zIndex = "1";
 
-                      mapElement.appendChild(terrainTile);
-                  }
-              }
-          }
+                    if (terrainData.textureUrl) {
+                        terrainTile.style.backgroundImage = `url('${terrainData.textureUrl}')`;
+                        terrainTile.style.backgroundSize = 'cover';
+                    } else {
+                        terrainTile.style.backgroundColor = terrainData.color;
+                    }
+
+                    mapElement.appendChild(terrainTile);
+                }
+            }
+        }
           
           // 2. Renderizar ENTIDADES
           gameState.map.entities.forEach((entity) => {
@@ -5378,7 +5547,31 @@
           if (!interactionType && entityTypes[definitionKey]) {
             interactionType = entityTypes[definitionKey].interaction;
           }
+          // === INICIO DE LA NUEVA LÓGICA DE TRANSICIÓN ===
+          if (interactionType === "transition") {
+              const definition = entityTypes[definitionKey];
+              if (definition && typeof definition.targetX === 'number' && typeof definition.targetY === 'number') {
+                  
+                  // Función que se ejecutará si el jugador confirma
+                  const doTransition = () => {
+                      gameState.player.x = definition.targetX;
+                      gameState.player.y = definition.targetY;
+                      updatePlayerPosition(`transition_to_${definitionKey}`); // ¡Muy importante!
+                      showModal("Transición Completa", `Has llegado a ${definition.name}.`);
+                  };
 
+                  // Mostramos el modal de confirmación
+                  showConfirmationModal(
+                      `Entrar a ${entity.name}`,
+                      "¿Deseas pasar a la siguiente zona?",
+                      doTransition // Pasamos la función como callback
+                  );
+
+              } else {
+                  console.warn(`La entidad de transición ${definitionKey} no tiene coordenadas de destino (targetX, targetY).`);
+              }
+              return; // Detenemos la ejecución para no procesar otros switches
+          }
           if (interactionType) {
             switch (interactionType) {
               case "browse":
@@ -9314,7 +9507,44 @@
         function openSectShop() {
           showModal("Tienda de Secta", "El Depósito aún está siendo abastecido.");
         }
+        // Variable global para almacenar la acción a confirmar
+      let onConfirmAction = null;
+      
 
+      function getPlayerCurrentZone() {
+        const playerX = gameState.player.x;
+        const playerY = gameState.player.y;
+        for (const zone of gameState.map.terrainZones) {
+          if (playerX >= zone.x1 && playerX <= zone.x2 && playerY >= zone.y1 && playerY <= zone.y2) {
+            return zone;
+          }
+        }
+        return null; // El jugador no está en ninguna zona definida (está en el "mundo abierto")
+      }
+      function showConfirmationModal(title, text, onConfirm) {
+        document.getElementById('confirmationModalTitle').textContent = title;
+        document.getElementById('confirmationModalText').innerHTML = text;
+        
+        onConfirmAction = onConfirm; // Guardamos la función que se ejecutará si se confirma
+
+        const confirmButton = document.getElementById('confirmBtn');
+        // Usamos .onclick para reemplazar cualquier listener anterior
+        confirmButton.onclick = () => {
+            if (typeof onConfirmAction === 'function') {
+                onConfirmAction();
+            }
+            closeConfirmationModal();
+        };
+
+        document.getElementById('confirmationModal').style.display = 'flex';
+        hideTouchControls();
+      }
+
+      function closeConfirmationModal() {
+        document.getElementById('confirmationModal').style.display = 'none';
+        onConfirmAction = null; // Limpiamos la acción
+        showTouchControls();
+      }
         // --- INICIALIZACIÓN ---
         document.addEventListener("DOMContentLoaded", () => {
           const mobileMenuButton = document.getElementById('mobileMenuBtn');
@@ -9430,7 +9660,7 @@
                   playerMovementKeysDown[direction] = false;
               }
           });
-          // --- FIN DEL REEMPLAZO ---
+          
 
           // Helper para convertir dirección a dx/dy para movePlayer
           function dxFromDirection(direction) {
@@ -9471,9 +9701,9 @@
           calculateAndSetTileSize();
           // generateMap() ahora es más simple, isRespawn = false para carga inicial completa
           gameState.lastGameTimeUpdate = Date.now(); // Inicializar antes del primer tick
-          // ---------- CAMBIO IMPORTANTE AQUÍ ----------
+         
           generateMap(true); // Usar true para la generación inicial completa, incluyendo decorativos
-          // ---------- FIN DEL CAMBIO IMPORTANTE ----------
+          
           recalculatePlayerStats();
           updatePlayerVisualSize(); // Asegura el tamaño correcto del div del jugador
           updatePlayerSpriteVisual(); // Establece el sprite inicial
