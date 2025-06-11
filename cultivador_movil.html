@@ -7634,9 +7634,10 @@
                           const swordDamage = Math.max(1, Math.floor(player.attack * damageMultiplier) - (enemy.defense || 0));
                           enemy.hp -= swordDamage;
                           logBattle(`¡${swordTechDetails.name} (Nv.${playerTechLevel}) causa ${swordDamage} daño!`);
+                          showFloatingText(document.querySelector('.character-sprite'), `Tajo Veloz`, 'ability');
+                          showFloatingText(document.getElementById('enemySprite'), `-${damageDealt}`, 'damage');
                       } else { logBattle(`Maná insuficiente para ${swordTechDetails.name}.`); actionTaken = false; }
-                      showFloatingText(document.querySelector('.character-sprite'), `Tajo Veloz`, 'ability');
-                      showFloatingText(document.getElementById('enemySprite'), `-${damageDealt}`, 'damage');
+                      
                       break;
                       
                     case "sword_t3":
