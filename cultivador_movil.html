@@ -4802,6 +4802,7 @@
                   `[EnsureFixed] CREANDO nueva instancia para ${entityTypeId} en (${fixedX}, ${fixedY}).`
                 );
                 const newEntityData = {
+                  ...definition,
                   x: fixedX,
                   y: fixedY,
                   type: definition.typeOverride || entityTypeId,
@@ -4819,31 +4820,8 @@
                     .slice(2)}`,
                   originalEntityTypeId: entityTypeId,
                   // Copiar stats de combate y loot
-                  ...(definition.hp && {
-                    hp: definition.hp,
-                    maxHp: definition.maxHp || definition.hp,
-                  }),
-                  ...(definition.attack && { attack: definition.attack }),
-                  ...(definition.defense && { defense: definition.defense }),
-                  ...(definition.exp && { exp: definition.exp }),
-                  ...(definition.lootTable && {
-                    lootTable: JSON.parse(JSON.stringify(definition.lootTable)),
-                  }), // Copia profunda del lootTable
-                  ...(definition.isBoss && { isBoss: true }),
-                  ...(definition.isMiniBoss && { isMiniBoss: true }), // Añadido
-                  ...(definition.specialChance && {
-                    specialChance: definition.specialChance,
-                  }),
-                   ...(definition.level && { level: definition.level }), 
-                  ...(definition.specialAttackMultiplier && {
-                    specialAttackMultiplier: definition.specialAttackMultiplier,
-                  }),
-                  ...(definition.healChance && {
-                    healChance: definition.healChance,
-                  }),
-                  ...(definition.abilities && {
-                    abilities: JSON.parse(JSON.stringify(definition.abilities)),
-                  }),
+                
+                
                 };
                 if (newEntityData.hp && !newEntityData.maxHp)
                   newEntityData.maxHp = newEntityData.hp;
