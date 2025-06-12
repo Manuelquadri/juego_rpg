@@ -659,6 +659,33 @@
         }
         /* --- Fin Estilos Modal Inventario --- */
 
+        /* === ESTILOS PARA NOTIFICACIÓN DE ZONA === */
+        .zone-notification {
+            position: absolute;
+            top: 20%; /* Posición vertical */
+            left: 50%;
+            transform: translateX(-50%); /* Centrado horizontal */
+            background-color: rgba(10, 10, 10, 0.8);
+            color: #f4d03f;
+            font-size: 1.5em; /* Tamaño de fuente grande */
+            font-weight: bold;
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid #d4af37;
+            z-index: 200; /* Por encima del mapa pero debajo de otros modales */
+            pointer-events: none; /* Para que no intercepte clics */
+            opacity: 0; /* Empieza invisible */
+            transition: opacity 0.5s ease-in-out, top 0.5s ease-in-out;
+            text-shadow: 1px 1px 3px black;
+            white-space: nowrap; /* Evita que el texto se rompa */
+        }
+
+        .zone-notification.show {
+            opacity: 1;
+            top: 25%; /* Se mueve un poco hacia abajo al aparecer */
+        }
+
+
       /****************************************
        * 6. MEDIA QUERIES (RESPONSIVIDAD)
        ****************************************/
@@ -1022,7 +1049,7 @@
           
           <div class="map" id="gameMap"></div>
           <div class="tile player" id="player">🧘</div>
-
+          <div id="zone-notification" class="zone-notification"></div>
           <!-- Este contenedor ahora SÓLO tiene las barras pequeñas que van sobre el sprite en el mapa -->
           <div id="playerOnMapBarsContainer">
             <div class="on-map-stat-bar">
@@ -1434,11 +1461,18 @@
           <button onclick="closeRankUpRewardModal()" style="margin-top: 20px;">Decidiré más tarde</button>
         </div>
       </div>
-
-      <!-- ================================================================= -->
-      <!-- CORRECCIÓN 2: BARRA DE NAVEGACIÓN SUPERIOR RELLENADA CON BOTONES -->
-      <!-- Se han añadido los botones que faltaban. Ahora el JavaScript podrá encontrarlos
-          y asignarles las funciones de click correspondientes. -->
+      <!-- Modal para Teletransporte -->
+    <div class="modal" id="teleportModal">
+        <div class="modal-content" style="max-width: 500px; text-align: left">
+            <h3 id="teleportModalTitle">Red de Matrices Espirituales</h3>
+            <p>Selecciona un destino sintonizado:</p>
+            <div id="teleportOptionsContainer" style="margin-top: 15px;">
+                <!-- Las opciones de destino se generarán aquí -->
+            </div>
+            <button onclick="closeTeleportModal()" style="margin-top: 20px">Cancelar</button>
+        </div>
+    </div>
+     
       <nav class="top-nav-bar" id="topNavBar">
           <button id="navBtnCharacter" class="nav-button">
               <div class="nav-icon">👤</div>
@@ -1468,9 +1502,16 @@
       <!-- ================================================================= -->
       <script>
 
-  let lastSuccessfulMoveTime = 0;
-          const PLAYER_MOVE_COOLDOWN = 250;  // <-- ¡ESTE ES EL NÚMERO QUE AJUSTARÁS! (en milisegundos)
-          const topNavBar = document.getElementById("topNavBar");
+        let lastSuccessfulMoveTime = 0;
+        const PLAYER_MOVE_COOLDOWN = 250;  // <-- ¡ESTE ES EL NÚMERO QUE AJUSTARÁS! (en milisegundos)
+        let playerMovementKeysDown = {
+          // Para rastrear qué teclas de movimiento están presionadas
+          up: false,
+          down: false,
+          left: false,
+          right: false,
+        };
+        const topNavBar = document.getElementById("topNavBar");
         const navBtnInventory = document.getElementById('navBtnInventory');
           console.log("Botón de Inventario (navBtnInventory):", navBtnInventory);     
         const navBtnCharacter = document.getElementById("navBtnCharacter");
@@ -1544,7 +1585,11 @@
             animationFrames: 4, // Número de frames por dirección en la hoja
             currentFrame: 0, // Frame actual de la animación (0 a animationFrames - 1)
             currentDirection: "down", // Dirección inicial: 'up', 'down', 'left', 'right'
+            currentZoneName: null,
             isMoving: false,
+            unlockedTeleporters: { // <-- ¡AÑADE ESTO!
+                'tp_sect_hub': true // El teletransportador de la secta empieza activado
+            },
             animationTimer: null, // Para el intervalo de la animación de caminar
             idleTimeout: null, // Para volver al estado idle después de moverse
             animationSpeed: 150, // Milisegundos entre frames de animación
@@ -1559,7 +1604,7 @@
             },
             currentSpriteKey: "idle", // 'idle', 'up', 'down', 'left', 'right'
             movementAnimationTimeout: null,
-            
+            //BUFF
             defenseBoostTurns: 0,
             defenseBoostAmount: 0,
             // ===  DEBUFFS ===
@@ -1573,6 +1618,9 @@
             burnDamage: 0,
             poisonedTurns: 0,
             poisonDamage: 0,
+            stunnedTurns: 0, 
+            manaDrainTurns: 0, 
+            manaDrainAmount: 0, 
             // ===================================
             dodgeNextAttack: false,
             healingRainTurns: 0,
@@ -1610,175 +1658,9 @@
             terrainZones: [
 
 
-              // ARENA DE LA SECTA
-              {
-                x1: 4,
-                y1: 12,
-                x2: 8,
-                y2: 16, // Ejemplo de coordenadas (ajusta según tu mapa)
-                type: "ARENA", // Puedes usar 'DESERT' o crear un G_TERRAIN_TYPES.ARENA
-                name: "Arena de la Secta",
-                // No necesita spawnSettings por ahora, a menos que quieras pequeños mobs decorativos allí.
-              },
-              // Ejemplo de Zona de Inicio cerca de la Secta (PRADERA)
-             //ZONAS
-              
-
-             {
-                x1: 2,
-                y1: 10,
-                x2: 29,
-                y2: 24,
-               
-
-                
-                type: "GRASSLAND",
-                name: "Terreno de la Secta (Seguro)", 
-             
-              },
-              {
-                x1: 2,
-                y1: 25,
-                x2: 29,
-                y2: 39,
-               
-
-                
-                type: "GRASSLAND",
-                name: "Praderas de la Secta",
-                spawnSettings: {
-                  targetEntities: [
-                    // Lista de objetivos de spawn para esta zona
-                    {
-                      entityTypeId: "monster_secta_debil",
-                      count: 10,
-                      currentCount: 0,
-                    },
-                    { entityTypeId: "monster", count: 10, currentCount: 0 },
-                    {
-                      entityTypeId: "resource_hierbas_bosque",
-                      count: 3,
-                      currentCount: 0,
-                    },
-                    { entityTypeId: "cristal_qi", count: 3, currentCount: 0 },
-                    {
-                      entityTypeId: "cultivator_rival_low",
-                      count: 5,
-                      currentCount: 0,
-                    },
-                  ],
-                  respawnTimer: 0, // Cuando llegue a 0, puede reaparecer
-                  respawnCooldown: 300, // Segundos para reaparecer después de vaciarse o parcialmente
-                  lastSpawnCheck: 0, // Timestamp del último intento de spawn
-                },
-              },
-              // Bosque Esmeralda
-              {
-                  x1: 30,
-                  y1: 10,
-                  x2: 59,
-                  y2: 39,
-                  type: "GRASSLAND", // <-- El terreno base ahora es hierba
-                  name: "Bosque Esmeralda",
-                  decorations: [ 
-                      { entityTypeId: 'deco_arbol_grande', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
-                      { entityTypeId: 'deco_arbol_normal', density: 0.3 }, // 30% tendrán un árbol normal
-                      { entityTypeId: 'deco_roca_musgosa', density: 0.05 }  // 5% tendrán una roca
-                  ],
-                  spawnSettings: { 
-                      targetEntities: [
-                          { entityTypeId: "monster_bosque_lobo", count: 8, currentCount: 0 },
-                          { entityTypeId: "monster_bosque_arana", count: 5, currentCount: 0 },
-                          { entityTypeId: "resource_hierbas_bosque", count: 3, currentCount: 0 },
-                          { entityTypeId: "monster_alpha", count: 5, currentCount: 0 },
-                      ],
-                      respawnTimer: 0,
-                      respawnCooldown: 450,
-                      lastSpawnCheck: 0,
-                  },
-              },
-              // Desierto Abrasador
-              {
-                x1: 1,
-                y1: 41,
-                x2: 90,
-                y2: 69,
-                type: "DESERT",
-                name: "Desierto Abrasador",
-                decorations: [ 
-                      { entityTypeId: 'deco_desierto', density: 0.05 }, // 5% de las celdas tendrán un árbol grande
-                      
-              
-                  ],
-                spawnSettings: {
-                  targetEntities: [
-                    {
-                      entityTypeId: "monster_desierto_escorpion",
-                      count: 7,
-                      currentCount: 0,
-                    },
-                    {
-                      entityTypeId: "monster_desierto_golem_arena",
-                      count: 2,
-                      currentCount: 0,
-                      isElite: true,
-                    }, // Golem como elite
-                  ],
-                  respawnTimer: 0,
-                  respawnCooldown: 600,
-                  lastSpawnCheck: 0,
-                },
-              },
-              // RUINAS
-              {
-                x1: 500, y1: 500,
-                x2: 550, y2: 550,
-                type: "RUINS",
-                name: "Corazón de las Ruinas Olvidadas",
-                decorations: [ 
-                      
-                      { entityTypeId: 'deco_ruina_pilar', density: 0.02 }, 
-                     
-                  ],
-                isIsolated: true,          // Marca esta zona como un "mapa" separado
-                ambientColor: '#1a1a1a',   // Color del "vacío" alrededor de la zona
-                spawnSettings: {
-                  targetEntities: [
-                    { entityTypeId: "esqueleto_podrido", count: 25, currentCount: 0 },
-                    { entityTypeId: "boss_ancient_golem", count: 25, currentCount: 0 }, 
-                  ],
-                  respawnTimer: 0,
-                  respawnCooldown: 400,
-                  lastSpawnCheck: 0,
-                },
-              },
-              // Ciénaga Sombría
-              {
-                x1: 60,
-                y1: 15,
-                x2: 90,
-                y2: 45,
-                type: "SWAMP",
-                name: "Ciénaga Sombría",
-                decorations: [ // <-- NUEVA PROPIEDAD
-                      { entityTypeId: 'deco_arbol_pantano', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
-                      { entityTypeId: 'deco_agua_estancada', density: 0.05 }
-              
-                  ],
-                spawnSettings: {
-                  targetEntities: [
-                    {
-                      entityTypeId: "monster_cienaga_serpiente",
-                      count: 4,
-                      currentCount: 0,
-                    },
-                  ],
-                  respawnTimer: 0,
-                  respawnCooldown: 400,
-                  lastSpawnCheck: 0,
-                },
-              },
-              //LÍMITES DE MAPA
+   
+        //ZONAS
+            //LÍMITES DE MAPA
               // ... otras zonas (montañas, ruinas, agua sin spawns de monstruos terrestres)
               {
                 x1: 0,
@@ -1894,7 +1776,231 @@
                 type: "MOUNTAIN_IZQ",
                 name: "límite oeste pradera",
               }, // Sin spawnSettings = no spawns
-              // ...
+              // ...FIN DE LOS LIMITES
+
+              // ARENA DE LA SECTA
+              {
+                x1: 4,
+                y1: 12,
+                x2: 8,
+                y2: 16, // Ejemplo de coordenadas (ajusta según tu mapa)
+                type: "ARENA", // Puedes usar 'DESERT' o crear un G_TERRAIN_TYPES.ARENA
+                name: "Arena de la Secta",
+                // No necesita spawnSettings por ahora, a menos que quieras pequeños mobs decorativos allí.
+              },
+           
+              
+
+             {
+                x1: 2,
+                y1: 10,
+                x2: 29,
+                y2: 24,
+               
+
+                
+                type: "GRASSLAND",
+                name: "Terreno de la Secta (Seguro)", 
+             
+              },
+              {
+                x1: 2,
+                y1: 25,
+                x2: 29,
+                y2: 39,
+               
+
+                
+                type: "GRASSLAND",
+                name: "Praderas de la Secta",
+                spawnSettings: {
+                  targetEntities: [
+                    // Lista de objetivos de spawn para esta zona
+                    {
+                      entityTypeId: "monster_secta_debil",
+                      count: 10,
+                      currentCount: 0,
+                    },
+                    { entityTypeId: "monster", count: 10, currentCount: 0 },
+                    {
+                      entityTypeId: "resource_hierbas_bosque",
+                      count: 3,
+                      currentCount: 0,
+                    },
+                    { entityTypeId: "cristal_qi", count: 3, currentCount: 0 },
+                    {
+                      entityTypeId: "cultivator_rival_low",
+                      count: 5,
+                      currentCount: 0,
+                    },
+                  ],
+                  respawnTimer: 0, // Cuando llegue a 0, puede reaparecer
+                  respawnCooldown: 300, // Segundos para reaparecer después de vaciarse o parcialmente
+                  lastSpawnCheck: 0, // Timestamp del último intento de spawn
+                },
+              },
+              // Bosque Esmeralda Profundo
+              {
+                  x1: 54,
+                  y1: 10,
+                  x2: 65,
+                  y2: 39,
+                  type: "GRASSLAND", // 
+                  name: "Bosque Esmeralda Profundo",
+                  decorations: [ 
+                      { entityTypeId: 'deco_arbol_grande', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
+                      { entityTypeId: 'deco_arbol_normal', density: 0.3 }, // 30% tendrán un árbol normal
+                      { entityTypeId: 'deco_roca_musgosa', density: 0.05 }  // 5% tendrán una roca
+                  ],
+                  spawnSettings: { 
+                      targetEntities: [
+                          { entityTypeId: "osa_mayor_esmeralda", count: 2, currentCount: 0 }, // Un enemigo más raro y fuerte
+                          { entityTypeId: "treant_anciano", count: 1, currentCount: 0 }, // Un mini-jefe de zon
+                      ],
+                      respawnTimer: 0,
+                      respawnCooldown: 450,
+                      lastSpawnCheck: 0,
+                  },
+              },
+              // Bosque Esmeralda
+              {
+                  x1: 30,
+                  y1: 10,
+                  x2: 59,
+                  y2: 39,
+                  type: "GRASSLAND", // <-- El terreno base ahora es hierba
+                  name: "Bosque Esmeralda",
+                  decorations: [ 
+                      { entityTypeId: 'deco_arbol_grande', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
+                      { entityTypeId: 'deco_arbol_normal', density: 0.3 }, // 30% tendrán un árbol normal
+                      { entityTypeId: 'deco_roca_musgosa', density: 0.05 }  // 5% tendrán una roca
+                  ],
+                  spawnSettings: { 
+                      targetEntities: [
+                          { entityTypeId: "monster_bosque_lobo", count: 8, currentCount: 0 },
+                          { entityTypeId: "monster_bosque_arana", count: 5, currentCount: 0 },
+                          { entityTypeId: "resource_hierbas_bosque", count: 3, currentCount: 0 },
+                          { entityTypeId: "monster_alpha", count: 5, currentCount: 0 },
+                      ],
+                      respawnTimer: 0,
+                      respawnCooldown: 450,
+                      lastSpawnCheck: 0,
+                  },
+              },
+              // Desierto Abrasador profundo
+              {
+                x1: 69,
+                y1: 50,
+                x2: 90,
+                y2: 69,
+                type: "DESERT",
+                name: "Desierto Abrasador profundo",
+                decorations: [ 
+                      { entityTypeId: 'deco_desierto', density: 0.05 }, // 5% de las celdas tendrán un árbol grande
+                      
+              
+                  ],
+                spawnSettings: {
+                  targetEntities: [
+                    {
+                      entityTypeId: "djinn_arenas",
+                      count: 20,
+                      currentCount: 0,
+                    },
+                    {
+                      entityTypeId: "gusano_dunas_colosal",
+                      count: 20,
+                      currentCount: 0,
+                      isElite: true,
+                    }, // Golem como elite
+                  ],
+                  respawnTimer: 0,
+                  respawnCooldown: 600,
+                  lastSpawnCheck: 0,
+                },
+              },
+              // Desierto Abrasador
+              {
+                x1: 1,
+                y1: 41,
+                x2: 90,
+                y2: 69,
+                type: "DESERT",
+                name: "Desierto Abrasador",
+                decorations: [ 
+                      { entityTypeId: 'deco_desierto', density: 0.05 }, // 5% de las celdas tendrán un árbol grande
+                      
+              
+                  ],
+                spawnSettings: {
+                  targetEntities: [
+                    {
+                      entityTypeId: "monster_desierto_escorpion",
+                      count: 70,
+                      currentCount: 0,
+                    },
+                    {
+                      entityTypeId: "monster_desierto_golem_arena",
+                      count: 20,
+                      currentCount: 0,
+                      isElite: true,
+                    }, // Golem como elite
+                  ],
+                  respawnTimer: 0,
+                  respawnCooldown: 600,
+                  lastSpawnCheck: 0,
+                },
+              },
+              // RUINAS
+              {
+                x1: 500, y1: 500,
+                x2: 550, y2: 550,
+                type: "RUINS",
+                name: "Corazón de las Ruinas Olvidadas",
+                decorations: [ 
+                      
+                      { entityTypeId: 'deco_ruina_pilar', density: 0.02 }, 
+                     
+                  ],
+                isIsolated: true,          // Marca esta zona como un "mapa" separado
+                ambientColor: '#1a1a1a',   // Color del "vacío" alrededor de la zona
+                spawnSettings: {
+                  targetEntities: [
+                    { entityTypeId: "esqueleto_podrido", count: 25, currentCount: 0 },
+                    { entityTypeId: "boss_ancient_golem", count: 25, currentCount: 0 }, 
+                  ],
+                  respawnTimer: 0,
+                  respawnCooldown: 400,
+                  lastSpawnCheck: 0,
+                },
+              },
+              // Ciénaga Sombría
+              {
+                x1: 66,
+                y1: 15,
+                x2: 90,
+                y2: 39,
+                type: "SWAMP",
+                name: "Ciénaga Sombría",
+                decorations: [ // <-- NUEVA PROPIEDAD
+                      { entityTypeId: 'deco_arbol_pantano', density: 0.1 }, // 10% de las celdas tendrán un árbol grande
+                      { entityTypeId: 'deco_agua_estancada', density: 0.05 }
+              
+                  ],
+                spawnSettings: {
+                  targetEntities: [
+                    {
+                      entityTypeId: "monster_cienaga_serpiente",
+                      count: 4,
+                      currentCount: 0,
+                    },
+                  ],
+                  respawnTimer: 0,
+                  respawnCooldown: 400,
+                  lastSpawnCheck: 0,
+                },
+              },
+              
             
               
             ],
@@ -1903,13 +2009,20 @@
           },
           battle: {
             active: false,
-            enemy: null,
+            enemy: {
+            reflectDamageTurns: 0, // Para el aura de espinas
+            reflectDamageMultiplier: 0, 
+
+            },
+
+
             playerTurn: true,
           },
           gameTime: 0, // Un simple contador de segundos del juego para los temporizadores
           lastGameTimeUpdate: Date.now(),
           activeCombatAbilities: [],
-        };
+        
+        };//FIN GAMESTATE
 
         let battleLogHistory = [];
 
@@ -1922,6 +2035,7 @@
         let recoveryProgress = 0;
         let recoveryDirection = 1; // 1 para aumentar, -1 para disminuir
         const RECOVERY_CYCLE_DURATION = 2;
+
         const G_COMBAT_ENTITY_TYPES = [
           "monster",
           "esqueleto_podrido",
@@ -1957,6 +2071,34 @@
         const G_SAFE_RESPAWN_X = 10;
         const G_SAFE_RESPAWN_Y = 10;
         const G_SAFE_RESPAWN_SEARCH_RADIUS = 3;
+        // TELETRANSPORTE
+        const TELEPORTER_DATA = {
+            'tp_sect_hub': {
+                name: "Matriz Central de la Secta",
+                x: 15,  // <-- Coordenadas al lado de la secta
+                y: 11,
+                isHub: true // Marca este como el punto de partida principal
+            },
+            'tp_forest_shrine': {
+                name: "Santuario del Bosque Esmeralda",
+                x: 45, // <-- Coordenadas en medio del bosque
+                y: 25,
+                isHub: false
+            },
+            'tp_desert_oasis': {
+                name: "Oasis del Desierto Abrasador",
+                x: 40, // <-- Coordenadas en una zona segura del desierto
+                y: 60,
+                isHub: false
+            },
+            'tp_swamp_ruin': {
+                name: "Ruina Hundida de la Ciénaga",
+                x: 75, // <-- Coordenadas en la ciénaga
+                y: 30,
+                isHub: false
+            }
+            // Puedes añadir más teletransportadores aquí en el futuro
+        };
         const G_TERRAIN_TYPES = {
           VOID: {
             textureUrl: "img/mont_sup.png", // ¡Asegúrate de que esta imagen exista!
@@ -2388,7 +2530,7 @@
           mision_cultivador_hostil_1: {
             titulo: "Rivalidad Temprana",
             descripcion:
-              "Un Cultivador Novato Hostil ha estado desafiando a discípulos de nuestra secta. El Guía Lin quiere que le des una lección. Derrótalo.",
+              "Un grupo de cultivadores están causando alboroto en la secta. El Guía Lin quiere que les des una lección. Derrótalos.",
             objetivo: {
               tipo: "eliminar_enemigo",
               enemigoTipo: "cultivator_rival_low",
@@ -2517,6 +2659,8 @@
             { itemName: "Rollo: Barrera Mística", price: 220, stock: 3 },
           ],
         };
+        
+        //ROLLOS DE TECNICAS
         const techniqueData = {
           // =================================================================
           // == GRADO 1 (Rango: Discípulo Externo)
@@ -2871,9 +3015,83 @@
         
 // ===  DICCIONARIO DE HABILIDADES DE ENEMIGOS ===
       const enemyAbilityData = {
+      // --- BUFFS (Mejoras al enemigo) ---
+      
+      stone_skin_1: {
+          name: "Piel de Piedra",
+          type: "buff_stat",
+          logMessage: (enemyName, defenseBoost, duration) => `${enemyName} usa Piel de Piedra. ¡Su defensa aumenta en ${defenseBoost} por ${duration} turnos!`,
+          effect: {
+              stat: "defense", // La estadística a mejorar
+              amount: 15,      // Cuánto aumenta
+              duration: 3      // Cuántos turnos dura
+          }
+      },
+      // --- DEBUFFS (Perjuicios al jugador) ---
+      armor_break: {
+          name: "Golpe Rompe-Armadura",
+          type: "debuff_stat",
+          logMessage: (enemyName, damage, reduction, duration) => `¡${enemyName} usa un Golpe Rompe-Armadura! Recibes ${damage} de daño y tu defensa se reduce en ${reduction} por ${duration} turnos.`,
+          effect: {
+              baseDamageMultiplier: 1.2,
+              debuff: {
+                  stat: "defense",
+                  amount: 10,
+                  duration: 3
+              }
+          }
+      },
+      thorns_aura: {
+          name: "Aura de Espinas",
+          type: "buff_reflect", 
+          logMessage: (enemyName, reflectPercent, duration) => `${enemyName} se rodea de un Aura de Espinas. ¡Reflejará un ${reflectPercent}% del daño durante ${duration} turnos!`,
+          effect: {
+              reflectChance: 1.0, // 100% de probabilidad de reflejar
+              reflectMultiplier: 0.25, // Refleja el 25% del daño
+              duration: 2
+          }
+      },
+      armor_piercing_strike: {
+          name: "Golpe Perforante",
+          type: "piercing_damage", 
+          logMessage: (enemyName, damage) => `${enemyName} utiliza un Golpe Perforante que ignora parte de tu armadura, ¡causando ${damage} de daño!`,
+          effect: {
+              baseDamageMultiplier: 1.1,
+              armorPenetration: 0.3 // 30% de la defensa del jugador será ignorada
+          }
+      },
+      intimidating_roar: {
+          name: "Rugido Intimidante",
+          type: "debuff_stat_no_damage", // Un debuff que no hace daño directo
+          logMessage: (enemyName, reduction, duration) => `¡${enemyName} suelta un Rugido Intimidante! Tu ataque se reduce en ${reduction} por ${duration} turnos.`,
+          effect: {
+              debuff: {
+                  stat: "attack",
+                  amount: 8,
+                  duration: 3
+              }
+          }
+      },
+     
+      // --- ATAQUES CON DAÑO EN EL TIEMPO (DoT) ---
+        fire_breath: {
+            name: "Aliento de Fuego",
+            type: "dot_damage",
+            logMessage: (enemyName, damage, burnDmg, duration) => `¡${enemyName} te envuelve en su Aliento de Fuego! Recibes ${damage} de daño y quedas quemado por ${burnDmg} de daño durante ${duration} turnos.`,
+            effect: {
+                baseDamageMultiplier: 0.8,
+                dot: {
+                    type: "burn", // 'burn', 'poison', 'curse', etc.
+                    damagePerTurn: 8,
+                    duration: 3
+                }
+            }
+        },
+        
+        
         poison_sting: {
-          name: "Aguijón Venenoso",
-          type: "debuff_damage",
+          name: "Picadura Venenosa",
+          type: "dot_damage",
           logMessage: (enemyName, damage, poisonDmg, duration) => `¡${enemyName} te clava su Aguijón Venenoso! Recibes ${damage} de daño y quedas envenenado por ${poisonDmg} de daño durante ${duration} turnos.`,
           effect: {
             baseDamageMultiplier: 0.5, // El golpe inicial no es tan fuerte
@@ -2883,48 +3101,78 @@
             }
           }
         },
-        armor_break: {
-            name: "Golpe Rompe-Armadura",
-            type: "debuff_stat",
-            logMessage: (enemyName, damage, reduction, duration) => `¡${enemyName} usa un Golpe Rompe-Armadura! Recibes ${damage} de daño y tu defensa se reduce en ${reduction} por ${duration} turnos.`,
+         // Una maldición que drena el maná del jugador cada turno
+        mana_curse: {
+            name: "Maldición de Maná",
+            type: "dot_resource", // <--- TIPO NUEVO (DoT que afecta un recurso)
+            logMessage: (enemyName, manaDrain, duration) => `${enemyName} te maldice, ¡drenando ${manaDrain} de tu maná cada turno durante ${duration} turnos!`,
             effect: {
-                baseDamageMultiplier: 1.2,
-                debuff: {
-                    stat: "defense",
-                    amount: 10,
+                dot: {
+                    resource: "mana", // El recurso a drenar
+                    drainPerTurn: 15,
                     duration: 3
                 }
             }
         },
-        intimidating_roar: {
-            name: "Rugido Intimidante",
-            type: "debuff_stat_no_damage",
-            logMessage: (enemyName, reduction, duration) => `¡${enemyName} suelta un Rugido Intimidante! Tu ataque se reduce en ${reduction} por ${duration} turnos.`,
+        // --- HABILIDADES DE CURACIÓN Y ROBO DE VIDA ---
+        basic_heal: {
+            name: "Recuperación Menor",
+            type: "heal",
+            logMessage: (enemyName, healAmount) => `${enemyName} se concentra y recupera ${healAmount} de vida.`,
             effect: {
-                debuff: {
-                    stat: "attack",
-                    amount: 8,
-                    duration: 3
-                }
-            }
-        },
-        curacion_basica: {
-            name: "Curación",
-            type: "buff",
-            logMessage: (enemyName,healAmount) => `¡${enemyName} Toma una medicina y se cura ${healAmount}.`,
-            effect: {
-                healAmount:50,
+                healAmount: 50
             }
         },
         life_drain: {
             name: "Drenaje Vital",
-            type: "heal_damage",
+            type: "heal_damage", // Hace daño Y se cura
             logMessage: (enemyName, damage, healAmount) => `¡${enemyName} usa Drenaje Vital! Te roba ${damage} de vida y se cura ${healAmount}.`,
             effect: {
                 baseDamageMultiplier: 0.8,
                 lifesteal: 0.5 // 50% del daño infligido se convierte en curación para el enemigo
             }
-        }
+        },
+     
+
+
+        //--- HABILIDADES DE ATURDIMIENTO 
+        concussive_blow: {
+            name: "Golpe Conmocionador",
+            type: "stun_chance", // <--- TIPO NUEVO
+            logMessage: (enemyName, damage, didStun) => {
+                let msg = `${enemyName} te asesta un Golpe Conmocionador, infligiendo ${damage} de daño.`;
+                if (didStun) {
+                    msg += " ¡Quedas aturdido y pierdes tu próximo turno!";
+                }
+                return msg;
+            },
+            effect: {
+                baseDamageMultiplier: 0.7, // Menos daño directo a cambio del potente efecto
+                stunChance: 0.40 // 40% de probabilidad de aturdir
+            }
+        },
+
+    //  HABILIDADES DE BLANCO ESPECIAL
+
+        //  Un ataque que golpea a un clon si está activo, o al jugador si no.
+        clone_hunter: {
+            name: "Cazador de Ilusiones",
+            type: "special_target_damage", // <--- TIPO NUEVO
+            logMessage: (enemyName, damage, target) => {
+                if (target === 'clone') {
+                    return `${enemyName} usa Cazador de Ilusiones y destruye tu clon!`;
+                } else {
+                    return `${enemyName} usa Cazador de Ilusiones, ¡y te golpea directamente con ${damage} de daño!`;
+                }
+            },
+            effect: {
+                baseDamageMultiplier: 1.5 // Muy dañino si no hay clon
+            }
+        },
+
+
+
+
       };
       
  
@@ -3099,7 +3347,53 @@
             reward: "Hierbas Medicinales",
             interaction: "collect_resource",
           },
-
+          // Tipo genérico para la plataforma
+          teleport_platform: {
+              symbol: "🌀",
+              name: "Matriz de Teletransporte",
+              spriteUrl: "img/teleport_plat.png", // ¡Necesitarás crear o encontrar esta imagen!
+              interaction: "activate_teleporter", // Esta es la nueva interacción clave
+              discovered: true // Queremos que se vean en el mapa desde el principio
+          },
+          tp_sect_hub: {
+              symbol: "🌀",
+              name: "Matriz Central",
+              spriteUrl: "img/teleport_plat.png", 
+              interaction: "activate_teleporter",
+              teleporterId: 'tp_sect_hub',
+              fixedLocation: { x: 15, y: 11 },
+              discovered: true
+          },
+          tp_forest_shrine: {
+              symbol: "🌀",
+              name: "Matriz Bosque esmeralda",
+              spriteUrl: "img/teleport_plat.png", 
+              
+              teleporterId: 'tp_forest_shrine',
+              interaction: "activate_teleporter",
+              fixedLocation: { x: 45, y: 25 },
+              
+              discovered: true,
+          },
+          tp_desert_oasis: {
+            symbol: "🌀",
+              name: "Matriz Desierto",
+              spriteUrl: "img/teleport_plat.png",
+              teleporterId: 'tp_desert_oasis', 
+              interaction: "activate_teleporter",
+              fixedLocation: { x: 40, y: 60 },
+              discovered: false,
+          },
+          tp_swamp_ruin: {
+            symbol: "🌀",
+              name: "Matriz Ruinas 1",
+              spriteUrl: "img/teleport_plat.png", 
+              interaction: "activate_teleporter",
+              teleporterId: 'tp_swamp_ruin',
+              fixedLocation: { x: 75, y: 30 },
+              discovered: false,
+          },
+          
            // === NUEVAS ENTIDADES DE TRANSICIÓN ===
           transition_ruins_entrance: {
             symbol: "🌀",
@@ -3121,7 +3415,7 @@
             targetY: 46,  // Coordenada Y de destino (aparece al lado de la entrada)
             discovered: true,
           },
-
+          
 
 //ENEMIGOS
           monster: {
@@ -3203,7 +3497,7 @@
             maxHp: 90,
             specialChance: 0.35,
             specialAttackMultiplier: 1.8,
-            aabilities: [
+            abilities: [
           {
             abilityId: "poison_sting", // ID de la habilidad en enemyAbilityData
             chance: 0.40 // 40% de probabilidad de usar esta habilidad en su turno
@@ -3228,19 +3522,11 @@
             specialChance: 0.35,
             specialAttackMultiplier: 1.8,
             abilities: [
-              {
-                name: "Tornado de arena",
-                damageMultiplier: 2.0,
-                chance: 0.2,
-                type: "area_attack_simulated",
-              },
-              {
-                name: "stone_skin_1",
-                effect: { defenseBoost: 15, duration: 3, manaCost: 25 },
-                chance: 0.2,
-                type: "area_attack_simulated",
-              },
-            ],
+          {
+            abilityId: " piel_de_piedra", // ID de la habilidad en enemyAbilityData
+            chance: 0.40 // 40% de probabilidad de usar esta habilidad en su turno
+          }
+        ],
             lootTable: [
               { itemName: "Cristales de Qi", quantity: [1, 3], chance: 0.3 },
               { itemName: "Núcleo de Arena", quantity: [1, 1], chance: 0.6 },
@@ -3259,13 +3545,11 @@
             maxHp: 60,
             specialChance: 0.35,
             specialAttackMultiplier: 1.8,
-            abilities: [
+           abilities: [
               {
-                name: "Mordida Venenosa",
-                damageMultiplier: 2.0,
-                chance: 0.4,
-                type: "area_attack_simulated",
-              },
+                abilityId: "poison_sting", // ID de la habilidad en enemyAbilityData
+                chance: 0.30 
+              }
             ],
             lootTable: [
               { itemName: "Escama de Serpiente", quantity: [1, 2], chance: 0.5 },
@@ -3402,7 +3686,7 @@
             name: "Elemental de Magma Menor",
             typeOverride: "monster",
             hp: 150,
-            level:7,
+            level:17,
             attack: 40,
             defense: 5,
             exp: 45,
@@ -3447,10 +3731,10 @@
             name: "Esqueleto podrido",
             spriteUrl: "img/esqueleto_1.png",
             typeOverride: "monster",
-            hp: 180,
-            level:9,
-            attack: 45,
-            defense: 10,
+            hp: 500,
+            level:15,
+            attack: 60,
+            defense: 30,
             exp: 60,
             maxHp: 180,
             lootTable: [
@@ -3462,7 +3746,7 @@
               
             ],
           },
-             jabali_alfa_1: { 
+          jabali_alfa_1: { 
               symbol: "🐗",
               name: "Jabalí Colmilludo",
               spriteUrl: "img/jabali.png",
@@ -3612,7 +3896,7 @@
             lootTable: [ /* (mismo loot) */ ],
             fixedLocation: { x: 58, y: 30 },
           },
-           jabali_alfa_10: { 
+          jabali_alfa_10: { 
             symbol: "🐗",
             name: "Jabalí Colmilludo",      
             spriteUrl: "img/jabali.png",
@@ -3692,7 +3976,241 @@
             ],
             fixedLocation: { x: 52, y: 34 },
           },
-          
+          // ==========================================================
+          // === NUEVOS ENEMIGOS DE NIVEL MEDIO (10-20) ===
+          // ==========================================================
+
+          // --- ENEMIGOS DEL BOSQUE PROFUNDO ---
+
+          // 1. Osa Mayor Esmeralda (Tanque con Buff de Defensa)
+          osa_mayor_esmeralda: {
+              symbol: "🐻",
+              name: "Osa Mayor Esmeralda",
+              spriteUrl: "img/osa_mayor.png", // Necesitarías un sprite para este
+              level: 12,
+              hp: 450,
+              maxHp: 450,
+              attack: 40,
+              defense: 25,
+              exp: 150,
+              abilities: [
+                  { abilityId: "stone_skin_1", chance: 0.30 }, // Se vuelve muy dura
+                  { abilityId: "concussive_blow", chance: 0.15 } // Un golpe poderoso pero poco frecuente
+              ],
+              lootTable: [
+                  { itemName: "Piel de Bestia Gruesa", quantity: [1, 2], chance: 0.7 },
+                  { itemName: "Carne de Bestia Exótica", quantity: [2, 4], chance: 0.5 },
+                  { itemName: "Piedras Espirituales", quantity: [10, 20], chance: 1.0 }
+              ]
+          },
+
+          // 2. Treant Anciano (Drenaje de Recursos y Curación)
+          treant_anciano: {
+              symbol: "🌳",
+              name: "Treant Anciano",
+              spriteUrl: "img/treant.png", // Necesitarías un sprite para este
+              level: 15,
+              hp: 600,
+              maxHp: 600,
+              attack: 50,
+              defense: 30,
+              exp: 220,
+              abilities: [
+                  { abilityId: "mana_curse", chance: 0.35 },     // Dificulta a los jugadores que usan maná
+                  { abilityId: "basic_heal", chance: 0.20 }      // Prolonga el combate curándose
+              ],
+              lootTable: [
+                  { itemName: "Corazón de Madera Viviente", quantity: [1, 1], chance: 0.4 },
+                  { itemName: "Semillas Ancestrales", quantity: [1, 3], chance: 0.2 },
+                  { itemName: "Piedras Espirituales", quantity: [15, 25], chance: 1.0 }
+              ]
+          },
+
+          // --- ENEMIGOS DE LA CIÉNAGA SOMBRÍA ---
+
+          // 3. Basilisco de Ciénaga (Aturdimiento y Veneno)
+          basilisco_cienaga: {
+              symbol: "🦎",
+              name: "Basilisco de Ciénaga",
+              spriteUrl: "img/basilisco.png", // Necesitarías un sprite para este
+              level: 14,
+              hp: 380,
+              maxHp: 380,
+              attack: 65,
+              defense: 18,
+              exp: 180,
+              abilities: [
+                  { abilityId: "concussive_blow", chance: 0.25 }, // Simula una mirada petrificante con el stun
+                  { abilityId: "poison_sting", chance: 0.40 }      // Su mordida es venenosa
+              ],
+              lootTable: [
+                  { itemName: "Ojo de Basilisco", quantity: [1, 1], chance: 0.3 },
+                  { itemName: "Escamas Iridiscentes", quantity: [2, 3], chance: 0.6 },
+                  { itemName: "Piedras Espirituales", quantity: [12, 22], chance: 1.0 }
+              ]
+          },
+
+          // 4. Espectro del Pantano (Drena Vida y Debilita)
+          espectro_pantano: {
+              symbol: "👻",
+              name: "Espectro del Pantano",
+              spriteUrl: "img/espectro.png", // Necesitarías un sprite para este
+              level: 17,
+              hp: 550,
+              maxHp: 550,
+              attack: 70,
+              defense: 15, // Baja defensa física, pero peligroso
+              exp: 250,
+              abilities: [
+                  { abilityId: "life_drain", chance: 0.30 },         // Se cura a costa del jugador
+                  { abilityId: "intimidating_roar", chance: 0.25 } // Su lamento debilita el ataque
+              ],
+              lootTable: [
+                  { itemName: "Esencia Espectral", quantity: [1, 2], chance: 0.5 },
+                  { itemName: "Almas Condenadas", quantity: [1, 1], chance: 0.25 },
+                  { itemName: "Piedras Espirituales", quantity: [20, 30], chance: 1.0 }
+              ]
+          },
+
+          // --- ENEMIGOS DEL DESIERTO ABRASADOR ---
+
+          // 5. Djinn de las Arenas (Ataque perforante)
+          djinn_arenas: {
+              symbol: "🧞",
+              name: "Djinn de las Arenas",
+              spriteUrl: "img/djinn.png", // Necesitarías un sprite para este
+              level: 18,
+              hp: 650,
+              maxHp: 650,
+              attack: 80,
+              defense: 20,
+              exp: 300,
+              abilities: [
+                  { abilityId: "armor_piercing_strike", chance: 0.40 }, // Su cimitarra de viento corta cualquier armadura
+                  { abilityId: "fire_breath", chance: 0.20 } // Aliento abrasador del desierto
+              ],
+              lootTable: [
+                  { itemName: "Corazón de Tormenta de Arena", quantity: [1, 1], chance: 0.2 },
+                  { itemName: "Esencia de Fuego", quantity: [2, 4], chance: 0.5 },
+                  { itemName: "Piedras Espirituales", quantity: [25, 40], chance: 1.0 }
+              ]
+          },
+
+          // 6. Gusano de las Dunas Colosal (Tanque con reflejo de daño)
+          gusano_dunas_colosal: {
+              symbol: "🐛",
+              name: "Gusano de las Dunas Colosal",
+              spriteUrl: "img/gusano_arena.png", // Necesitarías un sprite para este
+              level: 20,
+              hp: 1000,
+              maxHp: 1000,
+              attack: 60,
+              defense: 40,
+              exp: 400,
+              abilities: [
+                  { abilityId: "thorns_aura", chance: 0.30 }, // Su piel quitinosa daña a los atacantes
+                  { abilityId: "armor_break", chance: 0.20 } // Su mordida aplastante rompe defensas
+              ],
+              lootTable: [
+                  { itemName: "Diente de Gusano de Arena", quantity: [1, 1], chance: 0.5 },
+                  { itemName: "Quitina Reforzada", quantity: [3, 5], chance: 0.7 },
+                  { itemName: "Piedras Espirituales", quantity: [50, 75], chance: 1.0 }
+              ]
+          },
+
+          // --- CULTIVADORES RIVALES Y BANDIDOS ---
+
+          // 7. Cultivador Renegado (Equilibrado y peligroso)
+          cultivador_renegado: {
+              symbol: "😡",
+              name: "Cultivador Renegado",
+              spriteUrl: "img/cultivador_hostil_2.png", // Un sprite de cultivador más avanzado
+              level: 16,
+              hp: 500,
+              maxHp: 500,
+              attack: 75,
+              defense: 22,
+              exp: 240,
+              abilities: [
+                  { abilityId: "armor_piercing_strike", chance: 0.25 }, // Sabe dónde golpear
+                  { abilityId: "basic_heal", chance: 0.15 },            // Usa píldoras para curarse
+                  { abilityId: "fire_breath", chance: 0.20 }            // Usa una técnica de fuego
+              ],
+              lootTable: [
+                  { itemName: "Píldora de Recuperación Menor", quantity: [1, 2], chance: 0.3 },
+                  { itemName: "Rollo: Técnica Aleatoria Menor", quantity: [1, 1], chance: 0.05 }, // Requeriría una lógica de loot especial
+                  { itemName: "Piedras Espirituales", quantity: [30, 50], chance: 1.0 }
+              ]
+          },
+
+          // 8. Mercenario Acorazado (Defensa y Stun)
+          mercenario_acorazado: {
+              symbol: "🛡️",
+              name: "Mercenario Acorazado",
+              spriteUrl: "img/mercenario.png", // Necesitarías un sprite para este
+              level: 13,
+              hp: 500,
+              maxHp: 500,
+              attack: 55,
+              defense: 35,
+              exp: 160,
+              abilities: [
+                  { abilityId: "stone_skin_1", chance: 0.40 },   // Siempre mantiene su defensa alta
+                  { abilityId: "concussive_blow", chance: 0.20 } // Golpe de escudo
+              ],
+              lootTable: [
+                  { itemName: "Fragmento de Armadura Pesada", quantity: [1, 1], chance: 0.6 },
+                  { itemName: "Contrato de Mercenario", quantity: [1, 1], chance: 0.1 },
+                  { itemName: "Piedras Espirituales", quantity: [15, 25], chance: 1.0 }
+              ]
+          },
+
+          // --- ENEMIGOS DE RUINAS ANTIGUAS ---
+
+          // 9. Guardián de Terracota (Defensivo y con Reflejo)
+          guardian_terracota: {
+              symbol: "🗿",
+              name: "Guardián de Terracota",
+              spriteUrl: "img/guardian_terracota.png", // Necesitarías un sprite para este
+              level: 19,
+              hp: 750,
+              maxHp: 750,
+              attack: 70,
+              defense: 50,
+              exp: 350,
+              abilities: [
+                  { abilityId: "thorns_aura", chance: 0.25 }, // Su superficie encantada devuelve el daño
+                  { abilityId: "stone_skin_1", chance: 0.25 },  // Se endurece aún más
+                  { abilityId: "armor_break", chance: 0.15 }   // Un golpe para ablandar al objetivo
+              ],
+              lootTable: [
+                  { itemName: "Fragmentos de Jade", quantity: [2, 5], chance: 0.5 },
+                  { itemName: "Núcleo de Golem Antiguo", quantity: [1, 1], chance: 0.2 },
+                  { itemName: "Piedras Espirituales", quantity: [40, 60], chance: 1.0 }
+              ]
+          },
+
+          // 10. Ilusionista Sombrío (Cazador de Clones y Drenaje de Maná)
+          ilusionista_sombrio: {
+              symbol: "👤",
+              name: "Ilusionista Sombrío",
+              spriteUrl: "img/ilusionista.png", // Necesitarías un sprite para este
+              level: 18,
+              hp: 480,
+              maxHp: 480,
+              attack: 85, // Golpea duro si te pilla sin defensas
+              defense: 20,
+              exp: 320,
+              abilities: [
+                  { abilityId: "clone_hunter", chance: 0.50 }, // Su principal estrategia es eliminar clones
+                  { abilityId: "mana_curse", chance: 0.30 }      // Te deja sin recursos para contraatacar
+              ],
+              lootTable: [
+                  { itemName: "Polvo de Ilusión", quantity: [1, 3], chance: 0.7 },
+                  { itemName: "Espejos Astrales", quantity: [1, 1], chance: 0.15 },
+                  { itemName: "Piedras Espirituales", quantity: [35, 55], chance: 1.0 }
+              ]
+          },
           //BOSSES
            jabali_colmilludo_alfa: { 
             symbol: "🐗",
@@ -3718,7 +4236,7 @@
         
           golem_de_piedra: {
             symbol: "🗿",
-            name: "Golem Ancestral de Jade",
+            name: "Golem de piedra",
             spriteUrl: "img/golem_jade.png",
             typeOverride: "monster",
             hp: 800,
@@ -3727,12 +4245,11 @@
             defense: 50,
             exp: 500,
             maxHp: 800,
-            isBoss: true,
             abilities: [
               {
                 name: "Golpe Sísmico",
                 damageMultiplier: 2.0,
-                chance: 0.2,
+                chance: 0.1,
                 type: "area_attack_simulated",
               },
               { name: "Restauración Pétrea", healPercentage: 0.2, chance: 0.1 },
@@ -4356,7 +4873,35 @@
           },
         };
 
-  
+        let zoneNotificationTimeout = null; 
+
+        function showZoneNotification(zoneName) {
+            console.log(`[Depuración showZoneNotification] Se llamó a la función con el nombre de zona: "${zoneName}"`);
+            const notificationElement = document.getElementById('zone-notification');
+            
+            if (!notificationElement) {
+                console.error("[Depuración showZoneNotification] ¡ERROR CRÍTICO! El elemento #zone-notification no fue encontrado en el DOM.");
+                return;
+            }
+            console.log("[Depuración showZoneNotification] Elemento #zone-notification encontrado con éxito.");
+
+            if (zoneNotificationTimeout) {
+                clearTimeout(zoneNotificationTimeout);
+                console.log("[Depuración showZoneNotification] Se limpió un temporizador de notificación anterior.");
+            }
+
+            notificationElement.textContent = `Has entrado en: ${zoneName}`;
+            console.log(`[Depuración showZoneNotification] Texto del elemento actualizado a: "${notificationElement.textContent}"`);
+            
+            notificationElement.classList.add('show');
+            console.log("[Depuración showZoneNotification] Clase 'show' añadida. El elemento debería ser visible ahora.");
+
+            zoneNotificationTimeout = setTimeout(() => {
+                notificationElement.classList.remove('show');
+                console.log("[Depuración showZoneNotification] Temporizador completado. Clase 'show' eliminada.");
+            }, 3000); 
+            console.log(`[Depuración showZoneNotification] Nuevo temporizador (${zoneNotificationTimeout}) programado para ocultar el mensaje en 3 segundos.`);
+        }
         // --- FUNCIONES HELPER PARA UI MÓVIL ---
         function isMobileView() {
           return (
@@ -4543,7 +5088,100 @@
             btn.textContent = "Ocultar Controles";
           }
         }
+        function handleTeleporterInteraction(entity) {
+          if (!entity.teleporterId) return;
 
+          const teleporterId = entity.teleporterId;
+          const teleporterInfo = TELEPORTER_DATA[teleporterId];
+          const player = gameState.player;
+
+          if (!teleporterInfo) {
+              console.error(`Datos no encontrados para el teletransportador con ID: ${teleporterId}`);
+              return;
+          }
+
+          // Comprobar si ya está activado
+          if (!player.unlockedTeleporters[teleporterId]) {
+              // ¡Primera activación!
+              player.unlockedTeleporters[teleporterId] = true;
+              showModal(
+                  "Matriz Sintonizada",
+                  `Has canalizado tu Qi en la matriz. ¡Ahora puedes viajar hacia y desde "${teleporterInfo.name}"!`
+              );
+              // Podríamos abrir el menú de teletransporte directamente después,
+              // pero un mensaje de feedback primero es mejor.
+          } else {
+              // Si ya está activado, simplemente abrimos el menú de viaje.
+              openTeleportModal();
+          }
+      }
+
+      function openTeleportModal() {
+          const container = document.getElementById("teleportOptionsContainer");
+          const player = gameState.player;
+          container.innerHTML = ""; // Limpiar opciones anteriores
+
+          let hasDestinations = false;
+
+          for (const id in player.unlockedTeleporters) {
+              // No mostrar la ubicación actual como un destino
+              const currentTeleporter = getTeleporterAt(player.x, player.y);
+              if (currentTeleporter && currentTeleporter.id === id) {
+                  continue;
+              }
+
+              hasDestinations = true;
+              const destinationInfo = TELEPORTER_DATA[id];
+              const button = document.createElement("button");
+              button.className = "cultivation-option-btn";
+              button.textContent = `Viajar a: ${destinationInfo.name}`;
+              button.onclick = () => teleportPlayer(id);
+              container.appendChild(button);
+          }
+
+          if (!hasDestinations) {
+              container.innerHTML = "<p>No has sintonizado otras Matrices de Teletransporte todavía. ¡Explora para activarlas!</p>";
+          }
+
+          document.getElementById('teleportModal').style.display = 'flex';
+          hideTouchControls();
+      }
+
+      function teleportPlayer(destinationId) {
+          const destination = TELEPORTER_DATA[destinationId];
+          if (!destination) return;
+
+          // Actualizar coordenadas del jugador
+          gameState.player.x = destination.x;
+          gameState.player.y = destination.y;
+
+          closeTeleportModal();
+
+          // Mostrar un feedback visual rápido
+          showModal("Viaje Espiritual", "Te materializas en tu destino...", true);
+          setTimeout(() => {
+              closeModal();
+          }, 1200);
+
+          // ¡Muy importante! Actualizar la vista del mapa
+          updatePlayerPosition('teleport');
+      }
+
+      function closeTeleportModal() {
+          document.getElementById('teleportModal').style.display = 'none';
+          showTouchControls();
+      }
+
+      // Pequeña función de ayuda para saber si el jugador está en un teletransportador
+      function getTeleporterAt(x, y) {
+          for (const id in TELEPORTER_DATA) {
+              const tp = TELEPORTER_DATA[id];
+              if (tp.x === x && tp.y === y) {
+                  return { ...tp, id: id };
+              }
+          }
+          return null;
+      }
         // --- FUNCIONES DEL JUEGO (MODIFICADAS Y EXISTENTES) ---
 
         function learnTechniqueFromRoll(playerState, techId) {
@@ -4632,7 +5270,12 @@
             "secta_entrada_principal",
             "npc_secta_guia",
             "npc_secta_admin",
-      
+            "tp_sect_hub",
+            "tp_forest_shrine",
+            "tp_desert_oasis",
+            "tp_swamp_ruin",
+
+            //ENEMIGOS
             "jabali_colmilludo_alfa",
             "boss_ancient_golem",
             "transition_ruins_entrance",
@@ -5255,92 +5898,86 @@
           });
           // ...
         }
-        // movePlayer() no necesita grandes cambios, ya que updatePlayerPosition()
-        // se encarga ahora del scroll.
+        
         let animationFrameIndex = 0; // Para ciclar a través de PLAYER_WALK_CYCLE
         let lastPlayerMoveTime = 0; // Para controlar el tiempo de la animación
 
-        function movePlayer(dx, dy) {
+       function movePlayer(dx, dy) {
           movePlayerCallCount++;
           const callId = movePlayerCallCount;
-          console.log(`[MovePlayer CALL #${callId}] Intento de mover dx:${dx}, dy:${dy}. Posición actual: (${gameState.player.x}, ${gameState.player.y})`);
 
-          // Cooldown
           const now = Date.now();
           if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
-              // console.log(`[MovePlayer CALL #${callId}] Cooldown activo. Movimiento ignorado.`); // Descomentar si quieres ver esto
               return; 
           }
 
-          const playerState = gameState.player;
-          if (playerState.isCultivating || gameState.battle.active) {
-              console.log(`[MovePlayer CALL #${callId}] Acción bloqueada por cultivo/batalla.`);
-              return;
-          }
-
-          const newX = playerState.x + dx;
-          const newY = playerState.y + dy;
-          console.log(`[MovePlayer CALL #${callId}] Posición de destino calculada: (${newX}, ${newY}).`);
+          const newX = gameState.player.x + dx;
+          const newY = gameState.player.y + dy;
           let canMove = true; 
 
-          // 1. Límites del mapa
+          // Lógica de colisiones y movimiento (esta parte es correcta)
           if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) {
               canMove = false;
-              console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Límites del mapa.`);
           }
-
-          // 2. Terreno
           if (canMove) {
               const targetTerrainId = getTerrainTypeAt(newX, newY);
-              const targetTerrainData = G_TERRAIN_TYPES[targetTerrainId];
-              if (targetTerrainData && targetTerrainData.walkable === false) {
+              if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) {
                   canMove = false;
-                  console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Terreno no caminable ('${targetTerrainId}').`);
               }
           }
-          
-          // 3. Entidades
           if (canMove) {
               const entityAtNewPosition = gameState.map.entities.find(e => e.x === newX && e.y === newY);
-              
               if (entityAtNewPosition) {
-                  console.log(`[MovePlayer CALL #${callId}] Entidad encontrada en destino:`, JSON.parse(JSON.stringify(entityAtNewPosition)));
-                  const entityTypeToCheck = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
-                  console.log(`[MovePlayer CALL #${callId}] Tipo de entidad a verificar: '${entityTypeToCheck}'`);
-                  
                   if (G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) || entityAtNewPosition.isBoss || entityAtNewPosition.isSectChallengeRival) {
-                      console.log(`[MovePlayer CALL #${callId}] La entidad es hostil. Iniciando batalla...`);
                       startBattle(entityAtNewPosition);
                       return; 
                   }
-                  
-                  const isBlocking = G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck);
-                  console.log(`[MovePlayer CALL #${callId}] ¿Está en la lista de bloqueo (G_BLOCKING_ENTITY_TYPES)? -> ${isBlocking}`);
-                  
-                  if (isBlocking) {
+                  const entityTypeToCheck = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
+                  if (G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck)) {
                       canMove = false;
-                      console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Entidad Bloqueadora.`);
                   }
-              } else {
-                  console.log(`[MovePlayer CALL #${callId}] Celda de destino vacía.`);
               }
           }
-
-          console.log(`[MovePlayer CALL #${callId}] Decisión final. canMove: ${canMove}`);
-
+          
+          // Si el movimiento es válido, ejecutamos la lógica de zona
           if (canMove) {
-              console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) PERMITIDO.`);
-              playerState.x = newX;
-              playerState.y = newY;
+              
+              console.log(`%c---[MOVIMIENTO #${callId} APROBADO: (${gameState.player.x}, ${gameState.player.y}) -> (${newX}, ${newY})]---`, 'color: #28a745; font-weight: bold;');
+              
+              // 1. Obtenemos la zona ANTES de actualizar la posición del jugador
+              const oldZone = getPlayerCurrentZone(); 
+              const oldZoneName = oldZone ? oldZone.name : "Tierras Salvajes";
+              console.log(`1. Zona ANTES: "${oldZoneName}"`);
+
+              // 2. ACTUALIZAMOS la posición del jugador en el gameState
+              gameState.player.x = newX;
+              gameState.player.y = newY;
+
+              // 3. Obtenemos la nueva zona AHORA que el jugador se ha movido
+              const newZone = getPlayerCurrentZone();
+              const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
+              console.log(`2. Zona DESPUÉS: "${newZoneName}"`);
+              
+              // 4. La comparación clave
+              console.log(`3. COMPARANDO: ¿"${newZoneName}" es diferente de "${oldZoneName}"?`);
+              if (newZoneName !== oldZoneName) {
+                  console.log(`%c   ==> SÍ, ¡CAMBIO DE ZONA DETECTADO! Mostrando notificación.`, 'color: yellow; background-color: #333;');
+                  showZoneNotification(newZoneName);
+              } else {
+                  console.log(`   ==> NO, el jugador sigue en la misma zona.`);
+              }
+              
+              // 5. Actualizamos la propiedad del jugador para la UI del panel de estado.
+              gameState.player.currentZoneName = newZoneName;
+              
+              // Actualizar el resto del juego
               updatePlayerPosition(`movePlayer_success_call_${callId}`);
               updateUI();
               lastSuccessfulMoveTime = now;
               
-          } else {
-              console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) BLOQUEADO.`);
+              console.log(`%c---[FIN MOVIMIENTO #${callId}]---`, 'color: #28a745;');
           }
-          console.log(`--- Fin de la llamada a movePlayer #${callId} ---`);
-        }
+      }
 
         //FIN FUNCION MOVE PLAYER
         function checkForAggressiveEnemies() {
@@ -5571,9 +6208,12 @@
                       entityContainer.style.justifyContent = 'center';
                       entityContainer.style.zIndex = '5';
 
-                      const definition = entityTypes[entity.originalEntityTypeId] || entityTypes[entity.type];
+                      const definition = entityTypes[entity.originalEntityTypeId] || 
+                               entityTypes[entity.type] ||
+                               (entity.typeOverride && entityTypes[entity.typeOverride]);
+            
+                      // La URL del sprite se toma de la instancia, o de la definición encontrada.
                       const spriteUrl = entity.spriteUrl || (definition ? definition.spriteUrl : null);
-
                       if (spriteUrl) {
                           entityContainer.style.backgroundImage = `url('${spriteUrl}')`;
                           
@@ -5603,6 +6243,34 @@
                               
                           } 
                           else if (entity.originalEntityTypeId === 'boss_dem') {
+                              entityContainer.style.backgroundSize = '100%';
+                              entityContainer.style.top = `${(entity.y - 1.5) * currentTileSize}px`;
+                              entityContainer.style.width = `${currentTileSize * 3}px`;
+                              entityContainer.style.height = `${currentTileSize * 3}px`;
+                              
+                          }
+                          else if (entity.originalEntityTypeId === 'tp_sect_hub') {
+                              entityContainer.style.backgroundSize = '100%';
+                              entityContainer.style.top = `${(entity.y - 1.5) * currentTileSize}px`;
+                              entityContainer.style.width = `${currentTileSize * 3}px`;
+                              entityContainer.style.height = `${currentTileSize * 3}px`;
+                              
+                          }
+                          else if (entity.originalEntityTypeId === 'tp_forest_shrine') {
+                              entityContainer.style.backgroundSize = '100%';
+                              entityContainer.style.top = `${(entity.y - 1.5) * currentTileSize}px`;
+                              entityContainer.style.width = `${currentTileSize * 3}px`;
+                              entityContainer.style.height = `${currentTileSize * 3}px`;
+                              
+                          }
+                          else if (entity.originalEntityTypeId === 'tp_desert_oasis') {
+                              entityContainer.style.backgroundSize = '100%';
+                              entityContainer.style.top = `${(entity.y - 1.5) * currentTileSize}px`;
+                              entityContainer.style.width = `${currentTileSize * 3}px`;
+                              entityContainer.style.height = `${currentTileSize * 3}px`;
+                              
+                          }
+                          else if (entity.originalEntityTypeId === 'tp_swamp_ruin') {
                               entityContainer.style.backgroundSize = '100%';
                               entityContainer.style.top = `${(entity.y - 1.5) * currentTileSize}px`;
                               entityContainer.style.width = `${currentTileSize * 3}px`;
@@ -5731,10 +6399,6 @@
           }
         }
 
-        // Asegúrate que G_TILE_SIZE sea igual a las dimensiones de tu frame de sprite
-        // Si no, tendrás que ajustar cómo se define el tamaño del jugador.
-        // En calculateAndSetTileSize, si currentTileSize se calcula dinámicamente,
-        // y quieres que el jugador SIEMPRE tenga el tamaño del sprite:
         function updatePlayerVisualSize() {
           const playerElement = document.getElementById("player");
           if (playerElement) {
@@ -5748,22 +6412,7 @@
             // Opción A: El jugador mantiene el tamaño del frame original, y currentTileSize es solo para el mapa.
             playerElement.style.width = `${gameState.player.frameWidth}px`;
             playerElement.style.height = `${gameState.player.frameHeight}px`;
-            // En este caso, .player y .character-sprite NO deberían cambiar su width/height en @media queries
-            // basados en currentTileSize, sino mantener el tamaño del frame.
-
-            // Opción B: El jugador se reescala con los tiles del mapa (más complejo con spritesheets).
-            // Si eliges esto, frameWidth y frameHeight en gameState.player deberían ser actualizados
-            // por calculateAndSetTileSize() para ser igual a currentTileSize.
-            // Y el background-size del spritesheet necesitaría ajustarse para que un "frame virtual"
-            // dentro de la hoja escalada coincida con currentTileSize.
-            // Ejemplo para Opción B:
-            //playerElement.style.width = `${currentTileSize}px`;
-            //playerElement.style.height = `${currentTileSize}px`;
-            // Y en updatePlayerSpriteVisual, los cálculos de offsetX/Y necesitarían
-            // usar este currentTileSize en lugar de player.frameWidth/Height si la hoja
-            // también se está escalando.
-            // Por ahora, mantengamos la Opción A (tamaño de frame fijo) que es más simple
-            // si tu CSS para .player no está siendo sobrescrito por las @media queries.
+          
           }
         }
 
@@ -5813,8 +6462,6 @@
           updateExtraStatsUI();
         }
 
-        // ... (el resto de tus funciones JS, como updateUI, movePlayer, interact, etc. SIN CAMBIOS IMPORTANTES aquí,
-        //      ya que los cambios principales son en el renderizado y tamaño de tiles)
         function updateUI() {
           const player = gameState.player;
           document.getElementById("playerLevel").textContent = player.level;
@@ -5895,7 +6542,7 @@
 
         let lastPlayerAnimationUpdateTime = 0; // Renombrado para claridad
 
-        function movePlayer(dx, dy) {
+        /* function movePlayer(dx, dy) {
           movePlayerCallCount++;
           const callId = movePlayerCallCount;
           console.log(`[MovePlayer CALL #${callId}] Intento de mover dx:${dx}, dy:${dy}. Posición actual: (${gameState.player.x}, ${gameState.player.y})`);
@@ -5976,7 +6623,7 @@
           down: false,
           left: false,
           right: false,
-        };
+        }; */
         function handleMovement() {
           let dx = 0;
           let dy = 0;
@@ -6126,6 +6773,10 @@
                   console.warn(`La entidad de transición ${definitionKey} no tiene coordenadas de destino (targetX, targetY).`);
               }
               return; // Detenemos la ejecución para no procesar otros switches
+          }
+          if (interactionType === 'activate_teleporter') {
+              handleTeleporterInteraction(entity);
+              return; // Detener para no procesar otros switches
           }
           if (interactionType) {
             switch (interactionType) {
@@ -7570,406 +8221,418 @@
       }
         
       function battleAction(action, abilityDetails = null) {
-             if (!gameState.battle.playerTurn || !gameState.battle.active) return;
-              const player = gameState.player;
-              const enemy = gameState.battle.enemy;
-              let actionTaken = true;
-        
-        let playerTechLevel = 0;
-        if (abilityDetails && abilityDetails.source === "technique" && abilityDetails.sourceTechniqueId) {
-          playerTechLevel = player.learnedTechniques[abilityDetails.sourceTechniqueId]?.level || 0;
-        }
-
-          // --- Aplicar DoTs y HoTs al JUGADOR ---
-          if (player.burningTurns > 0) {
-            player.hp -= player.burnDamage;
-            logBattle(`Sufres ${player.burnDamage} daño por quemadura.`);
-            player.burningTurns--;
-            if (player.burningTurns === 0) logBattle("Quemadura se extingue.");
-          }
-          if (player.poisonedTurns > 0) {
-            player.hp -= player.poisonDamage;
-            logBattle(`Sufres ${player.poisonDamage} de daño por veneno.`);
-            player.poisonedTurns--;
-            if (player.poisonedTurns === 0) {
-                logBattle("El veneno se ha disipado.");
-                player.poisonDamage = 0;
-            }
-        }
-        // === NUEVA LÓGICA PARA PROCESAR DEBUFFS ===
-        if (player.defenseReductionTurns > 0) {
-            player.defenseReductionTurns--;
-            if (player.defenseReductionTurns === 0) {
-                player.defense += player.defenseReductionAmount; // Restaurar defensa
-                logBattle(`Tu defensa vuelve a la normalidad. (Defensa: ${player.defense})`);
-                player.defenseReductionAmount = 0;
-            }
-        }
-        if (player.attackReductionTurns > 0) {
-            player.attackReductionTurns--;
-            if (player.attackReductionTurns === 0) {
-                player.attack += player.attackReductionAmount; // Restaurar ataque
-                logBattle(`Tu espíritu de lucha se recupera. (Ataque: ${player.attack})`);
-                player.attackReductionAmount = 0;
-            }
-        }
-
-          if (player.healingRainTurns > 0) {
-            const heal = player.healingRainAmount;
-            player.hp = Math.min(player.maxHp, player.hp + heal);
-            logBattle(`Lluvia Curativa te sana ${heal} HP.`);
-            player.healingRainTurns--;
-            if (player.healingRainTurns === 0) logBattle("Lluvia Curativa cesa.");
+          
+        if (!gameState.battle.playerTurn || !gameState.battle.active) return;
+          const player = gameState.player;
+          const enemy = gameState.battle.enemy;
+          let actionTaken = true;
+    
+          let playerTechLevel = 0;
+          if (abilityDetails && abilityDetails.source === "technique" && abilityDetails.sourceTechniqueId) {
+            playerTechLevel = player.learnedTechniques[abilityDetails.sourceTechniqueId]?.level || 0;
           }
 
-          // --- Revertir buffs/debuffs temporales del JUGADOR ---
-          if (player.defenseBoostTurns > 0) {
-            player.defenseBoostTurns--;
-            if (player.defenseBoostTurns === 0) {
-              player.defense -= player.defenseBoostAmount;
-              logBattle(`Piel de Piedra termina. Defensa: ${player.defense}.`);
-              player.defenseBoostAmount = 0;
+            // --- Aplicar DoTs y HoTs al JUGADOR ---
+            if (player.burningTurns > 0) {
+              player.hp -= player.burnDamage;
+              logBattle(`Sufres ${player.burnDamage} daño por quemadura.`);
+              player.burningTurns--;
+              if (player.burningTurns === 0) logBattle("Quemadura se extingue.");
             }
+            if (player.poisonedTurns > 0) {
+              player.hp -= player.poisonDamage;
+              logBattle(`Sufres ${player.poisonDamage} de daño por veneno.`);
+              player.poisonedTurns--;
+              if (player.poisonedTurns === 0) {
+                  logBattle("El veneno se ha disipado.");
+                  player.poisonDamage = 0;
+              }
           }
-          if (player.bloodRitualTurns > 0 && action !== "blood_ritual") {
-            player.bloodRitualTurns--;
-            if (player.bloodRitualTurns === 0) {
-              player.attack -= player.bloodRitualAttackBoost;
-              logBattle(`Ritual de Sangre termina. Ataque: ${player.attack}.`);
-              player.bloodRitualAttackBoost = 0;
-            }
+          if (player.manaDrainTurns > 0) {
+              const manaDrained = Math.min(player.mana, player.manaDrainAmount);
+              player.mana -= manaDrained;
+              logBattle(`La maldición drena ${manaDrained} de tu maná.`);
+              showFloatingText(playerSprite, `-${manaDrained}`, 'mana'); // Usa el tipo 'mana'
+              player.manaDrainTurns--;
+              if (player.manaDrainTurns === 0) {
+                  logBattle("La maldición de maná se disipa.");
+                  player.manaDrainAmount = 0;
+              }
           }
-          if (player.immuneTurns > 0 && action !== "aura_of_purity") {
-            player.immuneTurns--;
-            if (player.immuneTurns === 0) {
-              logBattle(`Inmunidad termina.`);
-            }
+          // === NUEVA LÓGICA PARA PROCESAR DEBUFFS ===
+          if (player.defenseReductionTurns > 0) {
+              player.defenseReductionTurns--;
+              if (player.defenseReductionTurns === 0) {
+                  player.defense += player.defenseReductionAmount; // Restaurar defensa
+                  logBattle(`Tu defensa vuelve a la normalidad. (Defensa: ${player.defense})`);
+                  player.defenseReductionAmount = 0;
+              }
           }
-          if (
-            player.cloneActive &&
-            player.cloneTurns > 0 &&
-            action !== "phantom_clone"
-          ) {
-            player.cloneTurns--;
-            if (player.cloneTurns === 0) {
-              player.cloneActive = false;
-              logBattle("Clon Fantasma desaparece.");
-            }
-          }
-          if (player.elementalTurns > 0 && action !== "summon_elemental") {
-            player.elementalTurns--;
-            if (player.elementalTurns === 0) {
-              player.attack -= player.tempAttackBonus;
-              player.defense -= player.tempDefenseBonus;
-              logBattle("Elemental invocado desaparece.");
-              player.tempAttackBonus = 0;
-              player.tempDefenseBonus = 0;
-            }
-          }
-          if (player.magicShieldTurns > 0 && action !== "mystic_barrier") {
-            player.magicShieldTurns--;
-            if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
-              logBattle("Barrera Mística se disipa.");
-              player.magicShieldValue = 0;
-            }
+          if (player.attackReductionTurns > 0) {
+              player.attackReductionTurns--;
+              if (player.attackReductionTurns === 0) {
+                  player.attack += player.attackReductionAmount; // Restaurar ataque
+                  logBattle(`Tu espíritu de lucha se recupera. (Ataque: ${player.attack})`);
+                  player.attackReductionAmount = 0;
+              }
           }
 
-          if (player.hp <= 0) {
-            logBattle("Has sucumbido antes de actuar.");
-            player.hp = 0;
-            setTimeout(() => {
-              player.hp = Math.floor(player.maxHp * 0.1);
-              player.mana = Math.floor(player.maxMana * 0.1);
-              const expLossPercentage = 0.1;
-              const expToLose = Math.floor(player.exp * expLossPercentage);
-              player.exp = Math.max(0, player.exp - expToLose);
-              logBattle(`Pierdes ${expToLose} EXP.`);
-              const safeRespawnCoords = findSafeRespawnLocation(
-                G_SAFE_RESPAWN_X,
-                G_SAFE_RESPAWN_Y
-              );
-              player.x = safeRespawnCoords.x;
-              player.y = safeRespawnCoords.y;
-              updatePlayerPosition();
-              endBattle(false);
-              showModal("Derrota", "Has sido derrotado...");
-            }, 2000);
+            if (player.healingRainTurns > 0) {
+              const heal = player.healingRainAmount;
+              player.hp = Math.min(player.maxHp, player.hp + heal);
+              logBattle(`Lluvia Curativa te sana ${heal} HP.`);
+              player.healingRainTurns--;
+              if (player.healingRainTurns === 0) logBattle("Lluvia Curativa cesa.");
+            }
+
+            // --- Revertir buffs/debuffs temporales del JUGADOR ---
+            if (player.defenseBoostTurns > 0) {
+              player.defenseBoostTurns--;
+              if (player.defenseBoostTurns === 0) {
+                player.defense -= player.defenseBoostAmount;
+                logBattle(`Piel de Piedra termina. Defensa: ${player.defense}.`);
+                player.defenseBoostAmount = 0;
+              }
+            }
+            if (player.bloodRitualTurns > 0 && action !== "blood_ritual") {
+              player.bloodRitualTurns--;
+              if (player.bloodRitualTurns === 0) {
+                player.attack -= player.bloodRitualAttackBoost;
+                logBattle(`Ritual de Sangre termina. Ataque: ${player.attack}.`);
+                player.bloodRitualAttackBoost = 0;
+              }
+            }
+            if (player.immuneTurns > 0 && action !== "aura_of_purity") {
+              player.immuneTurns--;
+              if (player.immuneTurns === 0) {
+                logBattle(`Inmunidad termina.`);
+              }
+            }
+            if (
+              player.cloneActive &&
+              player.cloneTurns > 0 &&
+              action !== "phantom_clone"
+            ) {
+              player.cloneTurns--;
+              if (player.cloneTurns === 0) {
+                player.cloneActive = false;
+                logBattle("Clon Fantasma desaparece.");
+              }
+            }
+            if (player.elementalTurns > 0 && action !== "summon_elemental") {
+              player.elementalTurns--;
+              if (player.elementalTurns === 0) {
+                player.attack -= player.tempAttackBonus;
+                player.defense -= player.tempDefenseBonus;
+                logBattle("Elemental invocado desaparece.");
+                player.tempAttackBonus = 0;
+                player.tempDefenseBonus = 0;
+              }
+            }
+            if (player.magicShieldTurns > 0 && action !== "mystic_barrier") {
+              player.magicShieldTurns--;
+              if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
+                logBattle("Barrera Mística se disipa.");
+                player.magicShieldValue = 0;
+              }
+            }
+
+            if (player.hp <= 0) {
+              logBattle("Has sucumbido antes de actuar.");
+              player.hp = 0;
+              setTimeout(() => {
+                player.hp = Math.floor(player.maxHp * 0.1);
+                player.mana = Math.floor(player.maxMana * 0.1);
+                const expLossPercentage = 0.1;
+                const expToLose = Math.floor(player.exp * expLossPercentage);
+                player.exp = Math.max(0, player.exp - expToLose);
+                logBattle(`Pierdes ${expToLose} EXP.`);
+                const safeRespawnCoords = findSafeRespawnLocation(
+                  G_SAFE_RESPAWN_X,
+                  G_SAFE_RESPAWN_Y
+                );
+                player.x = safeRespawnCoords.x;
+                player.y = safeRespawnCoords.y;
+                updatePlayerPosition();
+                endBattle(false);
+                showModal("Derrota", "Has sido derrotado...");
+              }, 2000);
+              return;
+            }
+
+            const techDetails = techniqueData[action]; // Obtener detalles de la técnica por su ID
+          if (techDetails && techDetails.type === 'active_ability') {
+              const manaCost = techDetails.manaCost || 0;
+              if (player.mana >= manaCost) {
+                  player.mana -= manaCost;
+                  let damageDealt = 0;
+                  let logMessage = "";
+                  
+                  // --- Lógica Centralizada para Habilidades ---
+                  switch(action) {
+                      case "sword_t1":
+                        const swordTechDetails = techniqueData["sword_t1"];
+                        const swordManaCost = swordTechDetails.manaCost || 10; 
+                        if (player.mana >= swordManaCost) {
+                            player.mana -= swordManaCost;
+                            const damageMultiplier = swordTechDetails.effect.baseDamageMultiplier + ((playerTechLevel - 1) * 0.2);
+                            const swordDamage = Math.max(1, Math.floor(player.attack * damageMultiplier) - (enemy.defense || 0));
+                            enemy.hp -= swordDamage;
+                            logBattle(`¡${swordTechDetails.name} (Nv.${playerTechLevel}) causa ${swordDamage} daño!`);
+                            showFloatingText(document.querySelector('.character-sprite'), `Tajo Veloz`, 'ability');
+                            showFloatingText(document.getElementById('enemySprite'), `-${swordDamage}`, 'damage');
+                        } else { logBattle(`Maná insuficiente para ${swordTechDetails.name}.`); actionTaken = false; }
+                        
+                        break;
+                        
+                      case "sword_t3":
+                      case "fire_t2":
+                          damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.2)) - (enemy.defense || 0));
+                          enemy.hp -= damageDealt;
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño!`;
+                          if (action === 'fire_t2') {
+                              enemy.burningTurns = Math.max(enemy.burningTurns, techDetails.effect.burnDuration);
+                              enemy.burnDamage = Math.max(enemy.burnDamage, techDetails.effect.burnDamagePerTurn + (playerTechLevel * 2));
+                              logMessage += ` e inflige una quemadura intensa.`;
+                          }
+                          break;
+                    
+                  
+                      case "fire_t1":
+                          damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.1)) - (enemy.defense || 0));
+                          enemy.hp -= damageDealt;
+                          enemy.burningTurns = Math.max(enemy.burningTurns, techDetails.effect.burnDuration);
+                          enemy.burnDamage = Math.max(enemy.burnDamage, techDetails.effect.burnDamagePerTurn + playerTechLevel);
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño y quema al enemigo!`;
+                          break;
+
+                      case "lightning_t1":
+                      case "sword_t4":
+                          damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.15)) - (enemy.defense || 0));
+                          enemy.hp -= damageDealt;
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
+                          if (Math.random() < (techDetails.effect.stunChance + (playerTechLevel * 0.02))) {
+                              enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
+                              logMessage += " ¡El enemigo queda aturdido!";
+                          }
+                          break;
+                      
+                      case "sword_t2":
+                          const defenseToIgnore = (enemy.defense || 0) * (techDetails.effect.defensePenetration + (playerTechLevel * 0.02));
+                          damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.1)) - ((enemy.defense || 0) - defenseToIgnore));
+                          enemy.hp -= damageDealt;
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) ignora parte de la defensa y causa ${damageDealt} daño!`;
+                          break;
+
+                      case "movement_t2":
+                          player.dodgeNextAttack = true;
+                          logMessage = `¡Usas ${techDetails.name} (Nv.${playerTechLevel}) y te preparas para esquivar!`;
+                          break;
+
+                      case "formation_t1":
+                          player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
+                          player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 5)} de daño!`;
+                          break;
+                      
+                      case "formation_t2":
+                          player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
+                          player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 5)} de daño!`;
+                          break;
+                      case "formation_t3":
+                          player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
+                          player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 20)} de daño!`;
+                          showFloatingText(document.getElementById('enemySprite'), 'Defensa ↓ / Ataque ↓', 'debuff');
+                          break;
+                      case "sword_t5": // Corte que Divide Cielos y Tierra
+                          const baseDmg_t5 = player.attack * techDetails.effect.baseDamageMultiplier;
+                          let finalDmg_t5 = baseDmg_t5;
+                          logMessage = `¡${techDetails.name} desata un poder que ignora la defensa!`;
+                          if (Math.random() < (techDetails.effect.criticalChance || 0)) {
+                            finalDmg_t5 *= 1.5;
+                            logMessage += " ¡Es un golpe crítico!";
+                          }
+                          enemy.hp -= Math.floor(finalDmg_t5);
+                          logMessage += ` Causa ${Math.floor(finalDmg_t5)} daño verdadero.`;
+                          break;
+
+                      case "fire_t5": // Llama del Fénix Renaciente
+                          const fireDmg_t5 = Math.floor(player.attack * techDetails.effect.baseDamageMultiplier);
+                          enemy.hp -= fireDmg_t5;
+                          player.canRevive = true; // Activa la bandera de resurrección
+                          logMessage = `¡${techDetails.name} incinera al enemigo con ${fireDmg_t5} de daño y te imbuye con la esencia del Fénix!`;
+                          break;
+                      
+                      case "formation_t5": // Matriz de Reversión del Cosmos
+                          player.damageToHealingTurns = techDetails.effect.damageToHealingDuration;
+                          logMessage = `¡Activaste ${techDetails.name}! Durante ${player.damageToHealingTurns} turnos, el daño recibido te curará.`;
+                          break;
+
+                      case "movement_t5": // Paso del Vacío Infinito
+                          player.intangibleTurns = techDetails.effect.intangibleTurns;
+                          const hits_t5 = techDetails.effect.multiHit;
+                          let totalDmg_t5 = 0;
+                          for(let i=0; i<hits_t5; i++){
+                              const hitDmg = Math.max(1, Math.floor((player.attack * techDetails.effect.baseDamageMultiplier)/hits_t5) - enemy.defense);
+                              enemy.hp -= hitDmg;
+                              totalDmg_t5 += hitDmg;
+                          }
+                          logMessage = `¡Con ${techDetails.name} te vuelves intangible por ${player.intangibleTurns} turnos y golpeas ${hits_t5} veces, causando un total de ${totalDmg_t5} de daño!`;
+                          break;
+
+                      case "sword_t6": // Espada del Emperador Celestial
+                          logMessage = `¡${techDetails.name} desata un poder absoluto!`;
+                          if (enemy.hp / enemy.maxHp <= (techDetails.effect.executeThreshold || 0.2)) {
+                              enemy.hp = 0;
+                              logMessage += " ¡El enemigo es ejecutado por decreto celestial!";
+                          } else {
+                              const swordDmg_t6 = Math.floor(player.attack * techDetails.effect.baseDamageMultiplier);
+                              enemy.hp -= swordDmg_t6;
+                              logMessage += ` Causa ${swordDmg_t6} de daño que ignora toda protección.`;
+                          }
+                          break;
+                      
+                      case "formation_t6": // Matriz del Sello del Demonio
+                          enemy.sealedTurns = techDetails.effect.sealDuration;
+                          logMessage = `¡${techDetails.name} sella completamente al enemigo por ${enemy.sealedTurns} turnos!`;
+                          break;
+                      
+                      default:
+                          logBattle(`Técnica ${action} no implementada en batalla.`);
+                          actionTaken = false;
+                          break;
+                  }
+                  if(actionTaken) logBattle(logMessage);
+
+              } else {
+                logBattle(`Maná insuficiente para ${techDetails.name}.`);
+                actionTaken = false;
+              }
+          } else {
+              // Lógica para acciones básicas (attack, defend, escape)
+              switch (action) {
+                  case "attack":
+                      const damage = Math.max(1, player.attack - (enemy.defense || 0) + Math.floor(Math.random() * 5 - 2));
+                      enemy.hp -= damage;
+                      logBattle(`Atacas causando ${damage} daño.`);
+                      showFloatingText(document.getElementById('enemySprite'), `-${damage}`, 'damage');
+          
+                      break;
+                  case 'qi_fist':
+                    const qiFistCost = 10;
+                      if (player.mana >= qiFistCost) {
+                          player.mana -= qiFistCost;
+                          const magicDamage = Math.max(1, Math.floor(player.attack * 0.8 + player.maxMana * 0.2) - (enemy.defense || 0));
+                          enemy.hp -= magicDamage;
+                          logBattle(`Puño de Qi causa ${magicDamage} daño mágico.`);
+                          showFloatingText(document.querySelector('.character-sprite'), `Puño de QI`, 'ability');
+                          showFloatingText(document.getElementById('enemySprite'), `-${magicDamage}`, 'damage');
+                          
+                      } else { logBattle('Maná insuficiente para Puño de Qi.'); actionTaken = false; }
+                      
+                    break;
+                  case "defend":
+                      let healAmount = Math.floor(player.maxHp * 0.1);
+                      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+                      showFloatingText(document.querySelector('.character-sprite'), `+${healAmount}`, 'heal');
+                      logBattle(`Te defiendes y recuperas ${healAmount} HP.`);
+                      break;
+                  case "escape":
+                    if (enemy.isBoss) {
+                      logBattle(`¡No puedes huir de un ${enemy.name}!`);
+                      showFloatingText(document.querySelector('.character-sprite'), '¡Imposible!', 'debuff');
+                      actionTaken = false; // La acción falló, no se consume el turno
+                    } else if (Math.random() < 0.7) { // Probabilidad de éxito de huida
+                        
+                        const escapeTile = findEscapeTile(player, enemy);
+                        
+                        if (escapeTile) {
+                            logBattle("¡Escapaste con éxito!");
+                            showFloatingText(document.querySelector('.character-sprite'), '¡Huida!', 'ability');
+                            
+                            // Mover al jugador a la casilla segura ANTES de terminar la batalla
+                            player.x = escapeTile.x;
+                            player.y = escapeTile.y;
+                            
+                            // Esperar un breve momento para que el texto flotante se vea
+                            setTimeout(() => {
+                                endBattle(false); // false = no fue una victoria
+                                updatePlayerPosition("escape_success"); // Actualizar la posición visual en el mapa
+                            }, 500);
+
+                        } else {
+                            logBattle("¡Intentaste huir, pero no hay a dónde ir!");
+                            showFloatingText(document.querySelector('.character-sprite'), '¡Atrapado!', 'debuff');
+                            actionTaken = true; // El intento de huir consume el turno
+                        }
+                        
+                        // Como la huida (exitosa o no) ya manejó el flujo, salimos de la función
+                        return;
+
+                    } else {
+                      logBattle("¡No pudiste escapar!");
+                      showFloatingText(document.querySelector('.character-sprite'), '¡Falló!', 'debuff');
+                      actionTaken = true; // El intento fallido también consume el turno
+                    }
+                    break;
+                  default:
+                      logBattle("Acción desconocida.");
+                      actionTaken = false;
+                      break;
+              }
+          }
+
+          if (!actionTaken) {
+            updateBattleUI();
             return;
           }
 
-          const techDetails = techniqueData[action]; // Obtener detalles de la técnica por su ID
-        if (techDetails && techDetails.type === 'active_ability') {
-            const manaCost = techDetails.manaCost || 0;
-            if (player.mana >= manaCost) {
-                player.mana -= manaCost;
-                let damageDealt = 0;
-                let logMessage = "";
-                
-                // --- Lógica Centralizada para Habilidades ---
-                switch(action) {
-                    case "sword_t1":
-                      const swordTechDetails = techniqueData["sword_t1"];
-                      const swordManaCost = swordTechDetails.manaCost || 10; 
-                      if (player.mana >= swordManaCost) {
-                          player.mana -= swordManaCost;
-                          const damageMultiplier = swordTechDetails.effect.baseDamageMultiplier + ((playerTechLevel - 1) * 0.2);
-                          const swordDamage = Math.max(1, Math.floor(player.attack * damageMultiplier) - (enemy.defense || 0));
-                          enemy.hp -= swordDamage;
-                          logBattle(`¡${swordTechDetails.name} (Nv.${playerTechLevel}) causa ${swordDamage} daño!`);
-                          showFloatingText(document.querySelector('.character-sprite'), `Tajo Veloz`, 'ability');
-                          showFloatingText(document.getElementById('enemySprite'), `-${swordDamage}`, 'damage');
-                      } else { logBattle(`Maná insuficiente para ${swordTechDetails.name}.`); actionTaken = false; }
-                      
-                      break;
-                      
-                    case "sword_t3":
-                    case "fire_t2":
-                        damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.2)) - (enemy.defense || 0));
-                        enemy.hp -= damageDealt;
-                        logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño!`;
-                        if (action === 'fire_t2') {
-                             enemy.burningTurns = Math.max(enemy.burningTurns, techDetails.effect.burnDuration);
-                             enemy.burnDamage = Math.max(enemy.burnDamage, techDetails.effect.burnDamagePerTurn + (playerTechLevel * 2));
-                             logMessage += ` e inflige una quemadura intensa.`;
-                        }
-                        break;
-                   
-                 
-                    case "fire_t1":
-                        damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.1)) - (enemy.defense || 0));
-                        enemy.hp -= damageDealt;
-                        enemy.burningTurns = Math.max(enemy.burningTurns, techDetails.effect.burnDuration);
-                        enemy.burnDamage = Math.max(enemy.burnDamage, techDetails.effect.burnDamagePerTurn + playerTechLevel);
-                        logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño y quema al enemigo!`;
-                        break;
-
-                    case "lightning_t1":
-                    case "sword_t4":
-                        damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.15)) - (enemy.defense || 0));
-                        enemy.hp -= damageDealt;
-                        logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
-                        if (Math.random() < (techDetails.effect.stunChance + (playerTechLevel * 0.02))) {
-                            enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
-                            logMessage += " ¡El enemigo queda aturdido!";
-                        }
-                        break;
-                    
-                    case "sword_t2":
-                        const defenseToIgnore = (enemy.defense || 0) * (techDetails.effect.defensePenetration + (playerTechLevel * 0.02));
-                        damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.1)) - ((enemy.defense || 0) - defenseToIgnore));
-                        enemy.hp -= damageDealt;
-                        logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) ignora parte de la defensa y causa ${damageDealt} daño!`;
-                        break;
-
-                    case "movement_t2":
-                        player.dodgeNextAttack = true;
-                        logMessage = `¡Usas ${techDetails.name} (Nv.${playerTechLevel}) y te preparas para esquivar!`;
-                        break;
-
-                    case "formation_t1":
-                         player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
-                         player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
-                         logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 5)} de daño!`;
-                         break;
-                    
-                    case "formation_t2":
-                         player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
-                         player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
-                         logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 5)} de daño!`;
-                         break;
-                    case "formation_t3":
-                         player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
-                         player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
-                         logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 20)} de daño!`;
-                         showFloatingText(document.getElementById('enemySprite'), 'Defensa ↓ / Ataque ↓', 'debuff');
-                         break;
-                    case "sword_t5": // Corte que Divide Cielos y Tierra
-                        const baseDmg_t5 = player.attack * techDetails.effect.baseDamageMultiplier;
-                        let finalDmg_t5 = baseDmg_t5;
-                        logMessage = `¡${techDetails.name} desata un poder que ignora la defensa!`;
-                        if (Math.random() < (techDetails.effect.criticalChance || 0)) {
-                           finalDmg_t5 *= 1.5;
-                           logMessage += " ¡Es un golpe crítico!";
-                        }
-                        enemy.hp -= Math.floor(finalDmg_t5);
-                        logMessage += ` Causa ${Math.floor(finalDmg_t5)} daño verdadero.`;
-                        break;
-
-                    case "fire_t5": // Llama del Fénix Renaciente
-                        const fireDmg_t5 = Math.floor(player.attack * techDetails.effect.baseDamageMultiplier);
-                        enemy.hp -= fireDmg_t5;
-                        player.canRevive = true; // Activa la bandera de resurrección
-                        logMessage = `¡${techDetails.name} incinera al enemigo con ${fireDmg_t5} de daño y te imbuye con la esencia del Fénix!`;
-                        break;
-                    
-                    case "formation_t5": // Matriz de Reversión del Cosmos
-                        player.damageToHealingTurns = techDetails.effect.damageToHealingDuration;
-                        logMessage = `¡Activaste ${techDetails.name}! Durante ${player.damageToHealingTurns} turnos, el daño recibido te curará.`;
-                        break;
-
-                    case "movement_t5": // Paso del Vacío Infinito
-                         player.intangibleTurns = techDetails.effect.intangibleTurns;
-                         const hits_t5 = techDetails.effect.multiHit;
-                         let totalDmg_t5 = 0;
-                         for(let i=0; i<hits_t5; i++){
-                            const hitDmg = Math.max(1, Math.floor((player.attack * techDetails.effect.baseDamageMultiplier)/hits_t5) - enemy.defense);
-                            enemy.hp -= hitDmg;
-                            totalDmg_t5 += hitDmg;
-                         }
-                         logMessage = `¡Con ${techDetails.name} te vuelves intangible por ${player.intangibleTurns} turnos y golpeas ${hits_t5} veces, causando un total de ${totalDmg_t5} de daño!`;
-                         break;
-
-                    case "sword_t6": // Espada del Emperador Celestial
-                         logMessage = `¡${techDetails.name} desata un poder absoluto!`;
-                         if (enemy.hp / enemy.maxHp <= (techDetails.effect.executeThreshold || 0.2)) {
-                            enemy.hp = 0;
-                            logMessage += " ¡El enemigo es ejecutado por decreto celestial!";
-                         } else {
-                            const swordDmg_t6 = Math.floor(player.attack * techDetails.effect.baseDamageMultiplier);
-                            enemy.hp -= swordDmg_t6;
-                            logMessage += ` Causa ${swordDmg_t6} de daño que ignora toda protección.`;
-                         }
-                         break;
-                    
-                    case "formation_t6": // Matriz del Sello del Demonio
-                        enemy.sealedTurns = techDetails.effect.sealDuration;
-                        logMessage = `¡${techDetails.name} sella completamente al enemigo por ${enemy.sealedTurns} turnos!`;
-                        break;
-                    
-                    default:
-                        logBattle(`Técnica ${action} no implementada en batalla.`);
-                        actionTaken = false;
-                        break;
-                }
-                if(actionTaken) logBattle(logMessage);
-
-            } else {
-              logBattle(`Maná insuficiente para ${techDetails.name}.`);
-              actionTaken = false;
-            }
-        } else {
-            // Lógica para acciones básicas (attack, defend, escape)
-            switch (action) {
-                case "attack":
-                    const damage = Math.max(1, player.attack - (enemy.defense || 0) + Math.floor(Math.random() * 5 - 2));
-                    enemy.hp -= damage;
-                    logBattle(`Atacas causando ${damage} daño.`);
-                    showFloatingText(document.getElementById('enemySprite'), `-${damage}`, 'damage');
-        
-                    break;
-                case 'qi_fist':
-                  const qiFistCost = 10;
-                    if (player.mana >= qiFistCost) {
-                        player.mana -= qiFistCost;
-                        const magicDamage = Math.max(1, Math.floor(player.attack * 0.8 + player.maxMana * 0.2) - (enemy.defense || 0));
-                        enemy.hp -= magicDamage;
-                        logBattle(`Puño de Qi causa ${magicDamage} daño mágico.`);
-                        showFloatingText(document.querySelector('.character-sprite'), `Puño de QI`, 'ability');
-                        showFloatingText(document.getElementById('enemySprite'), `-${magicDamage}`, 'damage');
-                        
-                    } else { logBattle('Maná insuficiente para Puño de Qi.'); actionTaken = false; }
-                    
-                  break;
-                case "defend":
-                    let healAmount = Math.floor(player.maxHp * 0.1);
-                    player.hp = Math.min(player.maxHp, player.hp + healAmount);
-                    showFloatingText(document.querySelector('.character-sprite'), `+${healAmount}`, 'heal');
-                    logBattle(`Te defiendes y recuperas ${healAmount} HP.`);
-                    break;
-                case "escape":
-                  if (enemy.isBoss) {
-                    logBattle(`¡No puedes huir de un ${enemy.name}!`);
-                    showFloatingText(document.querySelector('.character-sprite'), '¡Imposible!', 'debuff');
-                    actionTaken = false; // La acción falló, no se consume el turno
-                  } else if (Math.random() < 0.7) { // Probabilidad de éxito de huida
-                      
-                      const escapeTile = findEscapeTile(player, enemy);
-                      
-                      if (escapeTile) {
-                          logBattle("¡Escapaste con éxito!");
-                          showFloatingText(document.querySelector('.character-sprite'), '¡Huida!', 'ability');
-                          
-                          // Mover al jugador a la casilla segura ANTES de terminar la batalla
-                          player.x = escapeTile.x;
-                          player.y = escapeTile.y;
-                          
-                          // Esperar un breve momento para que el texto flotante se vea
-                          setTimeout(() => {
-                              endBattle(false); // false = no fue una victoria
-                              updatePlayerPosition("escape_success"); // Actualizar la posición visual en el mapa
-                          }, 500);
-
-                      } else {
-                          logBattle("¡Intentaste huir, pero no hay a dónde ir!");
-                          showFloatingText(document.querySelector('.character-sprite'), '¡Atrapado!', 'debuff');
-                          actionTaken = true; // El intento de huir consume el turno
-                      }
-                      
-                      // Como la huida (exitosa o no) ya manejó el flujo, salimos de la función
-                      return;
-
-                  } else {
-                    logBattle("¡No pudiste escapar!");
-                    showFloatingText(document.querySelector('.character-sprite'), '¡Falló!', 'debuff');
-                    actionTaken = true; // El intento fallido también consume el turno
-                  }
-                  break;
-                default:
-                    logBattle("Acción desconocida.");
-                    actionTaken = false;
-                    break;
-            }
-        }
-
-        if (!actionTaken) {
+          gameState.battle.playerTurn = false;
           updateBattleUI();
-          return;
-        }
 
-        gameState.battle.playerTurn = false;
-        updateBattleUI();
+          if (enemy.hp <= 0) {
 
-        if (enemy.hp <= 0) {
-
-          
-            handleEnemyDefeat();
-          } else {
-            let enemyDiedToDot = false;
-            if (enemy.burningTurns > 0) {
-              enemy.hp -= enemy.burnDamage;
-              logBattle(
-                `${enemy.name} sufre ${
-                  enemy.burnDamage
-                } por quemadura. HP: ${Math.floor(enemy.hp)}`
-              );
-              if (enemy.hp <= 0) enemyDiedToDot = true;
-            }
-            if (!enemyDiedToDot && enemy.poisonedTurns > 0) {
-              enemy.hp -= enemy.poisonDamage;
-              logBattle(
-                `${enemy.name} sufre ${
-                  enemy.poisonDamage
-                } por veneno. HP: ${Math.floor(enemy.hp)}`
-              );
-              if (enemy.hp <= 0) enemyDiedToDot = true;
-            }
-            if (!enemyDiedToDot && enemy.rootedTurns > 0) {
-              enemy.hp -= enemy.rootDamage;
-              logBattle(
-                `${enemy.name} sufre ${
-                  enemy.rootDamage
-                } por enredo. HP: ${Math.floor(enemy.hp)}`
-              );
-              if (enemy.hp <= 0) enemyDiedToDot = true;
-            }
-
-            if (enemyDiedToDot) {
+            
               handleEnemyDefeat();
             } else {
-              setTimeout(enemyTurn, 1000);
+              let enemyDiedToDot = false;
+              if (enemy.burningTurns > 0) {
+                enemy.hp -= enemy.burnDamage;
+                logBattle(
+                  `${enemy.name} sufre ${
+                    enemy.burnDamage
+                  } por quemadura. HP: ${Math.floor(enemy.hp)}`
+                );
+                if (enemy.hp <= 0) enemyDiedToDot = true;
+              }
+              if (!enemyDiedToDot && enemy.poisonedTurns > 0) {
+                enemy.hp -= enemy.poisonDamage;
+                logBattle(
+                  `${enemy.name} sufre ${
+                    enemy.poisonDamage
+                  } por veneno. HP: ${Math.floor(enemy.hp)}`
+                );
+                if (enemy.hp <= 0) enemyDiedToDot = true;
+              }
+              if (!enemyDiedToDot && enemy.rootedTurns > 0) {
+                enemy.hp -= enemy.rootDamage;
+                logBattle(
+                  `${enemy.name} sufre ${
+                    enemy.rootDamage
+                  } por enredo. HP: ${Math.floor(enemy.hp)}`
+                );
+                if (enemy.hp <= 0) enemyDiedToDot = true;
+              }
+
+              if (enemyDiedToDot) {
+                handleEnemyDefeat();
+              } else {
+                setTimeout(enemyTurn, 1000);
+              }
             }
           }
-        }
 
         function handleEnemyDefeat() {
           const enemy = gameState.battle.enemy;
@@ -8400,14 +9063,25 @@
 
         function enemyTurn() {
         if (!gameState.battle.active || gameState.battle.playerTurn) return;
-        
+        let chosenAbility = null;
         const player = gameState.player;
         const enemy = gameState.battle.enemy;
         const playerSprite = document.querySelector('.character-sprite');
         const enemySprite = document.getElementById('enemySprite');
         
+
+        // --- PROCESAR ESTADOS Y DoTs DEL ENEMIGO (antes de que actúe) ---
+        if (enemy.defenseBoostTurns > 0) {
+            enemy.defenseBoostTurns--;
+            if (enemy.defenseBoostTurns === 0) {
+                enemy.defense -= enemy.defenseBoostAmount;
+                logBattle(`La Piel de Piedra de ${enemy.name} se desvanece. (Defensa: ${enemy.defense})`);
+                enemy.defenseBoostAmount = 0;
+            }
+        }
+        // --- COMPROBAR SI EL ENEMIGO PUEDE ACTUAR ---
         // 1. Procesar estados y DoTs del enemigo
-        // (Esta parte no cambia, se mantiene como estaba)
+        
         if (enemy.sealedTurns > 0 || enemy.frozenTurns > 0 || enemy.stunnedTurns > 0) {
             // ... (Lógica para saltar turno)
             const statusMessage = enemy.sealedTurns > 0 ? '¡Sellado!' : (enemy.frozenTurns > 0 ? '¡Congelado!' : '¡Aturdido!');
@@ -8423,95 +9097,188 @@
             updateUI();
             return;
         }
+        
+        if (enemy.abilities && enemy.silencedTurns <= 0) {
+            for (const abilityInfo of enemy.abilities) {
+                if (Math.random() < abilityInfo.chance) {
+                    chosenAbility = enemyAbilityData[abilityInfo.abilityId];
+                    if (chosenAbility) break; // Usar la primera habilidad que se active
+                }
+            }
+        }
 
         // 2. Decidir la acción del enemigo (Habilidad o Ataque Básico)
-        let chosenAbilityData = null;
-        let usedAbility = false;
+          // --- EJECUTAR LA ACCIÓN ELEGIDA ---
+        if (chosenAbility) {
+            showFloatingText(enemySprite, chosenAbility.name, 'ability');
+            const effect = chosenAbility.effect;
+            let damage = 0;
+            let finalDamage = 0;
+            let heal = 0;
 
-        if (enemy.abilities && enemy.silencedTurns <= 0) {
-            for (const ability of enemy.abilities) {
-                if (Math.random() < ability.chance) {
-                    chosenAbilityData = enemyAbilityData[ability.abilityId];
-                    if (chosenAbilityData) {
-                        usedAbility = true;
-                        showFloatingText(enemySprite, chosenAbilityData.name, 'ability');
-                        break;
+            switch (chosenAbility.type) {
+                
+                
+                case 'buff_stat':
+                    if (enemy.defenseBoostTurns === 0) { // Evitar que se acumule el mismo buff
+                        enemy.defenseBoostAmount = effect.amount;
+                        enemy.defense += effect.amount;
+                        enemy.defenseBoostTurns = effect.duration;
+                        logBattle(chosenAbility.logMessage(enemy.name, effect.amount, effect.duration));
+                    } else {
+                        logBattle(`${enemy.name} intenta fortalecerse, ¡pero ya lo está!`);
                     }
-                }
+                    break;
+                // ===================================
+                // === CASE 1: PIERCING_DAMAGE(DAÑO DE PERFORACIÓN) ===
+                // ===================================
+                case 'piercing_damage':
+                    const defenseToIgnore = player.defense * (effect.armorPenetration || 0);
+                    damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
+                    finalDamage = Math.max(0, damage - (player.defense - defenseToIgnore));
+                    player.hp -= finalDamage;
+                    
+                    showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
+                    logBattle(chosenAbility.logMessage(enemy.name, finalDamage));
+                    break;
+
+                // ===================================
+                // === CASE 2: STUN_CHANCE (ATURDIMIENTO)===
+                // ===================================
+                case 'stun_chance':
+                    damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
+                    finalDamage = Math.max(0, damage - player.defense);
+                    player.hp -= finalDamage;
+                    showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
+
+                    const didStun = Math.random() < (effect.stunChance || 0);
+                    if (didStun && player.stunnedTurns === 0) {
+                        player.stunnedTurns = 1; // Aturde por 1 turno (el siguiente del jugador)
+                        showFloatingText(playerSprite, '¡Aturdido!', 'debuff');
+                    }
+                    logBattle(chosenAbility.logMessage(enemy.name, finalDamage, didStun));
+                    break;
+
+                // ===================================
+                // === CASE 3: DOT_RESOURCE (Drenaje de Maná) ===
+                // ===================================
+                case 'dot_resource':
+                    // Esta habilidad no hace daño directo, solo aplica el debuff.
+                    if (effect.dot.resource === 'mana' && player.manaDrainTurns === 0) {
+                        player.manaDrainTurns = effect.dot.duration;
+                        player.manaDrainAmount = effect.dot.drainPerTurn;
+                        showFloatingText(playerSprite, 'Maldición de Maná', 'debuff');
+                        logBattle(chosenAbility.logMessage(enemy.name, player.manaDrainAmount, player.manaDrainTurns));
+                    } else {
+                        logBattle(`${enemy.name} intenta maldecirte, ¡pero ya estás bajo un efecto similar!`);
+                    }
+                    break;
+                
+                // ===================================
+                // === CASE 4: SPECIAL_TARGET_DAMAGE (Cazador de Clones) ===
+                // ===================================
+                case 'special_target_damage':
+                    let target = 'player';
+                    // Asumimos que tienes una propiedad como 'player.cloneActive'
+                    if (player.cloneActive) {
+                        player.cloneActive = false; // El clon es destruido
+                        player.cloneTurns = 0;
+                        target = 'clone';
+                        // No hay daño al jugador, el clon lo absorbe todo.
+                        showFloatingText(playerSprite, 'Clon Destruido', 'ability');
+                        logBattle(chosenAbility.logMessage(enemy.name, 0, target));
+                    } else {
+                        // Si no hay clon, el golpe va al jugador
+                        damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
+                        finalDamage = Math.max(0, damage - player.defense);
+                        player.hp -= finalDamage;
+                        showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
+                        logBattle(chosenAbility.logMessage(enemy.name, finalDamage, target));
+                    }
+                    break;
+
+                // ===================================
+                // === CASE 5: BUFF_REFLECT (Aura de Espinas) ===
+                // ===================================
+                case 'buff_reflect':
+                    if (enemy.reflectDamageTurns === 0) {
+                        enemy.reflectDamageTurns = effect.duration;
+                        enemy.reflectDamageMultiplier = effect.reflectMultiplier;
+                        const reflectPercent = (effect.reflectMultiplier || 0) * 100;
+                        showFloatingText(enemySprite, 'Aura de Espinas', 'ability');
+                        logBattle(chosenAbility.logMessage(enemy.name, reflectPercent, effect.duration));
+                    } else {
+                        logBattle(`${enemy.name} intenta activar su aura, ¡pero ya está activa!`);
+                    }
+                    break;
+            
+
+                case 'debuff_stat':
+                case 'dot_damage':
+                case 'heal_damage':
+                    damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
+                    finalDamage = Math.max(0, damage - player.defense);
+                    player.hp -= finalDamage;
+                    showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
+
+                    if (effect.debuff && player.defenseReductionTurns === 0) {
+                        player.defenseReductionAmount = effect.debuff.amount;
+                        player.defense -= effect.debuff.amount;
+                        player.defenseReductionTurns = effect.debuff.duration;
+                        showFloatingText(playerSprite, 'Defensa ↓', 'debuff');
+                    }
+                    if (effect.dot) {
+                        if (effect.dot.type === 'burn') {
+                            player.burningTurns = Math.max(player.burningTurns, effect.dot.duration);
+                            player.burnDamage = Math.max(player.burnDamage, effect.dot.damagePerTurn);
+                            showFloatingText(playerSprite, 'Quemadura', 'debuff');
+                        } else if (effect.dot.type === 'poison') {
+                            player.poisonedTurns = Math.max(player.poisonedTurns, effect.dot.duration);
+                            player.poisonDamage = Math.max(player.poisonDamage, effect.dot.damagePerTurn);
+                            showFloatingText(playerSprite, 'Envenenado', 'debuff');
+                        }
+                    }
+                    if (effect.lifesteal) {
+                        heal = Math.floor(finalDamage * effect.lifesteal);
+                        enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                        showFloatingText(enemySprite, `+${heal}`, 'heal');
+                    }
+                    logBattle(chosenAbility.logMessage(enemy.name, finalDamage, heal || effect.debuff?.amount || effect.dot?.damagePerTurn, effect.debuff?.duration || effect.dot?.duration));
+                    break;
+
+                case 'debuff_stat_no_damage':
+                    if (effect.debuff && player.attackReductionTurns === 0) {
+                        player.attackReductionAmount = effect.debuff.amount;
+                        player.attack -= effect.debuff.amount;
+                        player.attackReductionTurns = effect.debuff.duration;
+                        showFloatingText(playerSprite, 'Ataque ↓', 'debuff');
+                        logBattle(chosenAbility.logMessage(enemy.name, effect.debuff.amount, effect.debuff.duration));
+                    } else {
+                        logBattle(`${enemy.name} intenta intimidarte, ¡pero ya estás afectado!`);
+                    }
+                    break;
+
+                case 'heal':
+                    heal = effect.healAmount;
+                    enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                    showFloatingText(enemySprite, `+${heal}`, 'heal');
+                    logBattle(chosenAbility.logMessage(enemy.name, heal));
+                    break;
+
+                default:
+                    logBattle(`(${chosenAbility.name}) ¡La habilidad del enemigo no tuvo efecto!`);
+                    break;
             }
-        }
-
-        let damageToDeal = 0;
-        let effectsToApply = {};
-
-        if (usedAbility && chosenAbilityData) {
-            // Preparar el ataque de la habilidad
-            damageToDeal = Math.floor(enemy.attack * (chosenAbilityData.effect.baseDamageMultiplier || 1.0));
-            effectsToApply = chosenAbilityData.effect;
         } else {
-            // Preparar un ataque básico
-            damageToDeal = enemy.attack;
-        }
-
-        // 3. Comprobar las defensas del jugador ANTES de aplicar el daño
-        if (player.intangibleTurns > 0) {
-            logBattle(`¡Eres intangible! El ataque de ${enemy.name} te atraviesa sin causar daño.`);
-            showFloatingText(playerSprite, 'Intangible', 'ability');
-            player.intangibleTurns--;
-            gameState.battle.playerTurn = true;
-            updateBattleUI();
-            updateUI();
-            return;
-        }
-        if (player.dodgeNextAttack) {
-            player.dodgeNextAttack = false;
-            logBattle(`¡Esquivas el ataque de ${enemy.name}!`);
-            showFloatingText(playerSprite, 'Esquivado', 'ability');
-            gameState.battle.playerTurn = true;
-            updateBattleUI();
-            updateUI();
-            return;
-        }
-        
-        // 4. Aplicar el daño y los efectos si el ataque no fue anulado
-        const finalDamage = Math.max(0, damageToDeal - player.defense);
-        
-        if (finalDamage > 0) {
-            player.hp -= finalDamage;
-            showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
-        } else {
-            showFloatingText(playerSprite, 'Bloqueado', 'ability');
-        }
-
-        // Aplicar efectos de la habilidad (veneno, debuffs, etc.)
-        if (usedAbility && effectsToApply) {
-            if (effectsToApply.poison && !player.isImmuneToStatus) {
-                player.poisonedTurns = Math.max(player.poisonedTurns, effectsToApply.poison.duration);
-                player.poisonDamage = Math.max(player.poisonDamage, effectsToApply.poison.damagePerTurn);
-                showFloatingText(playerSprite, 'Envenenado', 'debuff');
-            }
-            if (effectsToApply.debuff && !player.isImmuneToStatus) {
-                const debuff = effectsToApply.debuff;
-                if (debuff.stat === 'defense' && player.defenseReductionTurns === 0) {
-                    player.defenseReductionAmount = debuff.amount;
-                    player.defense -= debuff.amount;
-                    player.defenseReductionTurns = debuff.duration;
-                    showFloatingText(playerSprite, 'Defensa ↓', 'debuff');
-                }
-                // ... (añadir otros debuffs aquí)
-            }
-            if (effectsToApply.lifesteal) {
-                const healAmount = Math.floor(finalDamage * effectsToApply.lifesteal);
-                enemy.hp = Math.min(enemy.maxHp, enemy.hp + healAmount);
-                showFloatingText(enemySprite, `+${healAmount}`, 'heal');
-            }
-            logBattle(chosenAbilityData.logMessage(enemy.name, finalDamage, effectsToApply.poison?.damagePerTurn || effectsToApply.debuff?.amount, effectsToApply.poison?.duration || effectsToApply.debuff?.duration));
-        } else {
-            // Log para el ataque básico
-            if (finalDamage > 0) {
-                logBattle(`${enemy.name} te ataca y te causa ${finalDamage} de daño.`);
+            // --- ATAQUE BÁSICO (si no se usa habilidad) ---
+            const damage = Math.max(0, enemy.attack - player.defense);
+            player.hp -= damage;
+            if (damage > 0) {
+                logBattle(`${enemy.name} te ataca y te causa ${damage} de daño.`);
+                showFloatingText(playerSprite, `-${damage}`, 'damage');
             } else {
                 logBattle(`${enemy.name} te ataca pero tu defensa absorbe todo el impacto.`);
+                showFloatingText(playerSprite, 'Bloqueado', 'ability');
             }
         }
         
@@ -10235,13 +11002,19 @@
       function getPlayerCurrentZone() {
         const playerX = gameState.player.x;
         const playerY = gameState.player.y;
+        console.log(`[getPlayerCurrentZone] Buscando zona para coords: X=${playerX}, Y=${playerY}`); // Descomenta si necesitas depurar esta función específicamente
         for (const zone of gameState.map.terrainZones) {
-          if (playerX >= zone.x1 && playerX <= zone.x2 && playerY >= zone.y1 && playerY <= zone.y2) {
-            return zone;
-          }
+            if (playerX >= zone.x1 && playerX <= zone.x2 && playerY >= zone.y1 && playerY <= zone.y2) {
+                // console.log(`[getPlayerCurrentZone] ==> Encontrado en zona: "${zone.name}"`); // Descomenta si necesitas depurar esta función específicamente
+                return zone;
+            }
         }
-        return null; // El jugador no está en ninguna zona definida (está en el "mundo abierto")
-      }
+        // console.log(`[getPlayerCurrentZone] ==> No se encontró en ninguna zona definida. Retornando null.`); // Descomenta si necesitas depurar esta función específicamente
+        return null; 
+    }
+
+
+
       function showConfirmationModal(title, text, onConfirm) {
         document.getElementById('confirmationModalTitle').textContent = title;
         document.getElementById('confirmationModalText').innerHTML = text;
@@ -10433,6 +11206,8 @@
           updatePlayerSpriteVisual(); // Llamar una vez para establecer el sprite inicial
 
           showTouchControls();
+          const initialZone = getPlayerCurrentZone();
+          gameState.player.currentZoneName = initialZone ? initialZone.name : "Tierras Salvajes";
 
           showModal(
             "Despertar del Cultivador",
