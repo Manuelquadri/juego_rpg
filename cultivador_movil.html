@@ -1608,6 +1608,18 @@
             height: 600,
             defaultTerrain: "GRASSLAND",
             terrainZones: [
+
+
+              // ARENA DE LA SECTA
+              {
+                x1: 4,
+                y1: 12,
+                x2: 8,
+                y2: 16, // Ejemplo de coordenadas (ajusta según tu mapa)
+                type: "ARENA", // Puedes usar 'DESERT' o crear un G_TERRAIN_TYPES.ARENA
+                name: "Arena de la Secta",
+                // No necesita spawnSettings por ahora, a menos que quieras pequeños mobs decorativos allí.
+              },
               // Ejemplo de Zona de Inicio cerca de la Secta (PRADERA)
              //ZONAS
               
@@ -1883,16 +1895,7 @@
                 name: "límite oeste pradera",
               }, // Sin spawnSettings = no spawns
               // ...
-              // ARENA DE LA SECTA
-              {
-                x1: 4,
-                y1: 12,
-                x2: 8,
-                y2: 16, // Ejemplo de coordenadas (ajusta según tu mapa)
-                type: "ARENA", // Puedes usar 'DESERT' o crear un G_TERRAIN_TYPES.ARENA
-                name: "Arena de la Secta",
-                // No necesita spawnSettings por ahora, a menos que quieras pequeños mobs decorativos allí.
-              },
+            
               
             ],
             terrainGrid: null,
@@ -1959,6 +1962,12 @@
             textureUrl: "img/mont_sup.png", // ¡Asegúrate de que esta imagen exista!
             name: "Vacío"
           },
+          ARENA: { 
+            symbol: "🏟️",
+            textureUrl: "img/b_arena.png", 
+            color: "#D2B48C", 
+            name: "Arena" },
+
           GRASSLAND: { 
               symbol: "🟩", 
               textureUrl: "img/grassland.png",
@@ -2048,7 +2057,7 @@
               color: "#5D3A9A", 
               name: "Pantano" 
           }, // Púrpura/Verde oscuro para pantano
-          ARENA: { symbol: "🏟️", color: "#D2B48C", name: "Arena" },
+          
           // Añade más según necesites
         };
 
