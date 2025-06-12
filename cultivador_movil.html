@@ -8013,32 +8013,41 @@
         }
 
         function showFloatingText(targetElement, text, type) {
-        if (!targetElement) return;
+          // --- ¡ESTA ES LA VERIFICACIÓN CLAVE! ---
+          if (!targetElement || typeof targetElement.getBoundingClientRect !== 'function') {
+              console.warn(`[showFloatingText] Intento de mostrar texto flotante en un elemento inválido. Texto: "${text}", Tipo: "${type}". El elemento era:`, targetElement);
+              return; // Salir de la función si el elemento no es válido.
+          }
+          // --- FIN DE LA VERIFICACIÓN ---
 
-        const battleScreen = document.getElementById('battleScreen');
-        
-        const popup = document.createElement('div');
-        popup.className = `damage-popup ${type}`;
-        popup.textContent = text;
-        
-        // Lo añadimos al contenedor de la pantalla de batalla para que position:absolute funcione bien
-        battleScreen.appendChild(popup);
+          const battleScreen = document.getElementById('battleScreen');
+          if (!battleScreen) return; // Salida temprana si la pantalla de batalla no está
+          
+          const popup = document.createElement('div');
+          popup.className = `damage-popup ${type}`;
+          popup.textContent = text;
+          
+          // Lo añadimos al contenedor de la pantalla de batalla para que position:absolute funcione bien
+          battleScreen.appendChild(popup);
 
-        // Calculamos la posición inicial del popup
-        const targetRect = targetElement.getBoundingClientRect();
-        const battleRect = battleScreen.getBoundingClientRect();
+          // Calculamos la posición inicial del popup
+          const targetRect = targetElement.getBoundingClientRect();
+          const battleRect = battleScreen.getBoundingClientRect();
 
-        // Posición inicial en el centro-superior del objetivo
-        const initialTop = targetRect.top - battleRect.top - 20;
-        const initialLeft = targetRect.left - battleRect.left + (targetRect.width / 2) - (popup.offsetWidth / 2);
+          // Posición inicial en el centro-superior del objetivo
+          const initialTop = targetRect.top - battleRect.top - 20;
+          const initialLeft = targetRect.left - battleRect.left + (targetRect.width / 2) - (popup.offsetWidth / 2);
 
-        popup.style.top = `${initialTop}px`;
-        popup.style.left = `${initialLeft}px`;
+          popup.style.top = `${initialTop}px`;
+          popup.style.left = `${initialLeft}px`;
 
-        // Eliminar el elemento del DOM después de que termine la animación
-        popup.addEventListener('animationend', () => {
-            popup.remove();
-        });
+          // Eliminar el elemento del DOM después de que termine la animación
+          popup.addEventListener('animationend', () => {
+              // Usamos un try-catch por si el popup ya fue eliminado por otra razón (ej. fin de batalla)
+              try {
+                  popup.remove();
+              } catch (e) {}
+          });
       }
 
         function populateBattleActionButtons() {
@@ -8329,36 +8338,30 @@
                 player.tempDefenseBonus = 0;
               }
             }
-            if (player.magicShieldTurns > 0 && action !== "mystic_barrier") {
-              player.magicShieldTurns--;
-              if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
-                logBattle("Barrera Mística se disipa.");
-                player.magicShieldValue = 0;
-              }
-            }
+            
 
             if (player.hp <= 0) {
-              logBattle("Has sucumbido antes de actuar.");
               player.hp = 0;
+              logBattle("Has sucumbido a tus heridas antes de poder actuar.");
+              updateBattleUI(); // Actualiza la UI para mostrar HP 0
+
+              // Lógica de derrota centralizada
               setTimeout(() => {
-                player.hp = Math.floor(player.maxHp * 0.1);
-                player.mana = Math.floor(player.maxMana * 0.1);
-                const expLossPercentage = 0.1;
-                const expToLose = Math.floor(player.exp * expLossPercentage);
-                player.exp = Math.max(0, player.exp - expToLose);
-                logBattle(`Pierdes ${expToLose} EXP.`);
-                const safeRespawnCoords = findSafeRespawnLocation(
-                  G_SAFE_RESPAWN_X,
-                  G_SAFE_RESPAWN_Y
-                );
-                player.x = safeRespawnCoords.x;
-                player.y = safeRespawnCoords.y;
-                updatePlayerPosition();
-                endBattle(false);
-                showModal("Derrota", "Has sido derrotado...");
+                  const expLoss = Math.floor(gameState.player.exp * 0.1);
+                  gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
+                  gameState.player.mana = Math.floor(gameState.player.maxMana * 0.1);
+                  gameState.player.exp = Math.max(0, gameState.player.exp - expLoss);
+                  
+                  const safeCoords = findSafeRespawnLocation(G_SAFE_RESPAWN_X, G_SAFE_RESPAWN_Y);
+                  gameState.player.x = safeCoords.x;
+                  gameState.player.y = safeCoords.y;
+                  
+                  updatePlayerPosition("player_defeat_respawn");
+                  endBattle(false);
+                  showModal("Derrota", `Caíste en combate. Pierdes ${expLoss} EXP.`);
               }, 2000);
-              return;
-            }
+              return; // Detener la función aquí, el jugador no puede actuar.
+          }
 
             const techDetails = techniqueData[action]; // Obtener detalles de la técnica por su ID
           if (techDetails && techDetails.type === 'active_ability') {
@@ -8430,22 +8433,52 @@
                           break;
 
                       case "formation_t1":
-                          player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
-                          player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
-                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 5)} de daño!`;
+                        
+                          // Definimos las variables para ESTE caso
+                          const shieldValue_t1 = techDetails.effect.shieldValue + (playerTechLevel * 5);
+                          const shieldDuration_t1 = techDetails.effect.duration;
+
+                          // Asignamos el valor del escudo y los turnos al estado del jugador
+                          player.magicShieldValue = (player.magicShieldValue || 0) + shieldValue_t1;
+                          // --- LA CORRECCIÓN CLAVE ESTÁ AQUÍ ---
+                          player.magicShieldTurns = Math.max(player.magicShieldTurns || 0, shieldDuration_t1);
+
+                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${shieldValue_t1} de daño!`;
+                          showFloatingText(document.querySelector('.character-sprite'), `Escudo +${shieldValue_t1}`, 'ability');
+                          logBattle(logMessage);
                           break;
                       
                       case "formation_t2":
-                          player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
-                          player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
-                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 5)} de daño!`;
-                          break;
+                        // Definimos las variables para ESTE caso
+                        const shieldValue_t2 = techDetails.effect.shieldValue + (playerTechLevel * 10);
+                        const shieldDuration_t2 = techDetails.effect.duration;
+
+                        // Asignamos el valor del escudo y los turnos al estado del jugador
+                        player.magicShieldValue = (player.magicShieldValue || 0) + shieldValue_t1;
+                        // --- LA CORRECCIÓN CLAVE ESTÁ AQUÍ ---
+                        player.magicShieldTurns = Math.max(player.magicShieldTurns || 0, shieldDuration_t1);
+
+                        logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${shieldValue_t1} de daño!`;
+                        showFloatingText(document.querySelector('.character-sprite'), `Escudo +${shieldValue_t1}`, 'ability');
+                        logBattle(logMessage);
+                        break;
                       case "formation_t3":
-                          player.magicShieldValue = (player.magicShieldValue || 0) + (techDetails.effect.shieldValue + (playerTechLevel * 5));
-                          player.magicShieldTurns = Math.max(player.magicShieldTurns, techDetails.effect.duration);
-                          logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${techDetails.effect.shieldValue + (playerTechLevel * 20)} de daño!`;
-                          showFloatingText(document.getElementById('enemySprite'), 'Defensa ↓ / Ataque ↓', 'debuff');
-                          break;
+                          // Definimos las variables para ESTE caso
+                        const shieldValue_t3 = techDetails.effect.shieldValue + (playerTechLevel * 20);
+                        const shieldDuration_t3 = techDetails.effect.duration;
+                        
+                        // Asignamos el valor del escudo y los turnos al estado del jugador
+                        player.magicShieldValue = (player.magicShieldValue || 0) + shieldValue_t3;
+                        // --- Y LA CORRECCIÓN CLAVE ESTÁ AQUÍ TAMBIÉN ---
+                        player.magicShieldTurns = Math.max(player.magicShieldTurns || 0, shieldDuration_t3);
+
+                        // ... (resto de la lógica para aplicar debuffs al enemigo) ...
+
+                        logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo de ${shieldValue_t3} y debilita al enemigo!`;
+                        showFloatingText(document.querySelector('.character-sprite'), `Escudo +${shieldValue_t3}`, 'ability');
+                        showFloatingText(document.getElementById('enemySprite'), 'Defensa ↓ / Ataque ↓', 'debuff');
+                        logBattle(logMessage);
+                        break;
                       case "sword_t5": // Corte que Divide Cielos y Tierra
                           const baseDmg_t5 = player.attack * techDetails.effect.baseDamageMultiplier;
                           let finalDmg_t5 = baseDmg_t5;
@@ -8518,8 +8551,14 @@
                       enemy.hp -= damage;
                       logBattle(`Atacas causando ${damage} daño.`);
                       showFloatingText(document.getElementById('enemySprite'), `-${damage}`, 'damage');
-          
-                      break;
+                      
+                      // ESTA LÍNEA DEBERÍA SER logBattle, NO showFloatingText.
+                      // O es un resto de una depuración anterior que hay que eliminar.
+                      if (player.hp <= 0) {
+                        logBattle("Has sucumbido antes de actuar.");
+                        // ... Lógica de derrota ...
+                      }
+                      break; // <-- Fin del caso de ataque
                   case 'qi_fist':
                     const qiFistCost = 10;
                       if (player.mana >= qiFistCost) {
@@ -9081,7 +9120,7 @@
         }
         // --- COMPROBAR SI EL ENEMIGO PUEDE ACTUAR ---
         // 1. Procesar estados y DoTs del enemigo
-        
+        let canEnemyAct = true;
         if (enemy.sealedTurns > 0 || enemy.frozenTurns > 0 || enemy.stunnedTurns > 0) {
             // ... (Lógica para saltar turno)
             const statusMessage = enemy.sealedTurns > 0 ? '¡Sellado!' : (enemy.frozenTurns > 0 ? '¡Congelado!' : '¡Aturdido!');
@@ -9091,7 +9130,8 @@
             if(enemy.sealedTurns > 0) enemy.sealedTurns--;
             if(enemy.frozenTurns > 0) enemy.frozenTurns--;
             if(enemy.stunnedTurns > 0) enemy.stunnedTurns--;
-            
+             canEnemyAct = false;
+           
             gameState.battle.playerTurn = true;
             updateBattleUI();
             updateUI();
@@ -9106,6 +9146,8 @@
                 }
             }
         }
+        let incomingDamage = 0;
+        let usedAbilityLogMessage = "";
 
         // 2. Decidir la acción del enemigo (Habilidad o Ataque Básico)
           // --- EJECUTAR LA ACCIÓN ELEGIDA ---
@@ -9134,12 +9176,8 @@
                 // ===================================
                 case 'piercing_damage':
                     const defenseToIgnore = player.defense * (effect.armorPenetration || 0);
-                    damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
-                    finalDamage = Math.max(0, damage - (player.defense - defenseToIgnore));
-                    player.hp -= finalDamage;
-                    
-                    showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
-                    logBattle(chosenAbility.logMessage(enemy.name, finalDamage));
+                    damage = Math.max(0, Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0)) - (player.defense - defenseToIgnore));
+                    applyDamageToPlayer(damage, chosenAbility.name); // <-- USO DE LA NUEVA FUNCIÓN
                     break;
 
                 // ===================================
@@ -9272,15 +9310,38 @@
         } else {
             // --- ATAQUE BÁSICO (si no se usa habilidad) ---
             const damage = Math.max(0, enemy.attack - player.defense);
-            player.hp -= damage;
+             applyDamageToPlayer(damage, `${enemy.name}`); 
+            
             if (damage > 0) {
                 logBattle(`${enemy.name} te ataca y te causa ${damage} de daño.`);
                 showFloatingText(playerSprite, `-${damage}`, 'damage');
             } else {
-                logBattle(`${enemy.name} te ataca pero tu defensa absorbe todo el impacto.`);
+                logBattle(`${enemy.name} te ataca pero tu defensa es demasiado alta.`);
                 showFloatingText(playerSprite, 'Bloqueado', 'ability');
             }
         }
+        // --- LÓGICA DE ABSORCIÓN DE DAÑO (LA PARTE CLAVE) ---
+        if (incomingDamage > 0 && player.magicShieldValue > 0 && player.magicShieldTurns > 0) {
+            const absorbedByShield = Math.min(incomingDamage, player.magicShieldValue);
+            player.magicShieldValue -= absorbedByShield;
+            incomingDamage -= absorbedByShield;
+            
+            logBattle(`¡Tu escudo absorbe ${absorbedByShield} de daño! (Restante: ${Math.floor(player.magicShieldValue)})`);
+            showFloatingText(playerSprite, `Absorbe ${absorbedByShield}`, 'ability');
+            
+            if (player.magicShieldValue <= 0) {
+                logBattle("¡Tu barrera mágica se ha roto!");
+                player.magicShieldTurns = 0; // Un escudo roto ya no tiene turnos.
+            }
+        }
+
+        // Aplicar el daño restante al HP del jugador
+        if(incomingDamage > 0) {
+            player.hp -= incomingDamage;
+            logBattle(`Recibes ${incomingDamage} de daño.`);
+            showFloatingText(playerSprite, `-${incomingDamage}`, 'damage');
+        }
+
         
         // 5. Comprobar si el jugador fue derrotado
         if (player.hp <= 0) {
@@ -9296,8 +9357,9 @@
             }
             
             if (!hasBeenSaved) {
-                
+              showFloatingText( 'Has sido derrotado!');
                logBattle("¡Has sido derrotado!");
+               //perdida de experiencia
                 const expLoss = Math.floor(gameState.player.exp * 0.1);
                 setTimeout(() => {
                     gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
@@ -9311,7 +9373,17 @@
                     showModal("Derrota", `Regresas a un lugar seguro, mermado. Pierdes ${expLoss} EXP.`);
                 }, 2000);
                 return; // Fin de la función si el jugador es derrotado
-                return;
+                
+            }
+        }
+        console.log(`[ENEMY_TURN_END] Fin del turno enemigo. Verificando duración del escudo.`);
+        console.log(`[ENEMY_TURN_END] Turnos del escudo ANTES de reducir: ${player.magicShieldTurns || 0}`);
+        // --- Reducir la duración del escudo AL FINAL del turno del enemigo ---
+        if ((player.magicShieldTurns || 0) > 0) {
+            player.magicShieldTurns--;
+            if (player.magicShieldTurns === 0 && (player.magicShieldValue || 0) > 0) {
+                logBattle("Tu barrera mágica se disipa al final del turno.");
+                player.magicShieldValue = 0;
             }
         }
 
@@ -9320,6 +9392,54 @@
         populateBattleActionButtons();
         updateBattleUI();
         updateUI();
+      }
+
+        function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
+          const player = gameState.player;
+          const playerSprite = document.querySelector('.character-sprite');
+          let finalDamage = damageAmount;
+          console.log(`[APPLY_DAMAGE] Función llamada. Daño inicial: ${damageAmount}, Fuente: ${sourceName}`);
+          console.log(`[APPLY_DAMAGE] Estado del escudo ANTES de absorber -> Valor: ${player.magicShieldValue || 0}, Turnos: ${player.magicShieldTurns || 0}`);
+          // 1. Lógica de absorción del escudo (¡LA PARTE CLAVE!)
+          if (finalDamage > 0 && (player.magicShieldValue || 0) > 0 && (player.magicShieldTurns || 0) > 0) {
+
+            console.log("[APPLY_DAMAGE] Condición para absorber daño CUMPLIDA. Escudo está activo.");
+              const absorbedByShield = Math.min(finalDamage, player.magicShieldValue);
+              player.magicShieldValue -= absorbedByShield;
+              finalDamage -= absorbedByShield;
+              console.log(`[APPLY_DAMAGE] Escudo absorbió: ${absorbedByShield}. Daño restante: ${finalDamage}. Valor del escudo restante: ${player.magicShieldValue}`);
+              
+              logBattle(`¡Tu escudo absorbe ${absorbedByShield} de daño! (Restante: ${Math.floor(player.magicShieldValue)})`);
+              showFloatingText(playerSprite, `Absorbe ${absorbedByShield}`, 'ability');
+              
+              if (player.magicShieldValue <= 0) {
+                console.log("[APPLY_DAMAGE] ¡Tu barrera mágica se ha roto!");
+                  logBattle("¡Tu barrera mágica se ha roto!");
+                  player.magicShieldTurns = 0; // Un escudo roto ya no tiene turnos.
+              }
+          }else{
+            console.log("[APPLY_DAMAGE] Condición para absorber daño NO cumplida. El daño pasará directamente.");
+          }
+
+          // 2. Aquí podrías añadir otras lógicas de mitigación de daño (ej. reducción pasiva) si las tienes
+
+          // 3. Aplicar el daño final al HP del jugador
+          if (finalDamage > 0) {
+              player.hp -= finalDamage;
+              console.log(`[APPLY_DAMAGE] Aplicando ${finalDamage} de daño final al HP del jugador. Nuevo HP: ${player.hp}`);
+              logBattle(`${sourceName} te causa ${finalDamage} de daño.`);
+              showFloatingText(playerSprite, `-${finalDamage}`, 'damage');
+          } else if (damageAmount > 0) {
+            console.log(`[APPLY_DAMAGE] El ataque fue completamente absorbido.`);
+              // Esto se ejecuta si el daño original era positivo pero fue completamente absorbido
+              logBattle(`¡Tu defensa absorbió completamente el ataque de ${sourceName}!`);
+              showFloatingText(playerSprite, '¡Bloqueado!', 'ability');
+          }else {
+        console.log(`[APPLY_DAMAGE] No se aplicó daño (daño inicial fue ${damageAmount}).`);
+    }
+
+          // Devuelve el daño final que realmente se infligió al HP, puede ser útil.
+          return finalDamage;
       }
 
           function showBattleReview() {
