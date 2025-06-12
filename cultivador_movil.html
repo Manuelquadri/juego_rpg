@@ -6807,6 +6807,11 @@
         }
 
         function startCultivationMode(type, targetId = null) {
+          // --- INICIO DE LA CORRECCIÓN ---
+          // Siempre que se inicie un modo de cultivo, cerramos el modal de elección.
+          closeCultivationChoiceModal();
+          // --- FIN DE LA CORRECCIÓN ---
+
           console.log(`[Cultivo LOG] ==> INTENTO DE INICIAR CULTIVO (Tipo: '${type}', Técnica: '${targetId}')`);
           if (gameState.player.isCultivating || gameState.cultivationInterval) {
               stopCultivation();
@@ -6815,11 +6820,9 @@
           gameState.player.isCultivating = true;
           gameState.player.cultivationMode = { type, targetId, startTime: Date.now(), isConversionCultivation: false };
           
-          // El intervalo se crea, pero no hacemos nada más que podría fallar aquí.
           gameState.cultivationInterval = setInterval(processCultivationTick, 1000);
           console.log(`[Cultivo LOG] -> NUEVO INTERVALO CREADO. ID: ${gameState.cultivationInterval}`);
           
-          // Llamamos a la actualización de la UI por separado.
           showActiveCultivationModal();
           renderQuickSlotBar();
       }
