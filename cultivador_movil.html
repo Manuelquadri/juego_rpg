@@ -2629,34 +2629,44 @@
               stock: 1,
               description: "Una espada básica pero fiable. (+5 Ataque)",
             },
+            //nivel 0
+            { itemName: "Rollo: Absorción de Qi Menor", price: 15, stock: 10 },
+            
+            { itemName: "Rollo: Conversión de Qi", price: 25, stock: 10 },
+            //nivel mortal
             { itemName: "Rollo: Tajo del Viento Veloz", price: 150, stock: 3 },
           { itemName: "Rollo: Físico de Buey de Piedra", price: 200, stock: 2 },
           { itemName: "Rollo: Matriz de Escudo de Qi", price: 180, stock: 3 },
           { itemName: "Rollo: Chispa Ígnea", price: 170, stock: 3 },
           { itemName: "Rollo: Dedo de Relámpago", price: 220, stock: 2 },
-            { itemName: "Rollo: Absorción de Qi Menor", price: 15, stock: 10 },
-            { itemName: "Rollo: Corte de Espada Básico", price: 50, stock: 10 },
-            { itemName: "Rollo: Conversión de Qi", price: 25, stock: 10 },
-            { itemName: "Rollo: Prisión de Hielo", price: 180, stock: 5 },
-            { itemName: "Rollo: Golpe de Llamas", price: 170, stock: 5 },
-            { itemName: "Rollo: Furia del Trueno", price: 190, stock: 5 },
-            { itemName: "Rollo: Dardo Venenoso", price: 150, stock: 5 },
-            { itemName: "Rollo: Piel de Piedra", price: 175, stock: 5 },
-            { itemName: "Rollo: Paso de las Sombras", price: 220, stock: 3 },
-            { itemName: "Rollo: Drenaje de Alma", price: 200, stock: 3 },
-            { itemName: "Rollo: Golpe Ciclón", price: 250, stock: 3 },
-            { itemName: "Rollo: Lluvia Curativa", price: 210, stock: 3 },
-            { itemName: "Rollo: Explosión Mental", price: 230, stock: 3 },
-            { itemName: "Rollo: Voluntad de Hierro", price: 200, stock: 3 },
-            { itemName: "Rollo: Flecha Celestial", price: 280, stock: 2 },
-            { itemName: "Rollo: Abrazo de la Naturaleza", price: 190, stock: 3 },
-            { itemName: "Rollo: Rugido de Dragón", price: 300, stock: 2 },
-            { itemName: "Rollo: Clon Fantasma", price: 240, stock: 2 },
-            { itemName: "Rollo: Cambio Temporal", price: 260, stock: 2 },
-            { itemName: "Rollo: Ritual de Sangre", price: 210, stock: 3 },
-            { itemName: "Rollo: Aura de Pureza", price: 230, stock: 3 },
-            { itemName: "Rollo: Invocar Elemental", price: 320, stock: 1 },
-            { itemName: "Rollo: Barrera Mística", price: 220, stock: 3 },
+          //nivel terrenal
+          
+          { itemName: "Rollo: Estocada Perfora-Armadura", price: 300, stock: 3 },
+            { itemName: "Rollo: Piel de Acero Fundido", price: 300, stock: 5 },
+            { itemName: "Rollo: Matriz de Grilletes de Qi", price: 300, stock: 5 },
+            { itemName: "Rollo: Paso Etéreo", price: 300, stock: 5 },
+            { itemName: "Rollo: Aliento de Dragón Menor", price: 300, stock: 5 },
+            //nivel celestial
+            { itemName: "Rollo: Danza de Espada Ciclónica", price: 600, stock: 3 },
+            { itemName: "Rollo: Corazón de Voluntad Indomable", price: 600, stock: 3 },
+            { itemName: "Rollo: Matriz de Supresión Espiritual", price:600 , stock: 3 },
+            { itemName: "Rollo: Jaula de Rayos", price: 600, stock: 3 },
+            { itemName: "Rollo: Parpadeo de Sombra", price: 600, stock: 3 },
+            //Nivel soberano
+            { itemName: "Rollo: Intenteción de Espada del Tirano", price: 1200, stock: 3 },
+            { itemName: "Rollo: Cuerpo Dorado Inmortal", price: 1200, stock: 2 },
+            { itemName: "Rollo: Sol Abrasador", price: 1200, stock: 3 },
+            { itemName: "Rollo: Llamada del Juicio del Trueno", price: 1200, stock: 2 },
+            { itemName: "Rollo: Santuario Dorado Protector", price: 1200, stock: 2 },
+            //nivel trascendente
+            { itemName: "Rollo: Corte que Divide Cielos y Tierra", price: 2400, stock: 2 },
+            { itemName: "Rollo: Constitución de Dragón Ancestral", price: 2400, stock: 3 },
+            { itemName: "Rollo: Llama del Fénix Renaciente", price: 2400, stock: 3 },
+            { itemName: "Rollo: Tribulación de los Nueve Cielos", price: 2400, stock: 3 },
+            { itemName: "Rollo: Matriz de Reversión del Cosmos", price: 2400, stock: 3 },
+            { itemName: "Rollo: Paso del Vacío Infinito", price: 2400, stock: 3 },
+          
+          
           ],
         };
         
@@ -2787,7 +2797,7 @@
           // == GRADO 4 (Rango: Anciano) - Nivel Soberano
           // =================================================================
           sword_t4: {
-              id: "sword_t4", name: "Intento de Espada del Tirano", icon: "👑",
+              id: "sword_t4", name: "Intenteción de Espada del Tirano", icon: "👑",
               description: "Canalizas tu Qi en la espada para liberar una onda de energía que daña y aturde.",
               type: "active_ability", abilityId: "sword_t4",
               effect: { baseDamageMultiplier: 2.8, stunChance: 0.4 }, manaCost: 70,
@@ -4241,7 +4251,7 @@
             typeOverride: "monster",
             hp: 800,
             level:11,
-            attack: 35,
+            attack: 55,
             defense: 50,
             exp: 500,
             maxHp: 800,
@@ -4328,6 +4338,8 @@
             specialChance: 0.35,
             specialAttackMultiplier: 1.8,
             healChance: 0.15,
+            abilities:[{ abilityId: "fire_breath", chance: 0.30 }],
+            
             lootTable: [
               {
                 itemName: "Piedras Espirituales",
@@ -4362,7 +4374,7 @@
             typeOverride: "monster",
             hp: 800,
             level:11,
-            attack: 35,
+            attack: 65,
             defense: 50,
             exp: 500,
             maxHp: 800,
