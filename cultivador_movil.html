@@ -14103,12 +14103,6 @@
       function openSectHallInterface() {
         const player = gameState.player;
         const sectData = SECTA_DATA;
-        console.log(
-          "[SectHall] Abrir interfaz. Rango actual:",
-          player.secta.rango,
-          "PCS:",
-          player.secta.puntosContribucion
-        ); // LOG INICIAL
 
         document.getElementById(
           "sectHallModalTitle"
@@ -14132,34 +14126,25 @@
         const currentRankIndex = sectData.rangos.findIndex(
           (r) => r.nombre === player.secta.rango
         );
-        console.log("[SectHall] currentRankIndex:", currentRankIndex); // LOG currentRankIndex
-
         let challengeButtonAdded = false;
 
-        // Condición principal para mostrar el botón de consulta
         if (
           currentRankIndex !== -1 &&
           currentRankIndex + 1 < sectData.rangos.length
         ) {
-          console.log(
-            "[SectHall] Condición para mostrar botón CUMPLIDA. Hay un siguiente rango."
-          ); // LOG
           const nextRankData = sectData.rangos[currentRankIndex + 1];
-          console.log(
-            "[SectHall] Siguiente rango:",
-            nextRankData.nombre,
-            "PCS Req:",
-            nextRankData.pcsRequeridos
-          ); // LOG nextRankData
-
           const challengeButton = document.createElement("button");
           challengeButton.textContent = `Consultar Desafío para ${nextRankData.nombre}`;
           challengeButton.className = "cultivation-option-btn";
           challengeButton.style.marginBottom = "10px";
 
+          // --- INICIO DE LA CORRECCIÓN CLAVE ---
           challengeButton.onclick = () => {
-            // ... (lógica del onclick que ya tienes, puedes añadir logs internos aquí también si es necesario) ...
-            console.log("[SectHall] Botón 'Consultar Desafío' CLICADO.");
+            // 1. Cerramos el modal actual del Salón de la Secta.
+            closeSectHallModal();
+
+            // 2. Preparamos y mostramos el NUEVO modal con la información del desafío.
+            // (La lógica interna para generar el mensaje no cambia)
             const pcsNecesarios = nextRankData.pcsRequeridos;
             const tieneSuficientesPCS =
               player.secta.puntosContribucion >= pcsNecesarios;
@@ -14169,20 +14154,12 @@
             let misionDesafioDataObj = null;
             let idDeLaMisionAsociada = null;
 
-            console.log(
-              `[SectHall - OnClick] PCS Necesarios: ${pcsNecesarios}, Tiene PCS: ${tieneSuficientesPCS}, Rival ID: ${rivalIdParaDesafio}`
-            );
-
             if (rivalIdParaDesafio) {
               const misionEntry = Object.entries(MISIONES_DATA).find(
                 ([mKey, mVal]) =>
-                  mVal.objetivo?.tipo === "derrotar_npc_especifico" &&
-                  mVal.objetivo?.npcId === rivalIdParaDesafio &&
-                  mVal.recompensa?.nuevoRango === nextRankData.nombre
-              );
-              console.log(
-                "[SectHall - OnClick] Mision Entry encontrada:",
-                misionEntry
+                  mVal.autoActivarAlCumplirRequisitos === true &&
+                  mVal.recompensa?.nuevoRango === nextRankData.nombre &&
+                  mVal.objetivo?.npcId === rivalIdParaDesafio
               );
 
               if (misionEntry) {
@@ -14191,13 +14168,6 @@
                 misionDesafioActiva = player.secta.misionesActivas.find(
                   (m) => m.id === idDeLaMisionAsociada
                 );
-                console.log(
-                  "[SectHall - OnClick] ID Misión Asociada:",
-                  idDeLaMisionAsociada,
-                  "Misión Activa?:",
-                  !!misionDesafioActiva
-                );
-
                 mensajeDesafio += `<em>"${misionDesafioDataObj.descripcion}"</em><br>`;
                 mensajeDesafio += `Oponente: <strong>${
                   entityTypes[rivalIdParaDesafio]?.name ||
@@ -14208,11 +14178,9 @@
                 } PCS, ${misionDesafioDataObj.recompensa.exp || 0} EXP, Rango ${
                   nextRankData.nombre
                 }.<br><hr>`;
-              } else {
-                mensajeDesafio += `Información del desafío específico no encontrada (error de configuración o la misión no está definida correctamente).<br><hr>`;
               }
             } else {
-              mensajeDesafio += `Este rango no parece requerir un desafío de combate para ascender.<br><hr>`;
+              mensajeDesafio += `Este rango no parece requerir un desafío de combate.<br><hr>`;
             }
 
             mensajeDesafio += `<strong>Requisitos Actuales:</strong><br>`;
@@ -14238,9 +14206,8 @@
               misionDesafioDataObj &&
               idDeLaMisionAsociada
             ) {
-              const activarDesafioBtnId = "activar-desafio-btn-specific";
-              mensajeDesafio += `<br><button id="${activarDesafioBtnId}">Activar Misión de Desafío Ahora</button>`;
-
+              mensajeDesafio += `<br><button id="activar-desafio-btn-specific">Activar Misión de Desafío Ahora</button>`;
+              // Guardamos la información necesaria para el listener del botón
               window.tempChallengeActivationInfo = {
                 misionId: idDeLaMisionAsociada,
                 nextRankName: nextRankData.nombre,
@@ -14248,107 +14215,53 @@
             } else if (!tieneSuficientesPCS) {
               mensajeDesafio +=
                 "<br>Aún no cumples los requisitos de PCS para activar este desafío.";
-            } else if (!rivalIdParaDesafio || !misionDesafioDataObj) {
-              mensajeDesafio +=
-                "<br>No hay un desafío de combate claramente definido para este rango o falta información de la misión.";
             }
 
+            // 3. Mostramos el modal de información. `showModal` se encargará de gestionar el velo y los stats.
             showModal("Información del Desafío de Rango", mensajeDesafio);
 
+            // 4. Asignamos el listener al botón de activar, si existe.
             if (
               window.tempChallengeActivationInfo &&
               document.getElementById("activar-desafio-btn-specific")
             ) {
               document.getElementById("activar-desafio-btn-specific").onclick =
                 () => {
-                  console.log(
-                    "[SectHall - OnClick] Botón 'Activar Misión Ahora' CLICADO."
-                  );
                   const info = window.tempChallengeActivationInfo;
-                  const misionDataParaActivar = MISIONES_DATA[info.misionId];
-                  const playerRef = gameState.player;
-                  const nextRankDataRef = SECTA_DATA.rangos.find(
-                    (r) => r.nombre === info.nextRankName
+                  acceptMission(info.misionId);
+                  closeModal(); // Cierra el modal de información del desafío
+                  showModal(
+                    "¡Desafío Aceptado!",
+                    "La misión de desafío ha sido añadida a tu diario. ¡Ve a la arena!"
                   );
-
-                  if (
-                    misionDataParaActivar &&
-                    nextRankDataRef &&
-                    playerRef.secta.puntosContribucion >=
-                      nextRankDataRef.pcsRequeridos
-                  ) {
-                    if (
-                      !playerRef.secta.misionesActivas.some(
-                        (m) => m.id === info.misionId
-                      ) &&
-                      !playerRef.secta.misionesCompletadas[info.misionId]
-                    ) {
-                      acceptMission(info.misionId);
-                      closeModal();
-                      openSectHallInterface();
-                      ensureFixedEntities();
-                      renderMap();
-                    } else {
-                      showModal(
-                        "Desafío ya Gestionado",
-                        "Este desafío ya está activo o ha sido completado."
-                      );
-                    }
-                  } else {
-                    showModal(
-                      "Requisitos No Cumplidos",
-                      "Ya no cumples los requisitos para activar este desafío."
-                    );
-                  }
+                  ensureFixedEntities();
+                  renderMap();
                   delete window.tempChallengeActivationInfo;
                 };
-            } else if (
-              document.getElementById("activar-desafio-btn-specific")
-            ) {
-              console.warn(
-                "[SectHall - OnClick] Botón 'activar-desafio-btn-specific' existe, pero window.tempChallengeActivationInfo no está definido."
-              );
             }
           };
+          // --- FIN DE LA CORRECCIÓN CLAVE ---
+
           rankChallengesDiv.appendChild(challengeButton);
           challengeButtonAdded = true;
-          console.log("[SectHall] Botón 'Consultar Desafío' AÑADIDO al DOM."); // LOG si se añade
-        } else {
-          // Este bloque se ejecuta si la condición if (currentRankIndex !== -1 && currentRankIndex + 1 < sectData.rangos.length) NO se cumple
-          console.log("[SectHall] Condición para mostrar botón NO CUMPLIDA."); // LOG
-          if (currentRankIndex === -1) {
-            console.log(
-              "[SectHall] Razón: currentRankIndex es -1 (rango del jugador no encontrado)."
-            ); // LOG
-          } else {
-            console.log(
-              "[SectHall] Razón: Jugador en rango máximo o no hay más rangos (currentRankIndex + 1 >= sectData.rangos.length)."
-            ); // LOG
-          }
         }
 
-        // Mensajes de fallback si el botón no se añadió
         if (!challengeButtonAdded) {
-          console.log(
-            "[SectHall] challengeButtonAdded es FALSE. Mostrando mensaje de fallback."
-          ); // LOG
           if (currentRankIndex === -1) {
             rankChallengesDiv.innerHTML =
               "<p>Error al determinar tu rango actual.</p>";
-          } else if (currentRankIndex + 1 >= sectData.rangos.length) {
+          } else {
             rankChallengesDiv.innerHTML =
               "<p>¡Has alcanzado el rango más alto o no hay más desafíos definidos!</p>";
-          } else {
-            // Esta situación es menos común si la lógica anterior es correcta,
-            // pero podría ocurrir si hay un `nextRankData` pero por alguna razón no se crea el botón.
-            rankChallengesDiv.innerHTML =
-              "<p>No hay información de desafío disponible en este momento (situación de fallback inesperada).</p>";
           }
         }
 
         document.getElementById("sectHallModal").style.display = "flex";
         hideTouchControls();
+        updateStatsPanelVisibility();
+        updateGameOverlayVisibility();
       }
+
       function acceptMissionFromSectHall(misionId) {
         acceptMission(misionId);
         if (document.getElementById("sectHallModal").style.display === "flex") {
