@@ -3667,7 +3667,7 @@
           },
 
           ///----------------- FIN DECORACIONES------------
-       
+ /// ============================  NPCs  ========================================      
           npc_secta_guia: {
             symbol: "👨‍🏫",
             name: "Guía Lin",
@@ -3686,10 +3686,37 @@
             fixedLocation: { x: 17, y: 15 },
             discovered: true,
           },
+          npc_anciana_su: {
+              symbol: "👵",
+              name: "Anciana Su, la Archivista",
+              spriteUrl: "img/anciana_su.png",
+              interaction: "talk_story_npc",
+              npcId: "anciana_su",
+              fixedLocation: { x: 18, y: 14 },
+              discovered: true,
+          },
+          npc_maestro_jian: {
+              symbol: "👑",
+              name: "Maestro de Secta Jian",
+              spriteUrl: "img/maestro_jian.png",
+              interaction: "talk_story_npc",
+              npcId: "maestro_jian",
+              fixedLocation: { x: 15, y: 18 },
+              discovered: true,
+          },
+          santuario_del_eco: {
+              symbol: "⛩️",
+              name: "Santuario del Eco",
+              spriteUrl: "img/santuario_eco.png",
+              interaction: "interact_shrine",
+              type: "story_shrine",
+              fixedLocation: { x: 330, y: 15 },
+              discovered: false, 
+          },
           rival_interno_1: {
             symbol: "😠",
             name: "Han Li (Guardián Interno)",
-            spriteUrl: "img/lobo_bosque.png",
+            spriteUrl: "img/rival_1.png",
             typeOverride: "monster",
             hp: 250,
             attack: 60,
@@ -3703,6 +3730,7 @@
           rival_principal_1: {
             symbol: "😡",
             name: "Anciana Shui (Prueba Principal)",
+            spriteUrl: "img/rival_2.png",
             typeOverride: "monster",
             hp: 600,
             attack: 90,
@@ -3718,7 +3746,7 @@
           guardian_diacono_1: {
             symbol: "👨‍⚖️",
             name: "Guardián de la Arena, Feng (Prueba de Diácono)",
-            spriteUrl: "img/guardian_feng.png", // Necesitarás una imagen para él
+            spriteUrl: "img/rival_3.png", // Necesitarás una imagen para él
             typeOverride: "monster",
             level: 28,
             hp: 2000, maxHp: 2000, attack: 150, defense: 80, exp: 1500,
@@ -3731,8 +3759,8 @@
 
         guardian_anciano_1: {
             symbol: "👴",
-            name: "Anciano Guardián, Lei (Prueba de Anciano)",
-            spriteUrl: "img/guardian_lei.png", // Necesitarás una imagen para él
+            name: "Anciano Guardián, Yao (Prueba de Anciano)",
+            spriteUrl: "img/adm_yao.png", // Necesitarás una imagen para él
             typeOverride: "monster",
             level: 45,
             hp: 4500, maxHp: 4500, attack: 300, defense: 150, exp: 4000,
@@ -3745,8 +3773,8 @@
 
         guardian_gran_anciano_1: {
             symbol: "👵",
-            name: "Gran Anciana de la Hoja, Yue (Prueba de Gran Anciano)",
-            spriteUrl: "img/guardian_yue.png", // Necesitarás una imagen para ella
+            name: "Gran Anciano de la Hoja, Lin (Prueba de Gran Anciano)",
+            spriteUrl: "img/guia_lin.png", // Necesitarás una imagen para ella
             typeOverride: "monster",
             level: 62,
             hp: 8000, maxHp: 8000, attack: 550, defense: 220, exp: 8000,
@@ -3760,7 +3788,7 @@
         guardian_maestro_1: {
             symbol: "👑",
             name: "Maestro de Secta Anterior (Prueba Final)",
-            spriteUrl: "img/guardian_maestro.png", // Necesitarás una imagen para él
+            spriteUrl: "img/maestro_jian.png", // Necesitarás una imagen para él
             typeOverride: "monster",
             level: 75,
             hp: 15000, maxHp: 15000, attack: 700, defense: 300, exp: 15000,
@@ -5998,6 +6026,8 @@
             "tp_forest_shrine",
             "tp_desert_oasis",
             "tp_swamp_ruin",
+            "npc_maestro_jian",
+            "npc_anciana_su",
 
             //ENEMIGOS
             "jabali_colmilludo_alfa",
