@@ -3538,10 +3538,10 @@
             "Permite activar/desactivar la conversión de Maná en HP al cultivar. Mejora la tasa de conversión y eficiencia con cada nivel de refinamiento.",
           type: "active_refinement_effect",
           effect: {
-            baseManaCostPerSecond: 2.0,
-            baseHpGainPerSecond: 1.0,
-            hpGainIncreasePerLevel: 2,
-            manaCostReductionPerLevel: 0.1,
+            baseManaCostPerSecond: 2.0, // Mantenemos un coste base razonable
+            baseHpGainPerSecond: 3.0, // <-- ¡VALOR CORREGIDO! Ahora es más eficiente.
+            hpGainIncreasePerLevel: 0.5, // Hacemos que la mejora por nivel sea más gradual pero sostenida
+            manaCostReductionPerLevel: 0.02, // Reducimos la mejora de eficiencia para balancear
           },
           maxLevel: 100,
           cultivationSettings: {
