@@ -1789,7 +1789,7 @@
                 // No necesita spawnSettings por ahora, a menos que quieras pequeños mobs decorativos allí.
               },
            
-              
+              ///ZONA SEGURA DE LA SECTA
 
              {
                 x1: 2,
@@ -2000,6 +2000,70 @@
                   lastSpawnCheck: 0,
                 },
               },
+              // ===============================================
+              // === ZONAS DE ALTO NIVEL (NUEVAS) ===
+              // ===============================================
+
+              // Zona para Misiones de Diácono
+              {
+                  x1: 200, y1: 10, x2: 250, y2: 50,
+                  type: "MOUNTAIN_FRENTE", // Usaremos un terreno rocoso y hostil
+                  name: "Desfiladero de los Lamentos",
+                  isIsolated: true, // Es como un mapa separado
+                  ambientColor: '#3c2f2f', // Un tono rojizo oscuro
+                  decorations: [
+                      { entityTypeId: 'deco_roca_musgosa', density: 0.1 },
+                  ],
+                  spawnSettings: {
+                      targetEntities: [
+                          { entityTypeId: "cultivador_secta_rival", count: 15, currentCount: 0 },
+                          { entityTypeId: "murcielago_cristal_sangriento", count: 10, currentCount: 0 },
+                      ],
+                      respawnTimer: 0, respawnCooldown: 600, lastSpawnCheck: 0,
+                  },
+              },
+
+              // Zona para Misiones de Anciano
+              {
+                  x1: 300, y1: 10, x2: 360, y2: 70,
+                  type: "SWAMP", // Un terreno antiguo y corrupto
+                  name: "Valle del Dragón Caído",
+                  isIsolated: true,
+                  ambientColor: '#2a3b2a', // Un verde enfermizo
+                  decorations: [
+                      { entityTypeId: 'deco_arbol_pantano', density: 0.2 },
+                      { entityTypeId: 'deco_huesos_gigantes', density: 0.05 }, // Necesitaremos definir esto
+                  ],
+                  spawnSettings: {
+                      targetEntities: [
+                          { entityTypeId: "draco_hueso_antiguo", count: 12, currentCount: 0 },
+                          { entityTypeId: "espectro_tifonico", count: 8, currentCount: 0 },
+                      ],
+                      respawnTimer: 0, respawnCooldown: 900, lastSpawnCheck: 0,
+                  },
+              },
+
+              // Zona para Misiones de Gran Anciano
+              {
+                  x1: 400, y1: 10, x2: 450, y2: 60,
+                  type: "RUINS", // Terreno de otro mundo
+                  name: "La Fisura Demoníaca",
+                  isIsolated: true,
+                  ambientColor: '#4d194d', // Un púrpura corrupto
+                  decorations: [
+                      { entityTypeId: 'deco_cristal_corrupto', density: 0.15 }, // Necesitaremos definir esto
+                  ],
+                  spawnSettings: {
+                      targetEntities: [
+                          { entityTypeId: "demonio_de_la_fisura", count: 20, currentCount: 0 },
+                          { entityTypeId: "guardian_celestial_caido", count: 5, currentCount: 0 },
+                      ],
+                      respawnTimer: 0, respawnCooldown: 1200, lastSpawnCheck: 0,
+                  },
+              },
+
+
+              ///=========  FIN ZONAS ==========
               
             
               
@@ -2248,6 +2312,7 @@
           // Añade aquí otros 'originalEntityTypeId' o 'type' de entidades que deben bloquear
           // Por ejemplo, si tus NPCs tienen un 'type' específico o los identificas por 'npcId'
         ];
+        //SECTA
         const SECTA_DATA = {
           nombre: "Secta del Viento Azure",
           rangos: [
@@ -2334,11 +2399,31 @@
                 "mision_lobos_bosque_1", // Nueva misión ofrecida por Lin
                 "mision_cultivador_hostil_1", // Nueva misión ofrecida por Lin
                 "mision_componentes_alquimia_1",
-                "mision_investigar_anomalia_1",
                 "mision_cazar_bestia_especifica_1",
-                "mision_escolta_mercader_1",
                 "mision_recuperar_artefacto_1",
-                // ... añade más ID de misiones que Lin ofrezca
+                // --- NUEVAS MISIONES ASIGNADAS ---
+                // Rango: Discípulo Externo
+                "mision_ext_1",
+                "mision_ext_3",
+                "mision_ext_4",
+                // Rango: Discípulo Interno
+                "mision_int_1",
+                "mision_int_2",
+                "mision_int_4",
+                // Rango: Discípulo Principal
+                "mision_prin_4",
+                // Misiones de Rango Diácono
+                "mision_diac_1", "mision_diac_3", "mision_diac_4",
+
+                // Misiones de Rango Anciano
+                "mision_anc_1", "mision_anc_3", "mision_anc_4",
+
+                // Misiones de Rango Gran Anciano
+                "mision_gran_anc_1", "mision_gran_anc_2", "mision_gran_anc_3",
+
+                // Misión Final de Maestro de Secta
+                "mision_maestro_1",
+               
               ],
             },
             admin_yao: {
@@ -2354,180 +2439,96 @@
               tiendaSectaId: "tienda_secta_basica",
               misionesOfrecidas: [
                 "mision_escorpiones_desierto_1", // Nueva misión ofrecida por Yao
+                // --- NUEVAS MISIONES ASIGNADAS ---
+                // Rango: Discípulo Externo
+                "mision_ext_2",
+                // Rango: Discípulo Interno
+                "mision_int_3",
+                // Rango: Discípulo Principal
+                "mision_prin_1",
+                "mision_prin_2",
+                "mision_prin_3",
+                // Misiones de Rango Diácono
+                "mision_diac_2",
+
+                // Misiones de Rango Anciano
+                "mision_anc_2",
+                
+                // Misiones de Rango Gran Anciano
+                "mision_gran_anc_4",
                 // ... añade más ID de misiones que Yao ofrezca
               ],
             },
           },
         };
+        
         const MISIONES_DATA = {
-          mision_recolectar_hierbas_1: {
-            titulo: "Suministros para la Enfermería",
-            descripcion:
-              "La hermana mayor Mei necesita 10 Hierbas Medicinales para reponer las existencias de la enfermería. Recolecta Hierbas Medicinales y entrégaselas al Administrador Yao.",
-            objetivo: {
-              tipo: "entregar_item",
-              item: "Hierbas Medicinales",
-              cantidad: 10,
-              npcEntrega: "admin_yao",
-            },
-            recompensa: {
-              pcs: 50,
-              exp: 100,
-              items: { "Piedras Espirituales": 20 },
-            },
-            npcInicio: "guia_lin",
-          },
-          mision_eliminar_demonios_1: {
-              titulo: "Limpiando la pradera de la secta",
-              descripcion:
-              "Pequeños demonios han estado merodeando en la pradera cercana al sur de la secta. Elimina 5 Demonios Menores para asegurar el área y reporta tu éxito al Guía Lin.",
-              objetivo: {
-                  tipo: "eliminar_enemigo",
-                  enemigoTipo: "monster",
-                  cantidad: 5,
-                  nombreDisplay: "Demonio Menor",
-                  npcEntrega: "guia_lin",
-              },
-              recompensa: {
-                  pcs: 75,
-                  exp: 150,
-                  items: { "Piedras Espirituales": 30 },
-              },
-              npcInicio: "guia_lin", // Ahora esta es la última propiedad
-          },
-          mision_componentes_alquimia_1: {
-            titulo: "Medicina Urgente",
-            descripcion:
-              "El Alquimista de la Secta, Anciano Chen, necesita urgentemente 3 'Flores de Luna Escarchada' y 2 'Raíces de Fuego Terrenal' para una píldora vital. Se dice que crecen en zonas con fluctuaciones elementales.",
-            objetivo: {
-              tipo: "recolectar_multiples_items",
-              items: [
-                { nombre: "Flor de Luna Escarchada", cantidad: 3 },
-                { nombre: "Raíz de Fuego Terrenal", cantidad: 2 },
-              ],
-              npcEntrega: "admin_yao",
-            },
-            recompensa: {
-              pcs: 120,
-              exp: 250,
-              items: {
-                "Píldora de Recuperación Menor": 2,
-                "Piedras Espirituales": 50,
-              },
-            },
-            npcInicio: "guia_lin",
-            requisitoRango: "Discípulo Externo",
-          },
+
           
-          
-          /* mision_escolta_mercader_1: {
-            titulo: "Protección Mercantil",
-            descripcion:
-              "Un mercader aliado de la secta necesita una escolta para atravesar el Desfiladero Sombrío, conocido por sus bandidos. Asegúrate de que llegue a salvo al Puesto Comercial del Oeste.",
-            objetivo: {
-              tipoSimplificado: "eliminar_enemigos_en_area",
-              enemigoTipo: "bandido_desfiladero",
-              cantidad: 5,
-              areaNombre: "Desfiladero Sombrío",
-              npcReporte: "admin_yao",
+
+          // === MISIONES: DISCÍPULO EXTERNO ===
+
+        
+
+            mision_ext_1: {
+                titulo: "Control de Plagas en la Pradera",
+                descripcion: "Unas Bestias Menores de Pradera se están acercando demasiado a los terrenos de la secta. Demuestra tu valía eliminando 5 de ellas.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "monster_secta_debil",
+                    cantidad: 5,
+                    nombreDisplay: "Bestia Menor",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 30, exp: 50, items: { "Piedras Espirituales": 5 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Externo",
             },
-            recompensa: {
-              pcs: 250,
-              exp: 500,
-              items: {
-                "Mapa del Tesoro Fragmentado": 1,
-                "Piedras Espirituales": 150,
-              },
+            mision_ext_2: {
+                titulo: "Suministro de Energía",
+                descripcion: "El Administrador Yao necesita reponer las reservas de energía de la secta. Recolecta 3 Cristales de Qi y entrégaselos.",
+                objetivo: {
+                    tipo: "entregar_item",
+                    item: "Cristales de Qi",
+                    cantidad: 3,
+                    npcEntrega: "admin_yao",
+                },
+                recompensa: { pcs: 40, exp: 60, items: { "Piedras Espirituales": 10 } },
+                npcInicio: "admin_yao",
+                requisitoRango: "Discípulo Externo",
             },
-            npcInicio: "guia_lin",
-            requisitoRango: "Discípulo Interno",
-          }, */
-          mision_recuperar_artefacto_1: {
-            titulo: "El Compás Espiritual Perdido",
-            descripcion:
-              "Un antiguo Compás Espiritual, vital para la navegación en las Ruinas Olvidadas, fue robado por cultivadores renegados. Infíltrate en su campamento en las colinas y recupera el artefacto.",
-            objetivo: {
-              tipo: "derrotar_mini_boss_y_recuperar_item",
-              enemigoMiniBossId: "lider_renegado_1",
-              itemArtefacto: "Compás Espiritual Antiguo",
-              npcEntrega: "admin_yao",
+            mision_ext_3: {
+                titulo: "Una Lección de Humildad",
+                descripcion: "Algunos cultivadores novatos se han vuelto arrogantes y están causando problemas. El Guía Lin quiere que derrotes a 3 de ellos para que recuerden su lugar.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "cultivator_rival_low",
+                    cantidad: 3,
+                    nombreDisplay: "Cultivador Novato Hostil",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 50, exp: 120, items: { "Píldora de Recuperación Menor": 1 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Externo",
             },
-            recompensa: {
-              pcs: 300,
-              exp: 600,
-              items: {
-                "Manual de Formación Básica": 1,
-                "Piedras Espirituales": 200,
-              },
+            mision_ext_4: {
+                titulo: "Primera Incursión al Bosque",
+                descripcion: "Los lobos del Bosque Esmeralda están mostrando una agresividad inusual. Adéntrate con cuidado y elimina 2 Lobos del Bosque para investigar.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "monster_bosque_lobo",
+                    cantidad: 2,
+                    nombreDisplay: "Lobo del Bosque",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 60, exp: 150, items: { "Colmillo de Lobo": 1 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Externo",
+                requisitoNivel: 3, // Un pequeño requisito de nivel para guiar al jugador.
             },
-            npcInicio: "guia_lin",
-            requisitoRango: "Discípulo Interno",
-            requisitoNivel: 8,
-          },
-          mision_desafio_interno_1: {
-            titulo: "Prueba de Discípulo Interno",
-            descripcion:
-              "Para ser reconocido como Discípulo Interno, debes demostrar tu fuerza venciendo al Guardián de la Prueba, Han Li. Encuéntralo en la arena de desafíos de la secta.",
-            objetivo: {
-              tipo: "derrotar_npc_especifico",
-              npcId: "rival_interno_1",    
-              npcEntrega: "guia_lin", 
-            },
-            recompensa: { pcs: 200, exp: 300, nuevoRango: "Discípulo Interno" },
-            autoActivarAlCumplirRequisitos: true,
-          },
-          mision_desafio_principal_1: {
-            titulo: "Prueba de Discípulo Principal",
-            descripcion:
-              "La Anciana Shui espera en la arena. Demuestra que eres digno del rango de Discípulo Principal.",
-            objetivo: {
-              tipo: "derrotar_npc_especifico",
-              npcId: "rival_principal_1",
-              npcEntrega: "guia_lin",
-            },
-            recompensa: { pcs: 500, exp: 800, nuevoRango: "Discípulo Principal" },
-            autoActivarAlCumplirRequisitos: true,
-          },
-          // Misiones de Ejemplo por Nivel:
-          mision_lobos_bosque_1: {
-            titulo: "Amenaza Lupina",
-            descripcion:
-              "Una manada de Lobos del Bosque se ha vuelto agresiva. El Guía Lin te pide que elimines 3 de ellos.",
-            objetivo: {
-              tipo: "eliminar_enemigo",
-              enemigoTipo: "monster_bosque_lobo",
-              cantidad: 3,
-              nombreDisplay: "Lobo del Bosque",
-              npcEntrega: "guia_lin",
-            },
-            recompensa: {
-              pcs: 100,
-              exp: 200,
-              items: { "Piedras Espirituales": 10, "Colmillo de Lobo": 1 },
-            },
-            npcInicio: "guia_lin",
-            requisitoNivel: 5, // Se desbloquea al nivel 5
-          },
-          mision_escorpiones_desierto_1: {
-            titulo: "Aguijones Peligrosos",
-            descripcion:
-              "Los Escorpiones de las Dunas están causando problemas a las caravanas. Elimina 5 y reporta al Administrador Yao.",
-            objetivo: {
-              tipo: "eliminar_enemigo",
-              enemigoTipo: "monster_desierto_escorpion",
-              cantidad: 5,
-              nombreDisplay: "Escorpión de las Dunas",
-              npcEntrega: "admin_yao",
-            },
-            recompensa: {
-              pcs: 150,
-              exp: 350,
-              items: { "Piedras Espirituales": 11, "Aguijón de Escorpión": 2 },
-            },
-            npcInicio: "admin_yao", // Puede ser otro NPC
-            requisitoNivel: 10, // Se desbloquea al nivel 10
-          },
-          mision_cultivador_hostil_1: {
+
+           
+             mision_cultivador_hostil_1: {
             titulo: "Rivalidad Temprana",
             descripcion:
               "Un grupo de cultivadores están causando alboroto en la secta. El Guía Lin quiere que les des una lección. Derrótalos.",
@@ -2573,7 +2574,68 @@
             npcInicio: "guia_lin",
             requisitoRango: "Discípulo Externo",
           },
-          mision_cazar_bestia_especifica_1: {
+
+            // === MISIONES: DISCÍPULO INTERNO ===
+            // (Se desbloquean al alcanzar este rango)
+
+            mision_int_1: {
+                titulo: "La Plaga Arácnida",
+                descripcion: "Las Arañas Tejesombras están infestando el Bosque Esmeralda, haciendo peligrosa la recolección de hierbas. Extermina a 8 de ellas.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "monster_bosque_arana",
+                    cantidad: 8,
+                    nombreDisplay: "Araña Tejesombras",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 80, exp: 250, items: { "Seda de Araña": 3 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Interno",
+            },
+            mision_int_2: {
+                titulo: "Limpieza en la Ciénaga",
+                descripcion: "La Ciénaga Sombría es un lugar peligroso. Para mantener a raya a sus habitantes, elimina 4 Serpientes de Ciénaga.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "monster_cienaga_serpiente",
+                    cantidad: 4,
+                    nombreDisplay: "Serpiente de Ciénaga",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 100, exp: 300, items: { "Piedras Espirituales": 25 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Interno",
+            },
+            mision_int_3: {
+                titulo: "La Petición del Herrero",
+                descripcion: "El herrero de la secta necesita Quitina Resistente para forjar armaduras ligeras. Caza Escorpiones de las Dunas hasta obtener 3 unidades de Quitina y entrégaselas a Yao.",
+                objetivo: {
+                    tipo: "cazar_y_recuperar_item_de_loot",
+                    enemigoTipo: "monster_desierto_escorpion",
+                    itemPrueba: "Quitina Resistente",
+                    cantidadItemPrueba: 3,
+                    npcEntrega: "admin_yao",
+                },
+                recompensa: { pcs: 120, exp: 400, items: { "Piedras Espirituales": 30 } },
+                npcInicio: "admin_yao",
+                requisitoRango: "Discípulo Interno",
+            },
+            mision_int_4: {
+                titulo: "La Bestia Alfa",
+                descripcion: "Un Lobo Alfa ha sido avistado en el corazón del bosque, liderando a las manadas. Cazarlo será una prueba de tu creciente poder.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "monster_alpha",
+                    cantidad: 1,
+                    nombreDisplay: "Lobo Alfa",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 150, exp: 500, items: { "Núcleo de Bestia Menor": 1, "Piedras Espirituales": 50 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Interno",
+                requisitoNivel: 8,
+            },
+            mision_cazar_bestia_especifica_1: {
             titulo: "La Amenaza del Jabalí Colmilludo",
             descripcion:
               "Un Jabalí Colmilludo particularmente agresivo ha estado atacando a los recolectores de la secta en lo profundo del bosque. Caza a esta bestia y trae su 'Colmillo intacto' como prueba al Guía Lin.",
@@ -2590,9 +2652,10 @@
               items: { "Piedras Espirituales": 20, "Carne de Bestia Exótica": 3 },
             },
             npcInicio: "guia_lin",
+            requisitoRango: "Discípulo Interno",
             requisitoNivel: 10,
           },
-          mision_cazar_bestia_especifica_1: {
+           mision_cazar_bestia_especifica_1: {
             titulo: "Elimina el golem de piedra",
             descripcion:
               "Elimina al golem de piedra Geo al sur de la pradera de la secta.Regresa con el Guía Lin luego de eliminarlo.",
@@ -2611,8 +2674,284 @@
               items: { "Piedras Espirituales": 20, "Carne de Bestia Exótica": 3 },
             },
             npcInicio: "guia_lin",
+            requisitoRango: "Discípulo Interno",
             requisitoNivel: 10,
           },
+
+            // === MISIONES: DISCÍPULO PRINCIPAL ===
+            // (Se desbloquean al alcanzar este rango)
+
+            mision_prin_1: {
+                titulo: "Arena y Aguijón",
+                descripcion: "Las caravanas que comercian con la secta reportan ataques de Escorpiones de las Dunas. Reduce su número eliminando a 10 de ellos.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "monster_desierto_escorpion",
+                    cantidad: 10,
+                    nombreDisplay: "Escorpión de las Dunas",
+                    npcEntrega: "admin_yao",
+                },
+                recompensa: { pcs: 180, exp: 600, items: { "Piedras Espirituales": 70 } },
+                npcInicio: "admin_yao",
+                requisitoRango: "Discípulo Principal",
+            },
+            mision_prin_2: {
+                titulo: "Corazones de Arena",
+                descripcion: "Los Golems de Tormenta de Arena son una amenaza mayor en el desierto. Destruye 5 y trae sus Núcleos de Arena como prueba.",
+                objetivo: {
+                    tipo: "cazar_y_recuperar_item_de_loot",
+                    enemigoTipo: "monster_desierto_golem_arena",
+                    itemPrueba: "Núcleo de Arena",
+                    cantidadItemPrueba: 5,
+                    npcEntrega: "admin_yao",
+                },
+                recompensa: { pcs: 250, exp: 800, items: { "Fragmento Desértico": 2, "Piedras Espirituales": 100 } },
+                npcInicio: "admin_yao",
+                requisitoRango: "Discípulo Principal",
+                requisitoNivel: 12,
+            },
+            mision_prin_3: {
+                titulo: "Ecos Espectrales",
+                descripcion: "Los alquimistas de la secta pagan bien por Esencias Espectrales. Se dice que los Espectros del Pantano las dejan al ser derrotados. Consigue 2 esencias.",
+                objetivo: {
+                    tipo: "cazar_y_recuperar_item_de_loot",
+                    enemigoTipo: "espectro_pantano",
+                    itemPrueba: "Esencia Espectral",
+                    cantidadItemPrueba: 2,
+                    npcEntrega: "admin_yao",
+                },
+                recompensa: { pcs: 300, exp: 900, items: { "Talismán de Percepción": 1 } },
+                npcInicio: "admin_yao",
+                requisitoRango: "Discípulo Principal",
+            },
+            mision_prin_4: {
+                titulo: "Renegados Peligrosos",
+                descripcion: "Un grupo de Cultivadores Renegados ha establecido un campamento en el bosque profundo, desafiando la autoridad de la secta. Disuélvelos.",
+                objetivo: {
+                    tipo: "eliminar_enemigo",
+                    enemigoTipo: "cultivador_renegado",
+                    cantidad: 4,
+                    nombreDisplay: "Cultivador Renegado",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: { pcs: 280, exp: 1000, items: { "Rollo: Técnica Aleatoria Menor": 1, "Piedras Espirituales": 80 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Discípulo Principal",
+                requisitoNivel: 15,
+            },
+            // === MISIONES: DIÁCONO ===
+            mision_diac_1: {
+                titulo: "Contención de Rivales",
+                descripcion: "La Secta de la Llama Negra se está expandiendo a nuestro territorio. Ve al Desfiladero de los Lamentos y derrota a 10 de sus cultivadores para enviar un mensaje.",
+                objetivo: { tipo: "eliminar_enemigo", enemigoTipo: "cultivador_secta_rival", cantidad: 10, npcEntrega: "guia_lin" },
+                recompensa: { pcs: 400, exp: 2500, items: { "Piedras Espirituales": 200 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Diácono",
+            },
+            mision_diac_2: {
+                titulo: "Recolección Peligrosa",
+                descripcion: "Nuestros alquimistas necesitan Cristales de Sangre Puros, que solo se encuentran en la Caverna de Cristal de Sangre, dentro del Desfiladero. Ten cuidado con sus guardianes. Necesitamos 3 cristales.",
+                objetivo: { tipo: "cazar_y_recuperar_item_de_loot", enemigoTipo: "murcielago_cristal_sangriento", itemPrueba: "Cristal de Sangre Puro", cantidadItemPrueba: 3, npcEntrega: "admin_yao" },
+                recompensa: { pcs: 500, exp: 3000, items: { "Píldora de Recuperación Mayor": 2 } }, // Necesitarías definir este item
+                npcInicio: "admin_yao",
+                requisitoRango: "Diácono",
+            },
+            mision_diac_3: {
+                titulo: "Investigar al Renegado",
+                descripcion: "Hemos recibido informes de que el diácono renegado, Jin, se esconde al final del Desfiladero. Investiga la zona y prepárate para lo peor.",
+                objetivo: { tipo: "llegar_a_punto", x: 240, y: 38, nombreArea: "Guarida de Jin", npcEntrega: "guia_lin" }, // Objetivo de exploración
+                recompensa: { pcs: 200, exp: 1000 },
+                npcInicio: "guia_lin",
+                requisitoRango: "Diácono",
+            },
+            mision_diac_4: {
+                titulo: "La Traición de Jin",
+                descripcion: "Es hora de acabar con la amenaza del Diácono Renegado Jin. Derrótalo y restaura el honor de la secta.",
+                objetivo: { tipo: "derrotar_npc_especifico", npcId: "diacono_renegado_jin", npcEntrega: "guia_lin" },
+                recompensa: { pcs: 1000, exp: 5000, items: { "Manual de Técnica de Diácono": 1 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Diácono", // Se podría hacer que esta se active después de la mision_diac_3
+            },
+
+            // === MISIONES: ANCIANO ===
+            mision_anc_1: {
+                titulo: "El Resentimiento del Dragón",
+                descripcion: "La energía Yin en el Valle del Dragón Caído ha reanimado a los antiguos dracos. Pacifica a 8 de estas criaturas esqueléticas.",
+                objetivo: { tipo: "eliminar_enemigo", enemigoTipo: "draco_hueso_antiguo", cantidad: 8, npcEntrega: "guia_lin" },
+                recompensa: { pcs: 1200, exp: 8000, items: { "Piedras Espirituales": 500 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Anciano",
+            },
+            mision_anc_2: {
+                titulo: "El Corazón de la Tormenta",
+                descripcion: "Para forjar un artefacto celestial, necesitamos un Corazón de Tifón. Caza a los Espectros Tifónicos en el Valle hasta que obtengas uno.",
+                objetivo: { tipo: "cazar_y_recuperar_item_de_loot", enemigoTipo: "espectro_tifonico", itemPrueba: "Corazón de Tifón", cantidadItemPrueba: 1, npcEntrega: "admin_yao" },
+                recompensa: { pcs: 1500, exp: 10000, items: { "Piedras Espirituales": 700 } },
+                npcInicio: "admin_yao",
+                requisitoRango: "Anciano",
+            },
+            mision_anc_3: {
+                titulo: "La Fuente de la Corrupción",
+                descripcion: "Creemos que un poderoso no-muerto es la causa de la corrupción en el Valle. Encuentra su guarida y prepárate para enfrentarlo.",
+                objetivo: { tipo: "llegar_a_punto", x: 350, y: 18, nombreArea: "Trono del Lich", npcEntrega: "guia_lin" },
+                recompensa: { pcs: 500, exp: 3000 },
+                npcInicio: "guia_lin",
+                requisitoRango: "Anciano",
+            },
+            mision_anc_4: {
+                titulo: "Sellar al Emperador Lich",
+                descripcion: "El Emperador Lich amenaza con extender su plaga no-muerta. Destrúyelo y reclama su filacteria como prueba.",
+                objetivo: { tipo: "derrotar_npc_especifico", npcId: "emperador_lich_del_valle", npcEntrega: "guia_lin" },
+                recompensa: { pcs: 2500, exp: 15000, items: { "Filacteria del Lich": 1, "Rollo: Técnica de Anciano Aleatoria": 1 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Anciano",
+            },
+
+            // === MISIONES: GRAN ANCIANO ===
+            mision_gran_anc_1: {
+                titulo: "Defensa de la Realidad",
+                descripcion: "Una Fisura Demoníaca se ha abierto, y sus habitantes se derraman en nuestro mundo. Repele la primera oleada eliminando a 15 Demonios de la Fisura.",
+                objetivo: { tipo: "eliminar_enemigo", enemigoTipo: "demonio_de_la_fisura", cantidad: 15, npcEntrega: "guia_lin" },
+                recompensa: { pcs: 3000, exp: 20000, items: { "Fragmento de la Fisura": 5 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Gran Anciano",
+            },
+            mision_gran_anc_2: {
+                titulo: "Luz Caída",
+                descripcion: "Los Guardianes Celestiales que protegían el sello de la fisura han sido corrompidos. Libera a 3 de ellos de su tormento.",
+                objetivo: { tipo: "eliminar_enemigo", enemigoTipo: "guardian_celestial_caido", cantidad: 3, npcEntrega: "guia_lin" },
+                recompensa: { pcs: 4000, exp: 25000, items: { "Lágrima Celestial": 1 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Gran Anciano",
+            },
+            mision_gran_anc_3: {
+                titulo: "El General del Abismo",
+                descripcion: "El General Demoníaco Abismal comanda las fuerzas de la Fisura. Adéntrate en su corazón y derrótalo para sellar la amenaza... por ahora.",
+                objetivo: { tipo: "derrotar_npc_especifico", npcId: "general_demoniaco_abismal", npcEntrega: "guia_lin" },
+                recompensa: { pcs: 5000, exp: 40000, items: { "Corazón del Abismo": 1, "Rollo: Técnica de Gran Anciano Aleatoria": 1 } },
+                npcInicio: "guia_lin",
+                requisitoRango: "Gran Anciano",
+            },
+            mision_gran_anc_4: {
+                titulo: "Preparativos para la Ascensión",
+                descripcion: "Has llegado al pináculo. Para trascender, necesitas forjar un Sello del Dao. Reúne 3 Lágrimas Celestiales, 5 Fragmentos de la Fisura y 10 Escamas de Dragón Espectral.",
+                objetivo: {
+                    tipo: "recolectar_multiples_items",
+                    items: [
+                        { nombre: "Lágrima Celestial", cantidad: 3 },
+                        { nombre: "Fragmento de la Fisura", cantidad: 5 },
+                        { nombre: "Escama de Dragón Espectral", cantidad: 10 },
+                    ],
+                    npcEntrega: "admin_yao",
+                },
+                recompensa: { pcs: 10000, exp: 50000 },
+                npcInicio: "admin_yao",
+                requisitoRango: "Gran Anciano",
+            },
+
+            // === MISIÓN FINAL: MAESTRO DE SECTA ===
+            mision_maestro_1: {
+                titulo: "El Duelo del Destino",
+                descripcion: "El equilibrio del mundo se ha roto. Un Avatar del Dao Corrupto ha despertado para consumir toda la existencia. Como Maestro de Secta, es tu deber enfrentarlo y proteger este mundo.",
+                objetivo: { tipo: "derrotar_npc_especifico", npcId: "avatar_del_dao_corrupto", npcEntrega: "guia_lin" },
+                recompensa: { pcs: 0, exp: 100000, items: { "Semilla del Dao Verdadero": 1 }, nuevoRango: "Soberano Inmortal" }, // Rango final honorífico
+                npcInicio: "guia_lin",
+                requisitoRango: "Maestro de Secta",
+            },
+
+
+    //MISIONES DE DESAFÍO
+          mision_desafio_interno_1: {
+            titulo: "Prueba de Discípulo Interno",
+            descripcion:
+              "Para ser reconocido como Discípulo Interno, debes demostrar tu fuerza venciendo al Guardián de la Prueba, Han Li. Encuéntralo en la arena de desafíos de la secta.",
+            objetivo: {
+              tipo: "derrotar_npc_especifico",
+              npcId: "rival_interno_1",    
+              npcEntrega: "guia_lin", 
+            },
+            recompensa: { pcs: 200, exp: 300, nuevoRango: "Discípulo Interno" },
+            autoActivarAlCumplirRequisitos: true,
+          },
+          mision_desafio_principal_1: {
+            titulo: "Prueba de Discípulo Principal",
+            descripcion:
+              "La Anciana Shui espera en la arena. Demuestra que eres digno del rango de Discípulo Principal.",
+            objetivo: {
+              tipo: "derrotar_npc_especifico",
+              npcId: "rival_principal_1",
+              npcEntrega: "guia_lin",
+            },
+            recompensa: { pcs: 500, exp: 800, nuevoRango: "Discípulo Principal" },
+            autoActivarAlCumplirRequisitos: true,
+          },
+           mision_desafio_diacono_1: {
+                titulo: "Prueba de Diácono",
+                descripcion: "Has demostrado tu valía a través de tus contribuciones. Para ser reconocido como Diácono, debes derrotar al Guardián de la Arena, Feng, en un duelo honorable.",
+                objetivo: {
+                    tipo: "derrotar_npc_especifico",
+                    npcId: "guardian_diacono_1",
+                    npcEntrega: "guia_lin", // El Guía Lin confirmará tu ascenso
+                },
+                recompensa: {
+                    pcs: 500,
+                    exp: 2000,
+                    nuevoRango: "Diácono"
+                    // La elección de técnica ya está manejada por tu lógica de ascenso
+                },
+                autoActivarAlCumplirRequisitos: true, // Esto es clave para la automatización
+            },
+
+            mision_desafio_anciano_1: {
+                titulo: "Prueba de Anciano",
+                descripcion: "Solo los más fuertes pueden guiar a la secta. El Anciano Guardián Lei te espera en la arena para probar si eres digno del título de Anciano.",
+                objetivo: {
+                    tipo: "derrotar_npc_especifico",
+                    npcId: "guardian_anciano_1",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: {
+                    pcs: 1000,
+                    exp: 5000,
+                    nuevoRango: "Anciano"
+                },
+                autoActivarAlCumplirRequisitos: true,
+            },
+
+            mision_desafio_gran_anciano_1: {
+                titulo: "Prueba de Gran Anciano",
+                descripcion: "La Gran Anciana de la Hoja, Yue, pondrá a prueba no solo tu fuerza, sino tu ingenio en combate. Véncela para obtener el respeto de todo el consejo de ancianos.",
+                objetivo: {
+                    tipo: "derrotar_npc_especifico",
+                    npcId: "guardian_gran_anciano_1",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: {
+                    pcs: 2000,
+                    exp: 10000,
+                    nuevoRango: "Gran Anciano"
+                },
+                autoActivarAlCumplirRequisitos: true,
+            },
+
+            mision_desafio_maestro_1: {
+                titulo: "La Prueba Final: El Legado del Maestro",
+                descripcion: "El camino hacia la cima llega a su fin. El Maestro de Secta anterior te espera para una última prueba. Demuestra que estás listo para heredar su voluntad y liderar la secta hacia la gloria.",
+                objetivo: {
+                    tipo: "derrotar_npc_especifico",
+                    npcId: "guardian_maestro_1",
+                    npcEntrega: "guia_lin",
+                },
+                recompensa: {
+                    pcs: 5000,
+                    exp: 20000,
+                    nuevoRango: "Maestro de Secta"
+                },
+                autoActivarAlCumplirRequisitos: true,
+            },
+         
+          
+         
         };
 
         const shopData = {
@@ -3275,9 +3614,22 @@
             isDecorative: true,
             noInteraction: true,
             discovered: true,
-          }, // Diferente de tu lugar de cultivo
-          // ... añade más según necesites
-          //NPCS
+          }, 
+          // === NUEVAS DECORACIONES DE ALTO NIVEL ===
+          deco_huesos_gigantes: {
+              symbol: "🦴",
+              name: "Restos de Dragón",
+              spriteUrl: "img/deco_huesos.png", // Necesitarás una imagen para esto
+              isDecorative: true, noInteraction: true, discovered: true,
+          },
+          deco_cristal_corrupto: {
+              symbol: "🔮",
+              name: "Cristal Demoníaco",
+              spriteUrl: "img/deco_cristal_corrupto.png", // Necesitarás una imagen para esto
+              isDecorative: true, noInteraction: true, discovered: true,
+          },
+
+          ///----------------- FIN DECORACIONES------------
        
           npc_secta_guia: {
             symbol: "👨‍🏫",
@@ -3326,6 +3678,61 @@
             specialChance: 0.2,
             specialAttackMultiplier: 1.6,
           },
+          guardian_diacono_1: {
+            symbol: "👨‍⚖️",
+            name: "Guardián de la Arena, Feng (Prueba de Diácono)",
+            spriteUrl: "img/guardian_feng.png", // Necesitarás una imagen para él
+            typeOverride: "monster",
+            level: 28,
+            hp: 2000, maxHp: 2000, attack: 150, defense: 80, exp: 1500,
+            isSectChallengeRival: true,
+            npcId: "guardian_diacono_1", // ID único para la misión
+            abilities: [{ abilityId: "armor_piercing_strike", chance: 0.3 }, { abilityId: "stone_skin_1", chance: 0.2 }],
+            lootTable: [{ itemName: "Piedras Espirituales", quantity: [300, 400], chance: 1.0 }],
+            fixedLocation: { x: 6, y: 14 }, // Posición en la Arena de la Secta
+        },
+
+        guardian_anciano_1: {
+            symbol: "👴",
+            name: "Anciano Guardián, Lei (Prueba de Anciano)",
+            spriteUrl: "img/guardian_lei.png", // Necesitarás una imagen para él
+            typeOverride: "monster",
+            level: 45,
+            hp: 4500, maxHp: 4500, attack: 300, defense: 150, exp: 4000,
+            isSectChallengeRival: true,
+            npcId: "guardian_anciano_1",
+            abilities: [{ abilityId: "thorns_aura", chance: 0.25 }, { abilityId: "life_drain", chance: 0.2 }],
+            lootTable: [{ itemName: "Piedras Espirituales", quantity: [800, 1000], chance: 1.0 }],
+            fixedLocation: { x: 7, y: 14 }, // Posición en la Arena de la Secta
+        },
+
+        guardian_gran_anciano_1: {
+            symbol: "👵",
+            name: "Gran Anciana de la Hoja, Yue (Prueba de Gran Anciano)",
+            spriteUrl: "img/guardian_yue.png", // Necesitarás una imagen para ella
+            typeOverride: "monster",
+            level: 62,
+            hp: 8000, maxHp: 8000, attack: 550, defense: 220, exp: 8000,
+            isSectChallengeRival: true,
+            npcId: "guardian_gran_anciano_1",
+            abilities: [{ abilityId: "clone_hunter", chance: 0.3 }, { abilityId: "concussive_blow", chance: 0.25 }, { abilityId: "basic_heal", chance: 0.1 }],
+            lootTable: [{ itemName: "Piedras Espirituales", quantity: [1500, 2000], chance: 1.0 }],
+            fixedLocation: { x: 5, y: 15 }, // Posición en la Arena de la Secta
+        },
+
+        guardian_maestro_1: {
+            symbol: "👑",
+            name: "Maestro de Secta Anterior (Prueba Final)",
+            spriteUrl: "img/guardian_maestro.png", // Necesitarás una imagen para él
+            typeOverride: "monster",
+            level: 75,
+            hp: 15000, maxHp: 15000, attack: 700, defense: 300, exp: 15000,
+            isSectChallengeRival: true,
+            npcId: "guardian_maestro_1",
+            abilities: [{ abilityId: "mana_curse", chance: 0.4 }, { abilityId: "intimidating_roar", chance: 0.3 }, { abilityId: "fire_breath", chance: 0.2 }],
+            lootTable: [{ itemName: "Sello del Maestro de Secta", quantity: [1, 1], chance: 1.0 }], // Un item único como prueba
+            fixedLocation: { x: 6, y: 15 }, // Posición en la Arena de la Secta
+        },
           //== FIN NPC===
           //RECURSOS
           cristal_qi: {
@@ -3742,11 +4149,15 @@
             spriteUrl: "img/esqueleto_1.png",
             typeOverride: "monster",
             hp: 500,
+            maxHp: 500,
             level:15,
             attack: 60,
             defense: 30,
             exp: 60,
-            maxHp: 180,
+            abilities: [
+                  { abilityId: "mana_curse", chance: 0.35 },     // Dificulta a los jugadores que usan maná
+                  { abilityId: "basic_heal", chance: 0.20 }      // Prolonga el combate curándose
+              ],
             lootTable: [
               {
                 itemName: "Piedras Espirituales",
@@ -4221,6 +4632,158 @@
                   { itemName: "Piedras Espirituales", quantity: [35, 55], chance: 1.0 }
               ]
           },
+          // === NUEVOS ENEMIGOS Y JEFES DE ALTO NIVEL ===
+
+            // -- Nivel Diácono (Nivel 20-30) --
+            cultivador_secta_rival: {
+                symbol: "⚔️",
+                name: "Cultivador de la Secta de la Llama Negra",
+                spriteUrl: "img/cultivador_rival_3.png",
+                level: 22,
+                hp: 800, maxHp: 800, attack: 120, defense: 40, exp: 450,
+                abilities: [{ abilityId: "fire_breath", chance: 0.3 }, { abilityId: "armor_piercing_strike", chance: 0.2 }],
+                lootTable: [
+                    { itemName: "Píldora de Recuperación Menor", quantity: [1, 2], chance: 0.2 },
+                    { itemName: "Insignia de Secta Rival", quantity: [1, 1], chance: 0.5 },
+                    { itemName: "Piedras Espirituales", quantity: [40, 60], chance: 1.0 }
+                ]
+            },
+            murcielago_cristal_sangriento: {
+                symbol: "🦇",
+                name: "Murciélago de Cristal Sangriento",
+                spriteUrl: "img/murcielago_sangre.png",
+                level: 25,
+                hp: 600, maxHp: 600, attack: 150, defense: 30, exp: 500,
+                abilities: [{ abilityId: "life_drain", chance: 0.4 }],
+                lootTable: [
+                    { itemName: "Cristal de Sangre Puro", quantity: [1, 1], chance: 0.3 },
+                    { itemName: "Piedras Espirituales", quantity: [50, 75], chance: 1.0 }
+                ]
+            },
+            diacono_renegado_jin: {
+                symbol: "👿",
+                name: "Diácono Renegado Jin (Jefe)",
+                spriteUrl: "img/diacono_renegado.png",
+                typeOverride: "monster",
+                level: 30,
+                hp: 2500, maxHp: 2500, attack: 180, defense: 60, exp: 2000,
+                isBoss: true,
+                abilities: [{ abilityId: "thorns_aura", chance: 0.3 }, { abilityId: "armor_break", chance: 0.25 }, { abilityId: "basic_heal", chance: 0.15 }],
+                lootTable: [
+                    { itemName: "Manual de Técnica de Diácono", quantity: [1, 1], chance: 1.0 },
+                    { itemName: "Piedras Espirituales", quantity: [500, 700], chance: 1.0 }
+                ],
+                fixedLocation: { x: 240, y: 40 } // Ubicación en el Desfiladero
+            },
+
+            // -- Nivel Anciano (Nivel 35-45) --
+            draco_hueso_antiguo: {
+                symbol: "🐉",
+                name: "Draco de Hueso Antiguo",
+                spriteUrl: "img/draco_hueso.png",
+                level: 38,
+                hp: 1500, maxHp: 1500, attack: 250, defense: 100, exp: 1200,
+                abilities: [{ abilityId: "intimidating_roar", chance: 0.3 }, { abilityId: "mana_curse", chance: 0.2 }],
+                lootTable: [
+                    { itemName: "Escama de Dragón Espectral", quantity: [1, 2], chance: 0.4 },
+                    { itemName: "Piedras Espirituales", quantity: [100, 150], chance: 1.0 }
+                ]
+            },
+            espectro_tifonico: {
+                symbol: "🌪️",
+                name: "Espectro Tifónico",
+                spriteUrl: "img/espectro_tifon.png",
+                level: 40,
+                hp: 1200, maxHp: 1200, attack: 300, defense: 70, exp: 1500,
+                abilities: [{ abilityId: "mana_curse", chance: 0.4 }, { abilityId: "concussive_blow", chance: 0.2 }],
+                lootTable: [
+                    { itemName: "Corazón de Tifón", quantity: [1, 1], chance: 0.25 },
+                    { itemName: "Piedras Espirituales", quantity: [120, 180], chance: 1.0 }
+                ]
+            },
+            emperador_lich_del_valle: {
+                symbol: "👑",
+                name: "Emperador Lich del Valle (Jefe)",
+                spriteUrl: "img/lich_emperador.png",
+                typeOverride: "monster",
+                level: 48,
+                hp: 5000, maxHp: 5000, attack: 350, defense: 120, exp: 5000,
+                isBoss: true,
+                abilities: [{ abilityId: "life_drain", chance: 0.3 }, { abilityId: "mana_curse", chance: 0.3 }, { abilityId: "clone_hunter", chance: 0.2 }], // Asume que el jugador podría tener clones a este nivel
+                lootTable: [
+                    { itemName: "Filacteria del Lich", quantity: [1, 1], chance: 1.0 },
+                    { itemName: "Rollo: Técnica de Anciano Aleatoria", quantity: [1, 1], chance: 1.0 },
+                    { itemName: "Piedras Espirituales", quantity: [1000, 1500], chance: 1.0 }
+                ],
+                fixedLocation: { x: 350, y: 20 } // Ubicación en el Valle del Dragón Caído
+            },
+
+            // -- Nivel Gran Anciano (Nivel 50-60) --
+            demonio_de_la_fisura: {
+                symbol: "👹",
+                name: "Demonio de la Fisura",
+                spriteUrl: "img/demonio_fisura.png",
+                level: 55,
+                hp: 2500, maxHp: 2500, attack: 500, defense: 150, exp: 3000,
+                abilities: [{ abilityId: "fire_breath", chance: 0.5, effect: { burnDamagePerTurn: 100, duration: 3 } }, { abilityId: "armor_break", chance: 0.3 }],
+                lootTable: [
+                    { itemName: "Fragmento de la Fisura", quantity: [1, 1], chance: 0.4 },
+                    { itemName: "Piedras Espirituales", quantity: [250, 400], chance: 1.0 }
+                ]
+            },
+            guardian_celestial_caido: {
+                symbol: "👼",
+                name: "Guardián Celestial Caído",
+                spriteUrl: "img/guardian_caido.png",
+                level: 60,
+                hp: 4000, maxHp: 4000, attack: 450, defense: 250, exp: 4000,
+                abilities: [{ abilityId: "stone_skin_1", chance: 0.3 }, { abilityId: "basic_heal", chance: 0.2 }],
+                lootTable: [
+                    { itemName: "Lágrima Celestial", quantity: [1, 1], chance: 0.2 },
+                    { itemName: "Piedras Espirituales", quantity: [300, 500], chance: 1.0 }
+                ]
+            },
+            general_demoniaco_abismal: {
+                symbol: "😈",
+                name: "General Demoníaco Abismal (Jefe)",
+                spriteUrl: "img/general_abismal.png",
+                typeOverride: "monster",
+                level: 65,
+                hp: 10000, maxHp: 10000, attack: 600, defense: 200, exp: 10000,
+                isBoss: true,
+                abilities: [{ abilityId: "intimidating_roar", chance: 0.4 }, { abilityId: "thorns_aura", chance: 0.3 }, { abilityId: "fire_breath", chance: 0.2 }],
+                lootTable: [
+                    { itemName: "Corazón del Abismo", quantity: [1, 1], chance: 1.0 },
+                    { itemName: "Rollo: Técnica de Gran Anciano Aleatoria", quantity: [1, 1], chance: 1.0 },
+                    { itemName: "Piedras Espirituales", quantity: [2000, 3000], chance: 1.0 }
+                ],
+                fixedLocation: { x: 425, y: 35 } // Ubicación en la Fisura
+            },
+
+            // -- Nivel Maestro de Secta (Nivel 70+) --
+            avatar_del_dao_corrupto: {
+                symbol: "☯️",
+                name: "Avatar del Dao Corrupto (Jefe Final)",
+                spriteUrl: "img/avatar_dao.png",
+                typeOverride: "monster",
+                level: 80,
+                hp: 25000, maxHp: 25000, attack: 800, defense: 300, exp: 50000,
+                isBoss: true,
+                abilities: [
+                    { abilityId: "mana_curse", chance: 0.5 },
+                    { abilityId: "life_drain", chance: 0.4 },
+                    { abilityId: "thorns_aura", chance: 0.3 },
+                    { abilityId: "concussive_blow", chance: 0.2 }
+                ],
+                lootTable: [
+                    { itemName: "Semilla del Dao Verdadero", quantity: [1, 1], chance: 1.0 },
+                    { itemName: "Piedras Espirituales", quantity: [10000, 10000], chance: 1.0 }
+                ],
+                fixedLocation: { x: 15, y: 12 } // Aparece cerca de la secta para el enfrentamiento final
+            },
+
+
+
           //BOSSES
            jabali_colmilludo_alfa: { 
             symbol: "🐗",
@@ -4413,7 +4976,7 @@
             fixedLocation: { x: 72, y: 51 },
           },
         };
-
+//------------------------   ITEMS ---------------------------------------------------
         const itemData = {
           "Hierbas Medicinales": {
             description: "Restaura un 30 de HP.",
@@ -4463,6 +5026,10 @@
               return `Usada Píldora, recuperado ${ps.hp - o} HP.`;
             },
             canUse: (ps) => ps.hp < ps.maxHp,
+          },
+          "Esencia Espectral": {
+              description: "Un residuo etéreo dejado por un espectro. Se usa en rituales y alquimia avanzada. Item de Misión.",
+              canUse: () => false, // No es un consumible
           },
           "Talismán de Percepción": {
             description: "Agudiza sentidos. Otorga EXP.",
@@ -4525,6 +5092,81 @@
             },
             canUse: () => true,
           },
+          "Insignia de Secta Rival": {
+              description: "Una insignia de la Secta de la Llama Negra. Prueba de tus victorias.",
+              canUse: () => false,
+          },
+          "Cristal de Sangre Puro": {
+              description: "Un cristal que pulsa con energía vital. Valioso para la alquimia de alto nivel.",
+              canUse: () => false,
+          },
+          "Manual de Técnica de Diácono": {
+              description: "Un manual que detalla una técnica de nivel Diácono. Contiene profundos conocimientos.",
+              effect: (ps, gex) => {
+                  gex(1000); // Da una buena cantidad de EXP
+                  return `Has estudiado el manual del diácono renegado. Ganas 1000 EXP y una nueva comprensión del combate.`;
+              },
+              canUse: () => true,
+          },
+          "Escama de Dragón Espectral": {
+              description: "Una escama etérea y resistente, imbuida con el resentimiento de un dragón.",
+              canUse: () => false,
+          },
+          "Corazón de Tifón": {
+              description: "El núcleo arremolinado de un espectro elemental. Irradia un poder inmenso.",
+              canUse: () => false,
+          },
+          "Filacteria del Lich": {
+              description: "El recipiente del alma del Emperador Lich. Su destrucción asegura su final. Irradia poder oscuro.",
+              effect: (ps, gex) => {
+                  gex(5000);
+                  return `Al destruir la filacteria, una oleada de energía pura te recorre. Ganas 5000 EXP.`;
+              },
+              canUse: () => true,
+          },
+          "Fragmento de la Fisura": {
+              description: "Un trozo de realidad de un plano demoníaco. Es inestable y peligroso.",
+              canUse: () => false,
+          },
+          "Lágrima Celestial": {
+              description: "Una lágrima cristalizada de un ser celestial. Contiene una pureza increíble.",
+              canUse: () => false,
+          },
+          "Corazón del Abismo": {
+              description: "El corazón de un general demoníaco. Es la fuente de su poder abismal.",
+              effect: (ps, gex) => {
+                  gex(10000);
+                  player.baseMaxHp += 500;
+                  recalculatePlayerStats();
+                  return `Has purificado el Corazón del Abismo, fortaleciendo tu propia base vital. Ganas 10000 EXP y 500 HP Máximo base.`;
+              },
+              canUse: () => true,
+          },
+          "Semilla del Dao Verdadero": {
+              description: "Un fragmento del origen de toda la cultivación. Su estudio podría llevarte a la trascendencia.",
+              effect: (ps) => {
+                  // Podría desbloquear una mecánica de post-juego o dar una mejora final masiva.
+                  ps.level += 5;
+                  levelUp(); // Simula varias subidas de nivel
+                  return `Has meditado sobre la Semilla del Dao, alcanzando una iluminación sin precedentes. Tu nivel y poder se disparan.`;
+              },
+              canUse: () => true,
+          },
+          "Rollo: Técnica de Anciano Aleatoria": {
+              description: "Un rollo que enseña una técnica poderosa, digna de un Anciano.",
+              canUse: () => false, // La lógica para esto sería más compleja, por ahora es un trofeo
+          },
+          "Rollo: Técnica de Gran Anciano Aleatoria": {
+              description: "Un rollo con una técnica casi legendaria, manejada solo por los Grandes Ancianos.",
+              canUse: () => false, // La lógica para esto sería más compleja, por ahora es un trofeo
+          },
+
+          "Sello del Maestro de Secta": {
+              description: "La prueba de que has superado al Maestro anterior. Irradia una autoridad inmensa. Item de Misión.",
+              canUse: () => false,
+          },
+          /// ========================   ROLLOS DE TÉCNICAS    ============================
+
           // -- Rollos Grado 1 --
         "Rollo: Tajo del Viento Veloz": { description: "Enseña 'Tajo del Viento Veloz'.", effect: (ps) => learnTechniqueFromRoll(ps, "sword_t1"), canUse: () => true },
         "Rollo: Físico de Buey de Piedra": { description: "Enseña 'Físico de Buey de Piedra'.", effect: (ps) => learnTechniqueFromRoll(ps, "body_t1"), canUse: () => true },
@@ -6554,88 +7196,7 @@
 
         let lastPlayerAnimationUpdateTime = 0; // Renombrado para claridad
 
-        /* function movePlayer(dx, dy) {
-          movePlayerCallCount++;
-          const callId = movePlayerCallCount;
-          console.log(`[MovePlayer CALL #${callId}] Intento de mover dx:${dx}, dy:${dy}. Posición actual: (${gameState.player.x}, ${gameState.player.y})`);
-
-          // Cooldown
-          const now = Date.now();
-          if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
-              // console.log(`[MovePlayer CALL #${callId}] Cooldown activo. Movimiento ignorado.`);
-              return; 
-          }
-
-          const newX = gameState.player.x + dx;
-          const newY = gameState.player.y + dy;
-          console.log(`[MovePlayer CALL #${callId}] Posición de destino calculada: (${newX}, ${newY}).`);
-          let canMove = true; 
-
-          // 1. Límites del mapa
-          if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) {
-              canMove = false;
-              console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Límites del mapa.`);
-          }
-
-          // 2. Terreno
-          if (canMove) {
-              const targetTerrainId = getTerrainTypeAt(newX, newY);
-              if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) {
-                  canMove = false;
-                  console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Terreno no caminable ('${targetTerrainId}').`);
-              }
-          }
-          
-          // 3. Entidades
-          if (canMove) {
-              const entityAtNewPosition = gameState.map.entities.find(e => e.x === newX && e.y === newY);
-              
-              if (entityAtNewPosition) {
-                  console.log(`[MovePlayer CALL #${callId}] Entidad encontrada en destino:`, JSON.parse(JSON.stringify(entityAtNewPosition)));
-                  const entityTypeToCheck = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
-                  console.log(`[MovePlayer CALL #${callId}] Tipo de entidad a verificar: '${entityTypeToCheck}'`);
-                  
-                  if (G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) || entityAtNewPosition.isBoss || entityAtNewPosition.isSectChallengeRival) {
-                      console.log(`[MovePlayer CALL #${callId}] La entidad es hostil. Iniciando batalla...`);
-                      startBattle(entityAtNewPosition);
-                      return; 
-                  }
-                  
-                  const isBlocking = G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck);
-                  console.log(`[MovePlayer CALL #${callId}] ¿Está en la lista de bloqueo (G_BLOCKING_ENTITY_TYPES)? -> ${isBlocking}`);
-                  
-                  if (isBlocking) {
-                      canMove = false;
-                      console.log(`[MovePlayer CALL #${callId}] BLOQUEADO por: Entidad Bloqueadora.`);
-                  }
-              } else {
-                  console.log(`[MovePlayer CALL #${callId}] Celda de destino vacía.`);
-              }
-          }
-
-          console.log(`[MovePlayer CALL #${callId}] Decisión final. canMove: ${canMove}`);
-
-          if (canMove) {
-              console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) PERMITIDO.`);
-              gameState.player.x = newX;
-              gameState.player.y = newY;
-              updatePlayerPosition(`movePlayer_success_call_${callId}`);
-              updateUI();
-              lastSuccessfulMoveTime = now;
-          } else {
-              console.log(`[MovePlayer CALL #${callId}] RESULTADO: Movimiento a (${newX}, ${newY}) BLOQUEADO.`);
-          }
-          console.log(`--- Fin de la llamada a movePlayer #${callId} ---`);
-        }
-        //FIN MOVE PLAYER
-
-        let playerMovementKeysDown = {
-          // Para rastrear qué teclas de movimiento están presionadas
-          up: false,
-          down: false,
-          left: false,
-          right: false,
-        }; */
+        
         function handleMovement() {
           let dx = 0;
           let dy = 0;
@@ -9025,79 +9586,66 @@
         function checkAndActivateRankChallengeMissions() {
           const player = gameState.player;
           const currentRankIndex = SECTA_DATA.rangos.findIndex(
-            (r) => r.nombre === player.secta.rango
+          (r) => r.nombre === player.secta.rango
           );
 
           if (currentRankIndex === -1) {
-            console.error(
+          console.error(
               "Error: Rango actual del jugador no encontrado en SECTA_DATA.rangos"
-            );
-            return;
+          );
+          return;
           }
 
-          // Si ya está en el rango máximo, no hay más desafíos
           if (currentRankIndex + 1 >= SECTA_DATA.rangos.length) {
-            // console.log("Jugador en el rango máximo o no hay más rangos definidos.");
-            return;
+          return;
           }
 
           const nextRankData = SECTA_DATA.rangos[currentRankIndex + 1];
 
-          // Verificar si el jugador cumple los PCS para el siguiente rango
           if (player.secta.puntosContribucion >= nextRankData.pcsRequeridos) {
-            // Verificar si hay un ID de rival para el desafío de este próximo rango
-            if (nextRankData.desafioRivalId) {
+          if (nextRankData.desafioRivalId) {
+              // --- LÓGICA MEJORADA PARA ENCONTRAR LA MISIÓN ---
               const desafioMisionId = Object.keys(MISIONES_DATA).find((mId) => {
-                const mision = MISIONES_DATA[mId];
-                return (
-                  mision.objetivo?.tipo === "derrotar_npc_especifico" &&
-                  mision.objetivo?.npcId === nextRankData.desafioRivalId &&
-                  (mision.autoActivarAlCumplirRequisitos === true ||
-                    mision.recompensa?.nuevoRango === nextRankData.nombre)
-                ); // Condición para identificar la misión de desafío
+              const mision = MISIONES_DATA[mId];
+              return (
+                  mision.autoActivarAlCumplirRequisitos === true &&
+                  mision.recompensa?.nuevoRango === nextRankData.nombre &&
+                  mision.objetivo?.npcId === nextRankData.desafioRivalId
+              );
               });
+              // --- FIN DE LA LÓGICA MEJORADA ---
 
               if (desafioMisionId) {
-                // Verificar si la misión de desafío NO está ya activa o completada
-                const isMissionActive = player.secta.misionesActivas.some(
+              const isMissionActive = player.secta.misionesActivas.some(
                   (m) => m.id === desafioMisionId
-                );
-                const isMissionCompleted =
+              );
+              const isMissionCompleted =
                   player.secta.misionesCompletadas[desafioMisionId];
 
-                if (!isMissionActive && !isMissionCompleted) {
+              if (!isMissionActive && !isMissionCompleted) {
                   acceptMission(desafioMisionId);
                   const misionData = MISIONES_DATA[desafioMisionId];
                   showModal(
-                    "¡Nuevo Desafío de Rango!",
-                    `Has alcanzado los requisitos de PCS para el rango de ${nextRankData.nombre}.\n` +
+                  "¡Nuevo Desafío de Rango!",
+                  `Has alcanzado los requisitos de PCS para el rango de ${nextRankData.nombre}.\n` +
                       `Se ha activado la misión de desafío: "${misionData.titulo}".\n` +
                       `¡Prepárate y busca a tu oponente en la arena de la secta!`
                   );
-
-                  // Asegurar que el NPC del desafío (el rival) aparezca en el mapa si tiene fixedLocation
-                  // ensureFixedEntities() debería encargarse de esto si el rival está en la lista de entidades fijas
-                  // y no ha sido derrotado (lo cual es el caso si la misión se acaba de activar).
-                  // Si el rival no es una entidad fija por defecto, podrías añadirlo aquí dinámicamente,
-                  // pero es más limpio manejarlo con ensureFixedEntities.
+                  
+                  // La función ensureFixedEntities se encargará de hacer aparecer al guardián
+                  // porque la misión está ahora activa.
                   ensureFixedEntities();
-                  renderMap(); // Para asegurar que el rival (si es nuevo) se muestre
-                } else {
-                  // console.log(`Misión de desafío ${desafioMisionId} para ${nextRankData.nombre} ya está activa o completada.`);
-                }
-              } else {
-                console.warn(
-                  `No se encontró una misión de desafío auto-activable para el rival ${nextRankData.desafioRivalId} del rango ${nextRankData.nombre}.`
-                );
+                  renderMap(); 
               }
-            } else {
-              // console.log(`El siguiente rango ${nextRankData.nombre} no tiene un desafioRivalId definido. Podría ser un rango sin desafío.`);
-            }
-          } else {
-            // console.log(`Jugador no tiene suficientes PCS para el siguiente rango ${nextRankData.nombre}. Necesita: ${nextRankData.pcsRequeridos}, Tiene: ${player.secta.puntosContribucion}`);
+              } else {
+              console.warn(
+                  `No se encontró una misión de desafío auto-activable para el rival ${nextRankData.desafioRivalId} del rango ${nextRankData.nombre}.`
+              );
+              }
           }
-          updateSectUI(); // Actualizar la UI de la secta por si algo cambió
-        }
+          }
+          updateSectUI();
+      }
 
         function applyRankBenefits(newRankName) {
           const rankData = SECTA_DATA.rangos.find(
