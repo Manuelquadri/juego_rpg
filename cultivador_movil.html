@@ -178,7 +178,12 @@
       .hp-fill { background: linear-gradient(90deg, #ff4444, #ff6666); }
       .mana-fill { background: linear-gradient(90deg, #4444ff, #6666ff); }
       .exp-fill { background: linear-gradient(90deg, #44ff44, #66ff66); }
-
+      .stats-panel.hidden {
+          opacity: 0;
+          pointer-events: none; /* Evita que se pueda hacer clic en el panel cuando está oculto */
+          transform: translateX(-100%); /* Opcional: lo desliza fuera de la pantalla */
+          transition: opacity 0.3s ease, transform 0.3s ease;
+      }
       /* --- Barra de Acceso Rápido Inferior --- */
       .quick-slot-bar {
         position: fixed;
@@ -5803,6 +5808,7 @@
       function closeMissionsModal() {
           document.getElementById("missionsModal").style.display = "none";
           showTouchControls();
+          updateStatsPanelVisibility();
       }
         function showTouchControls() {
           const joystick = document.getElementById("joystick-container");
@@ -5922,6 +5928,7 @@
       function closeTeleportModal() {
           document.getElementById('teleportModal').style.display = 'none';
           showTouchControls();
+          updateStatsPanelVisibility();
       }
 
       // Pequeña función de ayuda para saber si el jugador está en un teletransportador
@@ -5994,6 +6001,7 @@
           modalElement.style.display = "flex";
           hideTouchControls();
           updateTopNavVisibility();
+          updateStatsPanelVisibility();
         }
 
         function closeModal() {
@@ -6011,6 +6019,7 @@
           updatePlayerBarsOnMap();
           showTouchControls();
           updateTopNavVisibility();
+          updateStatsPanelVisibility();
       }
 //ENEMIGOS Y NPC FIJOS
         function ensureFixedEntities() {
@@ -8150,6 +8159,7 @@
             "none";
           updatePlayerBarsOnMap();
           showTouchControls();
+          updateStatsPanelVisibility();
         }
 
         function startCultivationMode(type, targetId = null) {
@@ -8288,12 +8298,30 @@
       modal.style.display = "flex";
       hideTouchControls();
   }
-        
+    
+    function updateStatsPanelVisibility() {
+      const statsPanel = document.querySelector('.stats-panel');
+      if (!statsPanel) {
+          console.error("No se encontró el elemento .stats-panel para actualizar su visibilidad.");
+          return;
+      }
+
+      // El panel debe estar oculto si la batalla está activa O si cualquier modal está abierto.
+      const shouldBeHidden = gameState.battle.active || isAnyModalOpen();
+
+      if (shouldBeHidden) {
+          statsPanel.classList.add('hidden');
+      } else {
+          statsPanel.classList.remove('hidden');
+      }
+  }  
+
   function closeActiveCultivationModal() {
           document.getElementById("activeCultivationModal").style.display =
             "none";
           updatePlayerBarsOnMap();
           showTouchControls();
+          updateStatsPanelVisibility();
         }
 
 
@@ -8652,6 +8680,7 @@
         }
 
         function startBattle(mapEntity) {
+          updateStatsPanelVisibility();
           battleLogHistory = []; 
           const toggleBtn = document.getElementById('toggleMapControlsBtn');
           if (toggleBtn) {
@@ -9742,6 +9771,7 @@
               }
             });
           }
+          updateStatsPanelVisibility();
         }
 
         function checkAndActivateRankChallengeMissions() {
@@ -10206,6 +10236,8 @@
           updateTopNavVisibility();
           showTouchControls();
           updatePlayerBarsOnMap();
+          updateStatsPanelVisibility();
+          
         }
 
      
@@ -10386,6 +10418,7 @@
           document.getElementById("techniqueModal").style.display = "none";
           updatePlayerBarsOnMap();
           showTouchControls();
+          updateStatsPanelVisibility();
         }
 
         let currentShopPage = 1;
@@ -10657,6 +10690,8 @@
           document.getElementById("shopModal").style.display = "none";
           updatePlayerBarsOnMap();
           showTouchControls();
+          updateStatsPanelVisibility();
+          
         }
 
         function buyFromShop(itemName) {
@@ -11832,6 +11867,7 @@
           showTouchControls();
           updatePlayerBarsOnMap();
           showTouchControls();
+          updateStatsPanelVisibility();
         }
         function openSectShop() {
           showModal("Tienda de Secta", "El Depósito aún está siendo abastecido.");
@@ -11879,6 +11915,7 @@
         document.getElementById('confirmationModal').style.display = 'none';
         onConfirmAction = null; // Limpiamos la acción
         showTouchControls();
+        updateStatsPanelVisibility();
       }
         // --- INICIALIZACIÓN ---
         document.addEventListener("DOMContentLoaded", () => {
