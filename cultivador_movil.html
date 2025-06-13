@@ -5803,6 +5803,7 @@
 
           document.getElementById("missionsModal").style.display = "flex";
           hideTouchControls();
+          updateStatsPanelVisibility();
       }
 
       function closeMissionsModal() {
@@ -10760,6 +10761,7 @@
             showModal("Error al Guardar", `Hubo un problema: ${error.message}`);
           }
         }
+        
         function triggerFileUpload() {
           document.getElementById("fileInput").click();
         }
@@ -10979,6 +10981,7 @@
         bar.appendChild(conversionSlot);
     }
 }
+      
       function unassignQuickSlot(slotIndex) {
         gameState.player.quickSlots[slotIndex] = null;
         closeModal();
@@ -11030,7 +11033,9 @@
             } else {
                 showModal("Acción no posible", message);
             }
+
         }
+        
         function showHelp() {
           showModal(
             "Ayuda - Camino del Cultivador",
@@ -11048,6 +11053,7 @@
               "  Joystick: Moverse\n" +
               '  Botón "Acción": Interactuar'
           );
+          updateStatsPanelVisibility();
         }
         //ACTUALIZAR BARRAS DEL JUGADOR
         function updatePlayerBarsOnMap() {
