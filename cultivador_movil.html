@@ -538,6 +538,28 @@
       /****************************************
        * 5. MODALES Y ELEMENTOS DE UI
        ****************************************/
+      /* === NUEVO: ESTILOS PARA EL VELO OSCURECEDOR === */
+      .game-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.6); /* Color negro semitransparente */
+          backdrop-filter: blur(3px); /* Efecto de desenfoque para el fondo (opcional, muy vistoso) */
+          z-index: 290; /* Clave: Por encima del juego (z-index < 290) pero por debajo de la batalla/modales (z-index >= 300) */
+          opacity: 0;
+          pointer-events: none; /* No debe ser clickeable cuando está invisible */
+          transition: opacity 0.4s ease-in-out;
+      }
+
+      .game-overlay.active {
+          opacity: 1;
+          pointer-events: auto; /* Se vuelve "sólido" para evitar clics en el juego de fondo */
+      }
+      /* === FIN DE ESTILOS PARA EL VELO === */
+
+
       .modal {
         position: fixed;
         top: 0;
@@ -997,6 +1019,7 @@
     </style>
   </head>
   <body>
+    <div id="game-overlay" class="game-overlay"></div>
       <!-- BOTÓN DE MENÚ PARA MÓVILES -->
       <button id="mobileMenuBtn">☰</button>
       <!-- FIN DEL BOTÓN -->
@@ -5603,6 +5626,22 @@
 
 
         ///======================   FUNCIONES ========================================
+        function updateGameOverlayVisibility() {
+          const overlay = document.getElementById('game-overlay');
+          if (!overlay) {
+              console.error("No se encontró el elemento #game-overlay.");
+              return;
+          }
+
+          // El velo debe estar activo si la batalla está activa O si cualquier modal está abierto.
+          const shouldBeActive = gameState.battle.active || isAnyModalOpen();
+
+          if (shouldBeActive) {
+              overlay.classList.add('active');
+          } else {
+              overlay.classList.remove('active');
+          }
+      }
         function getStoryNpcDialogue(npcId) {
           const player = gameState.player;
           const flags = player.worldState.storyFlags;
@@ -6003,6 +6042,7 @@
           hideTouchControls();
           updateTopNavVisibility();
           updateStatsPanelVisibility();
+          updateGameOverlayVisibility();
         }
 
         function closeModal() {
@@ -6021,6 +6061,7 @@
           showTouchControls();
           updateTopNavVisibility();
           updateStatsPanelVisibility();
+          updateGameOverlayVisibility();
       }
 //ENEMIGOS Y NPC FIJOS
         function ensureFixedEntities() {
@@ -8682,6 +8723,7 @@
 
         function startBattle(mapEntity) {
           updateStatsPanelVisibility();
+          updateGameOverlayVisibility();
           battleLogHistory = []; 
           const toggleBtn = document.getElementById('toggleMapControlsBtn');
           if (toggleBtn) {
@@ -10238,6 +10280,7 @@
           showTouchControls();
           updatePlayerBarsOnMap();
           updateStatsPanelVisibility();
+          updateGameOverlayVisibility();
           
         }
 
@@ -10692,7 +10735,7 @@
           updatePlayerBarsOnMap();
           showTouchControls();
           updateStatsPanelVisibility();
-          
+          updateGameOverlayVisibility();
         }
 
         function buyFromShop(itemName) {
