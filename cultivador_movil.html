@@ -1749,7 +1749,6 @@
           currentZoneName: null,
           isMoving: false,
           unlockedTeleporters: {
-            // <-- ¡AÑADE ESTO!
             tp_sect_hub: true, // El teletransportador de la secta empieza activado
           },
           animationTimer: null, // Para el intervalo de la animación de caminar
@@ -1795,6 +1794,8 @@
           // Para Ritual de Sangre
           bloodRitualTurns: 0,
           bloodRitualAttackBoost: 0,
+          magicShieldValue: 0, // Valor actual del escudo de absorción
+          magicShieldTurns: 0,
           // Nuevos estados para técnicas de alto nivel
           isImmuneToStatus: false, // Inmunidad a quemaduras, veneno, stun, etc.
           passiveHpRegen: 0, // Cantidad de HP a regenerar por segundo pasivamente
@@ -2282,6 +2283,25 @@
         battle: {
           active: false,
           enemy: {
+            frozenTurns: 0,
+            stunnedTurns: 0,
+            burningTurns: 0,
+            burnDamage: 0,
+            poisonedTurns: 0,
+            poisonDamage: 0,
+            defenseReductionTurns: 0,
+            defenseReductionAmount: 0,
+            attackReductionTurns: 0,
+            attackReductionAmount: 0,
+
+            // --- AÑADE ESTAS LÍNEAS AQUÍ ---
+            rootedTurns: 0, // Turnos que permanecerá atrapado
+            rootDamage: 0, // Daño que sufrirá cada turno mientras esté atrapado
+            // --- FIN DE LAS LÍNEAS A AÑADIR ---
+
+            // Nuevos estados para efectos de alto nivel
+            silencedTurns: 0,
+            sealedTurns: 0,
             reflectDamageTurns: 0, // Para el aura de espinas
             reflectDamageMultiplier: 0,
           },
@@ -11221,27 +11241,42 @@
                 break;
 
               case "formation_t2":
-                // Definimos las variables para ESTE caso
-                const shieldValue_t2 =
-                  techDetails.effect.shieldValue + playerTechLevel * 10;
-                const shieldDuration_t2 = techDetails.effect.duration;
+                // Obtenemos los detalles de la técnica y el nivel del jugador
+                const rootTechDetails = techniqueData["formation_t2"];
+                const rootTechLevel =
+                  player.learnedTechniques["formation_t2"]?.level || 1;
 
-                // Asignamos el valor del escudo y los turnos al estado del jugador
-                player.magicShieldValue =
-                  (player.magicShieldValue || 0) + shieldValue_t1;
-                // --- LA CORRECCIÓN CLAVE ESTÁ AQUÍ ---
-                player.magicShieldTurns = Math.max(
-                  player.magicShieldTurns || 0,
-                  shieldDuration_t1
-                );
+                const rootChance =
+                  (rootTechDetails.effect.rootChance || 0.7) +
+                  (rootTechLevel - 1) * 0.03; // Aumenta la probabilidad con el nivel
 
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${shieldValue_t1} de daño!`;
-                showFloatingText(
-                  document.querySelector(".character-sprite"),
-                  `Escudo +${shieldValue_t1}`,
-                  "ability"
-                );
-                logBattle(logMessage);
+                if (Math.random() < rootChance) {
+                  // La habilidad tiene éxito
+                  const rootDuration = rootTechDetails.effect.rootDuration;
+                  const rootDmgPerTurn =
+                    rootTechDetails.effect.damagePerTurn +
+                    (rootTechLevel - 1) * 2; // El daño por turno también escala
+
+                  enemy.rootedTurns = Math.max(enemy.rootedTurns, rootDuration);
+                  enemy.rootDamage = rootDmgPerTurn;
+
+                  logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) atrapa al enemigo! Sufrirá ${enemy.rootDamage} de daño por turno durante ${enemy.rootedTurns} turnos.`;
+                  showFloatingText(
+                    document.getElementById("enemySprite"),
+                    "¡Atrapado!",
+                    "debuff"
+                  );
+                } else {
+                  // La habilidad falla
+                  logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) falla y el enemigo esquiva los grilletes!`;
+                  showFloatingText(
+                    document.getElementById("enemySprite"),
+                    "¡Falló!",
+                    "ability"
+                  );
+                }
+
+                logBattle(logMessage); // Registramos el resultado, éxito o fallo
                 break;
               case "formation_t3":
                 // Definimos las variables para ESTE caso
@@ -12100,37 +12135,45 @@
             enemy.defenseBoostAmount = 0;
           }
         }
+
         // --- COMPROBAR SI EL ENEMIGO PUEDE ACTUAR ---
         // 1. Procesar estados y DoTs del enemigo
         let canEnemyAct = true;
-        if (
-          enemy.sealedTurns > 0 ||
-          enemy.frozenTurns > 0 ||
-          enemy.stunnedTurns > 0
-        ) {
-          // ... (Lógica para saltar turno)
-          const statusMessage =
-            enemy.sealedTurns > 0
-              ? "¡Sellado!"
-              : enemy.frozenTurns > 0
-              ? "¡Congelado!"
-              : "¡Aturdido!";
-          showFloatingText(enemySprite, statusMessage, "debuff");
-          logBattle(
-            `¡${enemy.name} está ${statusMessage
-              .toLowerCase()
-              .replace("¡", "")} y no puede actuar!`
-          );
+        let reasonForInaction = "";
 
-          if (enemy.sealedTurns > 0) enemy.sealedTurns--;
-          if (enemy.frozenTurns > 0) enemy.frozenTurns--;
-          if (enemy.stunnedTurns > 0) enemy.stunnedTurns--;
+        if (enemy.sealedTurns > 0) {
           canEnemyAct = false;
+          reasonForInaction = "¡Sellado!";
+          enemy.sealedTurns--;
+        } else if (enemy.frozenTurns > 0) {
+          canEnemyAct = false;
+          reasonForInaction = "¡Congelado!";
+          enemy.frozenTurns--;
+        } else if (enemy.stunnedTurns > 0) {
+          canEnemyAct = false;
+          reasonForInaction = "¡Aturdido!";
+          enemy.stunnedTurns--;
+        } else if (enemy.rootedTurns > 0) {
+          // Si está atrapado, ya ha recibido daño. Ahora simplemente le impedimos actuar.
+          canEnemyAct = false;
+          reasonForInaction = "¡Atrapado!";
+          // El contador de rootedTurns ya se redujo al aplicar el daño, no es necesario hacerlo aquí.
+        }
 
+        if (!canEnemyAct) {
+          logBattle(
+            `¡${enemy.name} está ${reasonForInaction
+              .toLowerCase()
+              .replace("!", "")} y no puede actuar este turno!`
+          );
+          showFloatingText(enemySprite, reasonForInaction, "debuff");
+
+          // El turno del enemigo termina aquí. Devolvemos el control al jugador.
           gameState.battle.playerTurn = true;
           updateBattleUI();
           updateUI();
-          return;
+          populateBattleActionButtons(); // Actualiza los botones por si el maná del jugador cambió
+          return; // <-- ¡MUY IMPORTANTE! Salir de la función para que no ataque.
         }
 
         if (enemy.abilities && enemy.silencedTurns <= 0) {
@@ -12440,7 +12483,7 @@
           }
 
           if (!hasBeenSaved) {
-            showFloatingText("Has sido derrotado!");
+            showFloatingText(playerSprite, "¡Derrotado!", "debuff");
             logBattle("¡Has sido derrotado!");
             //perdida de experiencia
             const expLoss = Math.floor(gameState.player.exp * 0.1);
