@@ -848,6 +848,60 @@
           font-size: 0.75em;
         }
       }
+      @media (max-height: 500px) and (min-width: 600px), (orientation: landscape) {
+
+      /* --- Acciones de Batalla más Compactas --- */
+      .battle-actions {
+          padding: 5px; /* Reducimos el padding general del contenedor */
+          border-top-width: 1px;
+      }
+
+      .action-buttons {
+          /* Hacemos que la cuadrícula tenga más columnas para que los botones se distribuyan horizontalmente */
+          grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+          gap: 4px; /* Un espacio más pequeño entre botones */
+          margin-bottom: 5px;
+      }
+
+      .battle-actions button {
+          padding: 6px 8px; /* Reducimos drásticamente el padding del botón */
+          font-size: 0.7rem; /* Hacemos la fuente un poco más pequeña */
+          font-weight: normal; /* Opcional: quitar el bold para un look más ligero */
+          border-radius: 6px; /* Bordes un poco menos redondeados */
+      }
+
+      /* --- HUD de Stats del Jugador un poco más discreto --- */
+      .stats-panel {
+          top: 10px;
+          left: 10px;
+          padding: 6px;
+          font-size: 0.75rem;
+      }
+
+      .stats-panel h3 {
+          font-size: 1rem;
+          margin-bottom: 2px;
+      }
+
+      /* --- Barra de Acceso Rápido un poco más pequeña --- */
+      .quick-slot-bar {
+          bottom: 5px;
+          padding: 6px;
+          gap: 6px;
+      }
+      .quick-slot {
+          width: 48px;
+          height: 48px;
+          font-size: 22px;
+      }
+      .slot-item-count {
+          font-size: 12px;
+      }
+      .slot-key-hint {
+          font-size: 10px;
+      }
+
+      }
       /****************************************
        * NUEVO: 7. ESTILOS DE LA TIENDA
        ****************************************/
