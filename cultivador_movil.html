@@ -10993,6 +10993,8 @@
         if (!gameState.battle.playerTurn || !gameState.battle.active) return;
         const player = gameState.player;
         const enemy = gameState.battle.enemy;
+        const playerSprite = document.querySelector('.character-sprite');
+        const enemySprite = document.getElementById('enemySprite');
         let actionTaken = true;
 
         let playerTechLevel = 0;
