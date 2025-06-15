@@ -1796,6 +1796,12 @@
           bloodRitualAttackBoost: 0,
           magicShieldValue: 0, // Valor actual del escudo de absorción
           magicShieldTurns: 0,
+
+          activeChanneledAbility: {
+            // Para habilidades con coste por turno
+            id: null,
+            hp: 0, // "Vida" de la habilidad (para los grilletes)
+          },
           // Nuevos estados para técnicas de alto nivel
           isImmuneToStatus: false, // Inmunidad a quemaduras, veneno, stun, etc.
           passiveHpRegen: 0, // Cantidad de HP a regenerar por segundo pasivamente
@@ -3732,11 +3738,18 @@
           name: "Matriz de Grilletes de Qi",
           icon: "🔗",
           description:
-            "Una formación que intenta enraizar al enemigo, impidiendo su movimiento y causando daño leve.",
+            "Una formación que intenta enraizar al enemigo, impidiendo su movimiento y causando daño leve. Consume maná cada turno y puede romperse si el enemigo ataca con fuerza.",
           type: "active_ability",
           abilityId: "formation_t2",
-          effect: { rootDuration: 2, damagePerTurn: 10, rootChance: 0.7 },
-          manaCost: 30,
+          effect: {
+            rootDuration: 2,
+            damagePerTurn: 10,
+            rootChance: 0.7,
+            // --- NUEVAS PROPIEDADES ---
+            shacklesHP: 100, // "Vida" base de los grilletes
+            manaUpkeep: 5, // Maná que consume por turno para mantenerla
+          },
+          manaCost: 30, // Coste inicial para lanzarla
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 190,
@@ -7283,48 +7296,33 @@
         return "..."; // Diálogo por defecto
       }
       function showZoneNotification(zoneName) {
-        console.log(
-          `[Depuración showZoneNotification] Se llamó a la función con el nombre de zona: "${zoneName}"`
-        );
+      
         const notificationElement =
           document.getElementById("zone-notification");
 
         if (!notificationElement) {
-          console.error(
-            "[Depuración showZoneNotification] ¡ERROR CRÍTICO! El elemento #zone-notification no fue encontrado en el DOM."
-          );
+        
           return;
         }
-        console.log(
-          "[Depuración showZoneNotification] Elemento #zone-notification encontrado con éxito."
-        );
+      
 
         if (zoneNotificationTimeout) {
           clearTimeout(zoneNotificationTimeout);
-          console.log(
-            "[Depuración showZoneNotification] Se limpió un temporizador de notificación anterior."
-          );
+         
         }
 
         notificationElement.textContent = `Has entrado en: ${zoneName}`;
-        console.log(
-          `[Depuración showZoneNotification] Texto del elemento actualizado a: "${notificationElement.textContent}"`
-        );
+      
 
         notificationElement.classList.add("show");
-        console.log(
-          "[Depuración showZoneNotification] Clase 'show' añadida. El elemento debería ser visible ahora."
-        );
+        
+       
 
         zoneNotificationTimeout = setTimeout(() => {
           notificationElement.classList.remove("show");
-          console.log(
-            "[Depuración showZoneNotification] Temporizador completado. Clase 'show' eliminada."
-          );
+         
         }, 3000);
-        console.log(
-          `[Depuración showZoneNotification] Nuevo temporizador (${zoneNotificationTimeout}) programado para ocultar el mensaje en 3 segundos.`
-        );
+      
       }
       // --- FUNCIONES HELPER PARA UI MÓVIL ---
       function isMobileView() {
@@ -7897,9 +7895,7 @@
 
           if (debeExistir) {
             if (!existingEntityInstance) {
-              console.log(
-                `[EnsureFixed] CREANDO nueva instancia para ${entityTypeId} en (${fixedX}, ${fixedY}).`
-              );
+             
               const newEntityData = {
                 ...definition,
                 x: fixedX,
@@ -8409,15 +8405,12 @@
 
         // Si el movimiento es válido, ejecutamos la lógica de zona
         if (canMove) {
-          console.log(
-            `%c---[MOVIMIENTO #${callId} APROBADO: (${gameState.player.x}, ${gameState.player.y}) -> (${newX}, ${newY})]---`,
-            "color: #28a745; font-weight: bold;"
-          );
+          
 
           // 1. Obtenemos la zona ANTES de actualizar la posición del jugador
           const oldZone = getPlayerCurrentZone();
           const oldZoneName = oldZone ? oldZone.name : "Tierras Salvajes";
-          console.log(`1. Zona ANTES: "${oldZoneName}"`);
+          
 
           // 2. ACTUALIZAMOS la posición del jugador en el gameState
           gameState.player.x = newX;
@@ -8426,17 +8419,12 @@
           // 3. Obtenemos la nueva zona AHORA que el jugador se ha movido
           const newZone = getPlayerCurrentZone();
           const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
-          console.log(`2. Zona DESPUÉS: "${newZoneName}"`);
+          
 
           // 4. La comparación clave
-          console.log(
-            `3. COMPARANDO: ¿"${newZoneName}" es diferente de "${oldZoneName}"?`
-          );
+         
           if (newZoneName !== oldZoneName) {
-            console.log(
-              `%c   ==> SÍ, ¡CAMBIO DE ZONA DETECTADO! Mostrando notificación.`,
-              "color: yellow; background-color: #333;"
-            );
+           
             showZoneNotification(newZoneName);
           } else {
             console.log(`   ==> NO, el jugador sigue en la misma zona.`);
@@ -8450,7 +8438,6 @@
           updateUI();
           lastSuccessfulMoveTime = now;
 
-          console.log(`%c---[FIN MOVIMIENTO #${callId}]---`, "color: #28a745;");
         }
       }
 
@@ -11275,33 +11262,42 @@
                 break;
 
               case "formation_t2":
-                // Obtenemos los detalles de la técnica y el nivel del jugador
                 const rootTechDetails = techniqueData["formation_t2"];
                 const rootTechLevel =
                   player.learnedTechniques["formation_t2"]?.level || 1;
-
                 const rootChance =
                   (rootTechDetails.effect.rootChance || 0.7) +
-                  (rootTechLevel - 1) * 0.03; // Aumenta la probabilidad con el nivel
+                  (rootTechLevel - 1) * 0.03;
 
                 if (Math.random() < rootChance) {
-                  // La habilidad tiene éxito
+                  // Éxito al lanzar
                   const rootDuration = rootTechDetails.effect.rootDuration;
                   const rootDmgPerTurn =
                     rootTechDetails.effect.damagePerTurn +
-                    (rootTechLevel - 1) * 2; // El daño por turno también escala
+                    (rootTechLevel - 1) * 2;
 
-                  enemy.rootedTurns = Math.max(enemy.rootedTurns, rootDuration);
+                  // --- LÓGICA MEJORADA ---
+                  const shacklesHealth =
+                    rootTechDetails.effect.shacklesHP +
+                    (rootTechLevel - 1) * 20; // La vida de los grilletes escala
+
+                  // Aplicamos el efecto al enemigo
+                  enemy.rootedTurns = rootDuration;
                   enemy.rootDamage = rootDmgPerTurn;
 
-                  logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) atrapa al enemigo! Sufrirá ${enemy.rootDamage} de daño por turno durante ${enemy.rootedTurns} turnos.`;
+                  // Activamos el estado de mantenimiento en el JUGADOR
+                  player.activeChanneledAbility.id = "formation_t2";
+                  player.activeChanneledAbility.hp = shacklesHealth;
+                  // --- FIN DE LÓGICA MEJORADA ---
+
+                  logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) atrapa al enemigo con grilletes de ${shacklesHealth} de resistencia!`;
                   showFloatingText(
                     document.getElementById("enemySprite"),
                     "¡Atrapado!",
                     "debuff"
                   );
                 } else {
-                  // La habilidad falla
+                  // Fallo al lanzar
                   logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) falla y el enemigo esquiva los grilletes!`;
                   showFloatingText(
                     document.getElementById("enemySprite"),
@@ -11310,7 +11306,7 @@
                   );
                 }
 
-                logBattle(logMessage); // Registramos el resultado, éxito o fallo
+                logBattle(logMessage);
                 break;
               case "formation_t3":
                 // Definimos las variables para ESTE caso
@@ -11593,6 +11589,8 @@
           }
         }
       }
+
+
 
       function handleEnemyDefeat() {
         const enemy = gameState.battle.enemy;
@@ -12152,426 +12150,255 @@
 
       function enemyTurn() {
         if (!gameState.battle.active || gameState.battle.playerTurn) return;
-        let chosenAbility = null;
+
         const player = gameState.player;
         const enemy = gameState.battle.enemy;
-        const playerSprite = document.querySelector(".character-sprite");
-        const enemySprite = document.getElementById("enemySprite");
+        const playerSprite = document.querySelector('.character-sprite');
+        const enemySprite = document.getElementById('enemySprite');
 
-        // --- PROCESAR ESTADOS Y DoTs DEL ENEMIGO (antes de que actúe) ---
-        if (enemy.defenseBoostTurns > 0) {
-          enemy.defenseBoostTurns--;
-          if (enemy.defenseBoostTurns === 0) {
-            enemy.defense -= enemy.defenseBoostAmount;
-            logBattle(
-              `La Piel de Piedra de ${enemy.name} se desvanece. (Defensa: ${enemy.defense})`
-            );
-            enemy.defenseBoostAmount = 0;
-          }
-        }
-
-        // --- COMPROBAR SI EL ENEMIGO PUEDE ACTUAR ---
-        // 1. Procesar estados y DoTs del enemigo
+        // --- Declaraciones de variables al inicio de la función ---
         let canEnemyAct = true;
         let reasonForInaction = "";
+        let chosenAbility = null;
+        const enemyBaseDamage = enemy.attack;
 
+        // --- PROCESAMIENTO DE EFECTOS DE ESTADO (DoTs, Stuns, etc.) ---
+
+        // 1. DAÑO POR TURNO de efectos como Grilletes, Veneno, Quemadura
+        if (enemy.rootedTurns > 0) {
+            enemy.hp -= enemy.rootDamage;
+            logBattle(`${enemy.name} sufre ${enemy.rootDamage} de daño por los grilletes. HP: ${Math.floor(enemy.hp)}`);
+            showFloatingText(enemySprite, `-${enemy.rootDamage}`, 'damage');
+            if (enemy.hp <= 0) { handleEnemyDefeat(); return; }
+        }
+        if (enemy.burningTurns > 0) {
+            enemy.hp -= enemy.burnDamage;
+            logBattle(`${enemy.name} sufre ${enemy.burnDamage} por quemadura. HP: ${Math.floor(enemy.hp)}`);
+            showFloatingText(enemySprite, `-${enemy.burnDamage}`, 'damage');
+            if (enemy.hp <= 0) { handleEnemyDefeat(); return; }
+        }
+        if (enemy.poisonedTurns > 0) {
+            enemy.hp -= enemy.poisonDamage;
+            logBattle(`${enemy.name} sufre ${enemy.poisonDamage} por veneno. HP: ${Math.floor(enemy.hp)}`);
+            showFloatingText(enemySprite, `-${enemy.poisonDamage}`, 'damage');
+            if (enemy.hp <= 0) { handleEnemyDefeat(); return; }
+        }
+
+        // 2. LÓGICA DE CONTROL (Stun, Seal, Freeze) - Impiden la acción completamente
         if (enemy.sealedTurns > 0) {
-          canEnemyAct = false;
-          reasonForInaction = "¡Sellado!";
-          enemy.sealedTurns--;
+            canEnemyAct = false;
+            reasonForInaction = "¡Sellado!";
+            enemy.sealedTurns--;
         } else if (enemy.frozenTurns > 0) {
-          canEnemyAct = false;
-          reasonForInaction = "¡Congelado!";
-          enemy.frozenTurns--;
+            canEnemyAct = false;
+            reasonForInaction = "¡Congelado!";
+            enemy.frozenTurns--;
         } else if (enemy.stunnedTurns > 0) {
-          canEnemyAct = false;
-          reasonForInaction = "¡Aturdido!";
-          enemy.stunnedTurns--;
-        } else if (enemy.rootedTurns > 0) {
-          // Si está atrapado, ya ha recibido daño. Ahora simplemente le impedimos actuar.
-          canEnemyAct = false;
-          reasonForInaction = "¡Atrapado!";
-          // El contador de rootedTurns ya se redujo al aplicar el daño, no es necesario hacerlo aquí.
+            canEnemyAct = false;
+            reasonForInaction = "¡Aturdido!";
+            enemy.stunnedTurns--;
         }
 
         if (!canEnemyAct) {
-          logBattle(
-            `¡${enemy.name} está ${reasonForInaction
-              .toLowerCase()
-              .replace("!", "")} y no puede actuar este turno!`
-          );
-          showFloatingText(enemySprite, reasonForInaction, "debuff");
-
-          // El turno del enemigo termina aquí. Devolvemos el control al jugador.
-          gameState.battle.playerTurn = true;
-          updateBattleUI();
-          updateUI();
-          populateBattleActionButtons(); // Actualiza los botones por si el maná del jugador cambió
-          return; // <-- ¡MUY IMPORTANTE! Salir de la función para que no ataque.
+            logBattle(`¡${enemy.name} está ${reasonForInaction.toLowerCase().replace('!','')} y no puede actuar!`);
+            showFloatingText(enemySprite, reasonForInaction, 'debuff');
+            endEnemyTurn();
+            return;
         }
 
-        if (enemy.abilities && enemy.silencedTurns <= 0) {
-          for (const abilityInfo of enemy.abilities) {
-            if (Math.random() < abilityInfo.chance) {
-              chosenAbility = enemyAbilityData[abilityInfo.abilityId];
-              if (chosenAbility) break; // Usar la primera habilidad que se active
+        // 3. LÓGICA DE GRILLETES (ROOTED) - Impide la acción si resisten
+        if (enemy.rootedTurns > 0) {
+            logBattle(`${enemy.name} intenta liberarse de los grilletes...`);
+            player.activeChanneledAbility.hp -= enemyBaseDamage;
+
+            if (player.activeChanneledAbility.hp <= 0) {
+                logBattle(`¡Con un golpe poderoso, ${enemy.name} rompe los grilletes!`);
+                showFloatingText(enemySprite, '¡Liberado!', 'ability');
+                enemy.rootedTurns = 0;
+                enemy.rootDamage = 0;
+                player.activeChanneledAbility.id = null;
+                player.activeChanneledAbility.hp = 0;
+                canEnemyAct = false;
+            } else {
+                logBattle(`Los grilletes resisten el ataque. (Resistencia: ${Math.floor(player.activeChanneledAbility.hp)})`);
+                showFloatingText(enemySprite, '¡Atrapado!', 'debuff');
+                canEnemyAct = false;
             }
-          }
+
+            enemy.rootedTurns--;
+            if (enemy.rootedTurns === 0 && player.activeChanneledAbility.id === 'formation_t2') {
+                logBattle("Los grilletes de Qi se disipan por el paso del tiempo.");
+                player.activeChanneledAbility.id = null;
+                player.activeChanneledAbility.hp = 0;
+            }
         }
-        let incomingDamage = 0;
-        let usedAbilityLogMessage = "";
 
-        // 2. Decidir la acción del enemigo (Habilidad o Ataque Básico)
-        // --- EJECUTAR LA ACCIÓN ELEGIDA ---
-        if (chosenAbility) {
-          showFloatingText(enemySprite, chosenAbility.name, "ability");
-          const effect = chosenAbility.effect;
-          let damage = 0;
-          let finalDamage = 0;
-          let heal = 0;
-
-          switch (chosenAbility.type) {
-            case "buff_stat":
-              if (enemy.defenseBoostTurns === 0) {
-                // Evitar que se acumule el mismo buff
-                enemy.defenseBoostAmount = effect.amount;
-                enemy.defense += effect.amount;
-                enemy.defenseBoostTurns = effect.duration;
-                logBattle(
-                  chosenAbility.logMessage(
-                    enemy.name,
-                    effect.amount,
-                    effect.duration
-                  )
-                );
-              } else {
-                logBattle(
-                  `${enemy.name} intenta fortalecerse, ¡pero ya lo está!`
-                );
-              }
-              break;
-            // ===================================
-            // === CASE 1: PIERCING_DAMAGE(DAÑO DE PERFORACIÓN) ===
-            // ===================================
-            case "piercing_damage":
-              const defenseToIgnore =
-                player.defense * (effect.armorPenetration || 0);
-              damage = Math.max(
-                0,
-                Math.floor(
-                  enemy.attack * (effect.baseDamageMultiplier || 1.0)
-                ) -
-                  (player.defense - defenseToIgnore)
-              );
-              applyDamageToPlayer(damage, chosenAbility.name); // <-- USO DE LA NUEVA FUNCIÓN
-              break;
-
-            // ===================================
-            // === CASE 2: STUN_CHANCE (ATURDIMIENTO)===
-            // ===================================
-            case "stun_chance":
-              damage = Math.floor(
-                enemy.attack * (effect.baseDamageMultiplier || 1.0)
-              );
-              finalDamage = Math.max(0, damage - player.defense);
-              player.hp -= finalDamage;
-              showFloatingText(playerSprite, `-${finalDamage}`, "damage");
-
-              const didStun = Math.random() < (effect.stunChance || 0);
-              if (didStun && player.stunnedTurns === 0) {
-                player.stunnedTurns = 1; // Aturde por 1 turno (el siguiente del jugador)
-                showFloatingText(playerSprite, "¡Aturdido!", "debuff");
-              }
-              logBattle(
-                chosenAbility.logMessage(enemy.name, finalDamage, didStun)
-              );
-              break;
-
-            // ===================================
-            // === CASE 3: DOT_RESOURCE (Drenaje de Maná) ===
-            // ===================================
-            case "dot_resource":
-              // Esta habilidad no hace daño directo, solo aplica el debuff.
-              if (
-                effect.dot.resource === "mana" &&
-                player.manaDrainTurns === 0
-              ) {
-                player.manaDrainTurns = effect.dot.duration;
-                player.manaDrainAmount = effect.dot.drainPerTurn;
-                showFloatingText(playerSprite, "Maldición de Maná", "debuff");
-                logBattle(
-                  chosenAbility.logMessage(
-                    enemy.name,
-                    player.manaDrainAmount,
-                    player.manaDrainTurns
-                  )
-                );
-              } else {
-                logBattle(
-                  `${enemy.name} intenta maldecirte, ¡pero ya estás bajo un efecto similar!`
-                );
-              }
-              break;
-
-            // ===================================
-            // === CASE 4: SPECIAL_TARGET_DAMAGE (Cazador de Clones) ===
-            // ===================================
-            case "special_target_damage":
-              let target = "player";
-              // Asumimos que tienes una propiedad como 'player.cloneActive'
-              if (player.cloneActive) {
-                player.cloneActive = false; // El clon es destruido
-                player.cloneTurns = 0;
-                target = "clone";
-                // No hay daño al jugador, el clon lo absorbe todo.
-                showFloatingText(playerSprite, "Clon Destruido", "ability");
-                logBattle(chosenAbility.logMessage(enemy.name, 0, target));
-              } else {
-                // Si no hay clon, el golpe va al jugador
-                damage = Math.floor(
-                  enemy.attack * (effect.baseDamageMultiplier || 1.0)
-                );
-                finalDamage = Math.max(0, damage - player.defense);
-                player.hp -= finalDamage;
-                showFloatingText(playerSprite, `-${finalDamage}`, "damage");
-                logBattle(
-                  chosenAbility.logMessage(enemy.name, finalDamage, target)
-                );
-              }
-              break;
-
-            // ===================================
-            // === CASE 5: BUFF_REFLECT (Aura de Espinas) ===
-            // ===================================
-            case "buff_reflect":
-              if (enemy.reflectDamageTurns === 0) {
-                enemy.reflectDamageTurns = effect.duration;
-                enemy.reflectDamageMultiplier = effect.reflectMultiplier;
-                const reflectPercent = (effect.reflectMultiplier || 0) * 100;
-                showFloatingText(enemySprite, "Aura de Espinas", "ability");
-                logBattle(
-                  chosenAbility.logMessage(
-                    enemy.name,
-                    reflectPercent,
-                    effect.duration
-                  )
-                );
-              } else {
-                logBattle(
-                  `${enemy.name} intenta activar su aura, ¡pero ya está activa!`
-                );
-              }
-              break;
-
-            case "debuff_stat":
-            case "dot_damage":
-            case "heal_damage":
-              damage = Math.floor(
-                enemy.attack * (effect.baseDamageMultiplier || 1.0)
-              );
-              finalDamage = Math.max(0, damage - player.defense);
-              player.hp -= finalDamage;
-              showFloatingText(playerSprite, `-${finalDamage}`, "damage");
-
-              if (effect.debuff && player.defenseReductionTurns === 0) {
-                player.defenseReductionAmount = effect.debuff.amount;
-                player.defense -= effect.debuff.amount;
-                player.defenseReductionTurns = effect.debuff.duration;
-                showFloatingText(playerSprite, "Defensa ↓", "debuff");
-              }
-              if (effect.dot) {
-                if (effect.dot.type === "burn") {
-                  player.burningTurns = Math.max(
-                    player.burningTurns,
-                    effect.dot.duration
-                  );
-                  player.burnDamage = Math.max(
-                    player.burnDamage,
-                    effect.dot.damagePerTurn
-                  );
-                  showFloatingText(playerSprite, "Quemadura", "debuff");
-                } else if (effect.dot.type === "poison") {
-                  player.poisonedTurns = Math.max(
-                    player.poisonedTurns,
-                    effect.dot.duration
-                  );
-                  player.poisonDamage = Math.max(
-                    player.poisonDamage,
-                    effect.dot.damagePerTurn
-                  );
-                  showFloatingText(playerSprite, "Envenenado", "debuff");
+        // 4. EJECUCIÓN DE LA ACCIÓN DEL ENEMIGO
+        if (canEnemyAct) {
+            if (enemy.abilities && enemy.silencedTurns <= 0) {
+                for (const abilityInfo of enemy.abilities) {
+                    if (Math.random() < abilityInfo.chance) {
+                        chosenAbility = enemyAbilityData[abilityInfo.abilityId];
+                        if (chosenAbility) break;
+                    }
                 }
-              }
-              if (effect.lifesteal) {
-                heal = Math.floor(finalDamage * effect.lifesteal);
-                enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-                showFloatingText(enemySprite, `+${heal}`, "heal");
-              }
-              logBattle(
-                chosenAbility.logMessage(
-                  enemy.name,
-                  finalDamage,
-                  heal || effect.debuff?.amount || effect.dot?.damagePerTurn,
-                  effect.debuff?.duration || effect.dot?.duration
-                )
-              );
-              break;
+            }
 
-            case "debuff_stat_no_damage":
-              if (effect.debuff && player.attackReductionTurns === 0) {
-                player.attackReductionAmount = effect.debuff.amount;
-                player.attack -= effect.debuff.amount;
-                player.attackReductionTurns = effect.debuff.duration;
-                showFloatingText(playerSprite, "Ataque ↓", "debuff");
-                logBattle(
-                  chosenAbility.logMessage(
-                    enemy.name,
-                    effect.debuff.amount,
-                    effect.debuff.duration
-                  )
-                );
-              } else {
-                logBattle(
-                  `${enemy.name} intenta intimidarte, ¡pero ya estás afectado!`
-                );
-              }
-              break;
+            if (chosenAbility) {
+                showFloatingText(enemySprite, chosenAbility.name, 'ability');
+                const effect = chosenAbility.effect;
+                let damage = 0;
+                let finalDamage = 0;
+                let heal = 0;
 
-            case "heal":
-              heal = effect.healAmount;
-              enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
-              showFloatingText(enemySprite, `+${heal}`, "heal");
-              logBattle(chosenAbility.logMessage(enemy.name, heal));
-              break;
+                // --- SWITCH COMPLETO PARA HABILIDADES DE ENEMIGO ---
+                switch (chosenAbility.type) {
+                    case 'buff_stat':
+                        if (enemy.defenseBoostTurns === 0) {
+                            enemy.defenseBoostAmount = effect.amount;
+                            enemy.defense += effect.amount;
+                            enemy.defenseBoostTurns = effect.duration;
+                            logBattle(chosenAbility.logMessage(enemy.name, effect.amount, effect.duration));
+                        } else {
+                            logBattle(`${enemy.name} intenta fortalecerse, ¡pero ya lo está!`);
+                        }
+                        break;
 
-            default:
-              logBattle(
-                `(${chosenAbility.name}) ¡La habilidad del enemigo no tuvo efecto!`
-              );
-              break;
-          }
-        } else {
-          // --- ATAQUE BÁSICO (si no se usa habilidad) ---
-          const damage = Math.max(0, enemy.attack - player.defense);
-          applyDamageToPlayer(damage, `${enemy.name}`);
+                    case 'debuff_stat':
+                    case 'dot_damage':
+                    case 'heal_damage':
+                        damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
+                        finalDamage = applyDamageToPlayer(damage, chosenAbility.name); // Usamos el daño real aplicado
 
-          if (damage > 0) {
-            logBattle(`${enemy.name} te ataca y te causa ${damage} de daño.`);
-            showFloatingText(playerSprite, `-${damage}`, "damage");
-          } else {
-            logBattle(
-              `${enemy.name} te ataca pero tu defensa es demasiado alta.`
-            );
-            showFloatingText(playerSprite, "Bloqueado", "ability");
-          }
+                        if (effect.debuff && player.defenseReductionTurns === 0) {
+                            player.defenseReductionAmount = effect.debuff.amount;
+                            player.defense -= effect.debuff.amount;
+                            player.defenseReductionTurns = effect.debuff.duration;
+                            showFloatingText(playerSprite, 'Defensa ↓', 'debuff');
+                        }
+                        if (effect.dot) {
+                            if (effect.dot.type === 'burn') {
+                                player.burningTurns = Math.max(player.burningTurns, effect.dot.duration);
+                                player.burnDamage = Math.max(player.burnDamage, effect.dot.damagePerTurn);
+                                showFloatingText(playerSprite, 'Quemadura', 'debuff');
+                            } else if (effect.dot.type === 'poison') {
+                                player.poisonedTurns = Math.max(player.poisonedTurns, effect.dot.duration);
+                                player.poisonDamage = Math.max(player.poisonDamage, effect.dot.damagePerTurn);
+                                showFloatingText(playerSprite, 'Envenenado', 'debuff');
+                            }
+                        }
+                        if (effect.lifesteal) {
+                            heal = Math.floor(finalDamage * effect.lifesteal);
+                            enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                            showFloatingText(enemySprite, `+${heal}`, 'heal');
+                        }
+                        logBattle(chosenAbility.logMessage(enemy.name, finalDamage, heal || effect.debuff?.amount || effect.dot?.damagePerTurn, effect.debuff?.duration || effect.dot?.duration));
+                        break;
+
+                    case 'piercing_damage':
+                        const defenseToIgnore = player.defense * (effect.armorPenetration || 0);
+                        damage = Math.max(0, Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0)) - (player.defense - defenseToIgnore));
+                        applyDamageToPlayer(damage, chosenAbility.name);
+                        logBattle(chosenAbility.logMessage(enemy.name, damage));
+                        break;
+
+                    case 'stun_chance':
+                        damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
+                        finalDamage = applyDamageToPlayer(damage, chosenAbility.name);
+                        const didStun = Math.random() < (effect.stunChance || 0);
+                        if (didStun && player.stunnedTurns === 0) {
+                            player.stunnedTurns = 1;
+                            showFloatingText(playerSprite, '¡Aturdido!', 'debuff');
+                        }
+                        logBattle(chosenAbility.logMessage(enemy.name, finalDamage, didStun));
+                        break;
+
+                    case 'dot_resource':
+                        if (effect.dot.resource === 'mana' && player.manaDrainTurns === 0) {
+                            player.manaDrainTurns = effect.dot.duration;
+                            player.manaDrainAmount = effect.dot.drainPerTurn;
+                            showFloatingText(playerSprite, 'Maldición de Maná', 'debuff');
+                            logBattle(chosenAbility.logMessage(enemy.name, player.manaDrainAmount, player.manaDrainTurns));
+                        } else {
+                            logBattle(`${enemy.name} intenta maldecirte, ¡pero ya estás bajo un efecto similar!`);
+                        }
+                        break;
+
+                    case 'heal':
+                        heal = effect.healAmount;
+                        enemy.hp = Math.min(enemy.maxHp, enemy.hp + heal);
+                        showFloatingText(enemySprite, `+${heal}`, 'heal');
+                        logBattle(chosenAbility.logMessage(enemy.name, heal));
+                        break;
+                    
+                    // Añade aquí más 'case' si defines nuevas habilidades de enemigo
+                    
+                    default:
+                        logBattle(`(${chosenAbility.name}) ¡La habilidad del enemigo no tuvo efecto!`);
+                        break;
+                }
+            } else {
+                // Ataque básico si no se usa habilidad
+                const damage = Math.max(0, enemy.attack - player.defense);
+                applyDamageToPlayer(damage, `${enemy.name}`);
+            }
         }
-        // --- LÓGICA DE ABSORCIÓN DE DAÑO (LA PARTE CLAVE) ---
-        if (
-          incomingDamage > 0 &&
-          player.magicShieldValue > 0 &&
-          player.magicShieldTurns > 0
-        ) {
-          const absorbedByShield = Math.min(
-            incomingDamage,
-            player.magicShieldValue
-          );
-          player.magicShieldValue -= absorbedByShield;
-          incomingDamage -= absorbedByShield;
 
-          logBattle(
-            `¡Tu escudo absorbe ${absorbedByShield} de daño! (Restante: ${Math.floor(
-              player.magicShieldValue
-            )})`
-          );
-          showFloatingText(
-            playerSprite,
-            `Absorbe ${absorbedByShield}`,
-            "ability"
-          );
+        endEnemyTurn();
+    }
 
-          if (player.magicShieldValue <= 0) {
-            logBattle("¡Tu barrera mágica se ha roto!");
-            player.magicShieldTurns = 0; // Un escudo roto ya no tiene turnos.
-          }
+      function endEnemyTurn() {
+        const player = gameState.player;
+        
+        // --- LÓGICA DE MANTENIMIENTO (UPKEEP) ---
+        // Se ejecuta al final del turno del enemigo, antes de devolver el control al jugador.
+        if (player.activeChanneledAbility.id === 'formation_t2') {
+            const upkeepCost = techniqueData['formation_t2'].effect.manaUpkeep;
+            if (player.mana >= upkeepCost) {
+                player.mana -= upkeepCost;
+                logBattle(`Mantener los Grilletes de Qi consume ${upkeepCost} maná.`);
+            } else {
+                logBattle(`¡Maná insuficiente para mantener los grilletes! Se disipan.`);
+                // Romper el efecto si no hay maná
+                gameState.battle.enemy.rootedTurns = 0;
+                gameState.battle.enemy.rootDamage = 0;
+                player.activeChanneledAbility.id = null;
+                player.activeChanneledAbility.hp = 0;
+            }
         }
 
-        // Aplicar el daño restante al HP del jugador
-        if (incomingDamage > 0) {
-          player.hp -= incomingDamage;
-          logBattle(`Recibes ${incomingDamage} de daño.`);
-          showFloatingText(playerSprite, `-${incomingDamage}`, "damage");
-        }
-
-        // 5. Comprobar si el jugador fue derrotado
         if (player.hp <= 0) {
           player.hp = 0;
-          // ... (lógica de salvación por habilidades y derrota no cambia) ...
-          let hasBeenSaved = false;
-          if (player.canRevive) {
-            // Simplificado para el ejemplo
-            player.hp = Math.floor(player.maxHp * 0.5);
-            player.canRevive = false;
-            logBattle("¡La Llama del Fénix te devuelve a la vida!");
-            showFloatingText(playerSprite, "¡Revivido!", "heal");
-            hasBeenSaved = true;
-          }
+          logBattle("Has sucumbido a tus heridas antes de poder actuar.");
+          updateBattleUI(); // Actualiza la UI para mostrar HP 0
 
-          if (!hasBeenSaved) {
-            showFloatingText(playerSprite, "¡Derrotado!", "debuff");
-            logBattle("¡Has sido derrotado!");
-            //perdida de experiencia
+          // Lógica de derrota centralizada
+          setTimeout(() => {
             const expLoss = Math.floor(gameState.player.exp * 0.1);
-            setTimeout(() => {
-              gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
-              gameState.player.mana = Math.floor(
-                gameState.player.maxMana * 0.1
-              );
-              gameState.player.exp = Math.max(
-                0,
-                gameState.player.exp - expLoss
-              );
-              const safeCoords = findSafeRespawnLocation(
-                G_SAFE_RESPAWN_X,
-                G_SAFE_RESPAWN_Y
-              );
-              gameState.player.x = safeCoords.x;
-              gameState.player.y = safeCoords.y;
-              updatePlayerPosition("player_defeat_respawn");
-              endBattle(false);
-              showModal(
-                "Derrota",
-                `Regresas a un lugar seguro, mermado. Pierdes ${expLoss} EXP.`
-              );
-            }, 2000);
-            return; // Fin de la función si el jugador es derrotado
-          }
-        }
-        console.log(
-          `[ENEMY_TURN_END] Fin del turno enemigo. Verificando duración del escudo.`
-        );
-        console.log(
-          `[ENEMY_TURN_END] Turnos del escudo ANTES de reducir: ${
-            player.magicShieldTurns || 0
-          }`
-        );
-        // --- Reducir la duración del escudo AL FINAL del turno del enemigo ---
-        if ((player.magicShieldTurns || 0) > 0) {
-          player.magicShieldTurns--;
-          if (
-            player.magicShieldTurns === 0 &&
-            (player.magicShieldValue || 0) > 0
-          ) {
-            logBattle("Tu barrera mágica se disipa al final del turno.");
-            player.magicShieldValue = 0;
-          }
-        }
+            gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
+            gameState.player.mana = Math.floor(gameState.player.maxMana * 0.1);
+            gameState.player.exp = Math.max(0, gameState.player.exp - expLoss);
 
-        // 6. Finalizar el turno
+            const safeCoords = findSafeRespawnLocation(
+              G_SAFE_RESPAWN_X,
+              G_SAFE_RESPAWN_Y
+            );
+            gameState.player.x = safeCoords.x;
+            gameState.player.y = safeCoords.y;
+
+            updatePlayerPosition("player_defeat_respawn");
+            endBattle(false);
+            showModal("Derrota", `Caíste en combate. Pierdes ${expLoss} EXP.`);
+          }, 2000);
+          return; // Detener la función aquí, el jugador no puede actuar.
+        }
+        
+        // Devolvemos el control al jugador
         gameState.battle.playerTurn = true;
-        populateBattleActionButtons();
+        
         updateBattleUI();
-        updateUI();
-      }
+        populateBattleActionButtons();
+    }
 
       function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
         const player = gameState.player;
@@ -14361,9 +14188,7 @@
       function getPlayerCurrentZone() {
         const playerX = gameState.player.x;
         const playerY = gameState.player.y;
-        console.log(
-          `[getPlayerCurrentZone] Buscando zona para coords: X=${playerX}, Y=${playerY}`
-        ); // Descomenta si necesitas depurar esta función específicamente
+        
         for (const zone of gameState.map.terrainZones) {
           if (
             playerX >= zone.x1 &&
