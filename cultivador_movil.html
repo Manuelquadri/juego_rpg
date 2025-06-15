@@ -1919,6 +1919,7 @@
               type: "MOUNTAIN_FRENTE",
               name: "límite norte",
             }, // Sin spawnSettings = no spawns
+
             {
               x1: 91,
               y1: 10,
@@ -2151,7 +2152,7 @@
             // Ciénaga Sombría
             {
               x1: 66,
-              y1: 15,
+              y1: 10,
               x2: 90,
               y2: 39,
               type: "SWAMP",
@@ -2353,6 +2354,13 @@
         "jabali_alfa_10",
         "jabali_alfa_11",
         "jabali_alfa_12",
+        "osa_mayor_esmeralda",
+        "treant_anciano",
+        "basilisco_cienaga",
+        "espectro_pantano",
+        "djinn_arenas",
+        "gusano_dunas_colosal",
+        "guardian_terracota",
       ];
       const G_MAX_MAP_ENTITIES = 30;
       const G_RESPAWN_THRESHOLD = 15;
@@ -5067,6 +5075,7 @@
         monster_desierto_escorpion: {
           symbol: "🦂",
           name: "Escorpión de las Dunas",
+          spriteUrl: "img/escorpion.png",
           hp: 90,
           level: 5,
           attack: 30,
@@ -5091,6 +5100,7 @@
         monster_desierto_golem_arena: {
           symbol: "🧱",
           name: "Golem de Tormenta de Arena",
+          spriteUrl: "img/golem_arena.png",
           hp: 200,
           level: 9,
           attack: 35,
@@ -5115,6 +5125,7 @@
         monster_cienaga_serpiente: {
           symbol: "🐍",
           name: "Serpiente de Ciénaga",
+          spriteUrl: "img/serpiente.png",
           hp: 60,
           level: 3,
           attack: 28,
@@ -5780,7 +5791,7 @@
         gusano_dunas_colosal: {
           symbol: "🐛",
           name: "Gusano de las Dunas Colosal",
-          spriteUrl: "img/gusano_arena.png", // Necesitarías un sprite para este
+          spriteUrl: "img/gusano.png", // Necesitarías un sprite para este
           level: 20,
           hp: 1000,
           maxHp: 1000,
@@ -8764,8 +8775,26 @@
                   entityContainer.style.top = `${
                     (entity.y - 1.5) * currentTileSize
                   }px`;
-                  entityContainer.style.width = `${currentTileSize * 3}px`;
-                  entityContainer.style.height = `${currentTileSize * 3}px`;
+                  entityContainer.style.width = `${currentTileSize * 5}px`;
+                  entityContainer.style.height = `${currentTileSize * 5}px`;
+                } else if (
+                  entity.originalEntityTypeId === "osa_mayor_esmeralda"
+                ) {
+                  entityContainer.style.backgroundSize = "100%";
+                  entityContainer.style.top = `${
+                    (entity.y - 1.5) * currentTileSize
+                  }px`;
+                  entityContainer.style.width = `${currentTileSize * 1}px`;
+                  entityContainer.style.height = `${currentTileSize * 2}px`;
+                } else if (
+                  entity.originalEntityTypeId === "monster_desierto_golem_arena"
+                ) {
+                  entityContainer.style.backgroundSize = "100%";
+                  entityContainer.style.top = `${
+                    (entity.y - 1.5) * currentTileSize
+                  }px`;
+                  entityContainer.style.width = `${currentTileSize * 1}px`;
+                  entityContainer.style.height = `${currentTileSize * 2}px`;
                 } else if (entity.originalEntityTypeId === "tp_swamp_ruin") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
@@ -9644,7 +9673,7 @@
                   rangoRequeridoNombre ? ", Rango: " + rangoRequeridoNombre : ""
                 })<br><small>${mision.descripcion}</small><br>
                                               <small style="color: #aaa;"><em>${recompensaTextoResumido}</em></small><br>
-                                              ${botonHTML} 
+                                              ${botonHTML}
                                           </div>`;
                 elementsToProcess.push({
                   buttonId: buttonId,
@@ -9689,7 +9718,7 @@
                 /\W/g,
                 "_"
               )}`;
-              modalContentHTML += `<p>${itemName} (Tienes: ${cantidadPlayer}): 
+              modalContentHTML += `<p>${itemName} (Tienes: ${cantidadPlayer}):
                                       <button id="${buttonIdEntregar1}">Entregar 1 (${pcsPorItem} PCS)</button>
                                       ${
                                         cantidadPlayer > 1
@@ -10717,7 +10746,7 @@
         battleActionButtons.innerHTML = `
               <button onclick="battleAction('attack')">⚔️ Atacar</button>
               <button onclick="battleAction('defend')">🛡️ Defender</button>
-              <button onclick="battleAction('qi_fist')">🧘 Puño de Qi</button> 
+              <button onclick="battleAction('qi_fist')">🧘 Puño de Qi</button>
               <button onclick="battleAction('escape')">🏃 Huir</button>
           `;
         gameState.activeCombatAbilities.forEach((ability) => {
@@ -13964,7 +13993,7 @@
                                     }">Usar</button>`
                                   : ""
                               }
-                      
+
                           </div>
                       </div>
                   `;
