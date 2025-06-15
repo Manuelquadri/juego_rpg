@@ -850,58 +850,66 @@
       }
       @media (max-height: 500px) and (min-width: 600px), (orientation: landscape) {
 
-      /* --- Acciones de Batalla más Compactas --- */
-      .battle-actions {
-          padding: 5px; /* Reducimos el padding general del contenedor */
-          border-top-width: 1px;
-      }
+        /* --- Acciones de Batalla más Compactas (LÓGICA MEJORADA) --- */
+        .battle-actions {
+            padding: 5px; 
+        }
 
-      .action-buttons {
-          /* Hacemos que la cuadrícula tenga más columnas para que los botones se distribuyan horizontalmente */
-          grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-          gap: 4px; /* Un espacio más pequeño entre botones */
-          margin-bottom: 5px;
-      }
+        .action-buttons {
+            /* Clave: Forzamos la cuadrícula a tener más columnas para que se expanda horizontalmente */
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 5px; 
+            margin-bottom: 5px;
+            /* Opcional: Para centrar los botones si no llenan todo el espacio */
+            justify-content: center; 
+        }
 
-      .battle-actions button {
-          padding: 6px 8px; /* Reducimos drásticamente el padding del botón */
-          font-size: 0.7rem; /* Hacemos la fuente un poco más pequeña */
-          font-weight: normal; /* Opcional: quitar el bold para un look más ligero */
-          border-radius: 6px; /* Bordes un poco menos redondeados */
-      }
+        .battle-actions button {
+            /* Hacemos los botones más anchos pero menos altos */
+            padding: 8px 12px;     /* Más padding horizontal, menos vertical */
+            min-height: 36px;      /* Establecemos una altura mínima/máxima para controlar su altura */
+            max-height: 38px;
+            font-size: 0.75rem;    /* Un tamaño de fuente legible pero compacto */
+            line-height: 1.2;      /* Ayuda a centrar el texto verticalmente en la nueva altura */
+            
+            /* Aseguramos que el contenido dentro del botón se centre */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
 
-      /* --- HUD de Stats del Jugador un poco más discreto --- */
-      .stats-panel {
-          top: 10px;
-          left: 10px;
-          padding: 6px;
-          font-size: 0.75rem;
-      }
+        /* --- Ajustes al resto de la UI en modo horizontal --- */
+        .stats-panel {
+            top: 10px;
+            left: 10px;
+            padding: 6px;
+            font-size: 0.75rem;
+        }
 
-      .stats-panel h3 {
-          font-size: 1rem;
-          margin-bottom: 2px;
-      }
+        .stats-panel h3 {
+            font-size: 1rem;
+            margin-bottom: 2px;
+        }
 
-      /* --- Barra de Acceso Rápido un poco más pequeña --- */
-      .quick-slot-bar {
-          bottom: 5px;
-          padding: 6px;
-          gap: 6px;
-      }
-      .quick-slot {
-          width: 48px;
-          height: 48px;
-          font-size: 22px;
-      }
-      .slot-item-count {
-          font-size: 12px;
-      }
-      .slot-key-hint {
-          font-size: 10px;
-      }
+        .quick-slot-bar {
+            bottom: 5px;
+            padding: 6px;
+            gap: 6px;
+        }
+        .quick-slot {
+            width: 48px;
+            height: 48px;
+            font-size: 22px;
+        }
+        .slot-item-count {
+            font-size: 12px;
+        }
+        .slot-key-hint {
+            font-size: 10px;
+        }
 
-      }
+        }
       /****************************************
        * NUEVO: 7. ESTILOS DE LA TIENDA
        ****************************************/
@@ -1370,27 +1378,24 @@
             </div>
           </div>
         </div>
-        <div
-          id="cultivationBoostSection"
-          style="
-            display: none;
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid #555;
-          "
-        >
-          <p>
-            Piedras Espirituales:
-            <span id="cultivationModalPlayerStones">0</span>
-          </p>
-          <button
-            id="boostCultivationButton"
-            onclick="boostCultivationProgress()"
-            style="margin-top: 8px; width: 100%"
-          >
-            ⚡ Acelerar Cultivo (1 Piedra = 10s)
-          </button>
-        </div>
+        <div id="cultivationBoostSection" style="display: none; margin-top: 15px; padding-top: 10px; border-top: 1px solid #555;">
+          <p>Piedras Espirituales: <span id="cultivationModalPlayerStones">0</span></p>
+          
+          <!-- Contenedor para los botones de aceleración -->
+          <div style="display: flex; gap: 10px; margin-top: 8px;">
+              
+              <!-- Botón para usar 1 piedra -->
+              <button id="boostCultivationButton1" onclick="boostCultivationProgress(1)" style="flex-grow: 1;">
+                  ⚡ Usar 1 PS (+10s)
+              </button>
+              
+              <!-- NUEVO Botón para usar 10 piedras -->
+              <button id="boostCultivationButton10" onclick="boostCultivationProgress(10)" style="flex-grow: 1; background: linear-gradient(135deg, #e8c34f, #c9a82e);">
+                  ⚡⚡ Usar 10 PS (+100s)
+              </button>
+      
+          </div>
+      </div>
         <button onclick="stopCultivation(true)" style="margin-top: 20px">
           🚫 Detener Cultivo
         </button>
@@ -5809,11 +5814,11 @@
           level: 17,
           hp: 550,
           maxHp: 550,
-          attack: 70,
+          attack: 80,
           defense: 15, // Baja defensa física, pero peligroso
           exp: 250,
           abilities: [
-            { abilityId: "life_drain", chance: 0.3 }, // Se cura a costa del jugador
+            { abilityId: "life_drain", chance: 0.8 }, // Se cura a costa del jugador
             { abilityId: "intimidating_roar", chance: 0.25 }, // Su lamento debilita el ataque
           ],
           lootTable: [
@@ -10187,20 +10192,22 @@
             }
 
             // Actualizar sección de aceleración
-            const stonesDisplay = document.getElementById(
-              "cultivationModalPlayerStones"
-            );
-            const boostButton = document.getElementById(
-              "boostCultivationButton"
-            );
-            if (stonesDisplay)
-              stonesDisplay.textContent =
-                gameState.inventory["Piedras Espirituales"] || 0;
-            if (boostButton)
-              boostButton.disabled =
-                (gameState.inventory["Piedras Espirituales"] || 0) < 1 ||
-                playerTech.level >= techData.maxLevel;
-          }
+            const stonesDisplay = document.getElementById("cultivationModalPlayerStones");
+            const boostButton1 = document.getElementById("boostCultivationButton1");
+            const boostButton10 = document.getElementById("boostCultivationButton10");
+            const currentStones = gameState.inventory["Piedras Espirituales"] || 0;
+            if (stonesDisplay) stonesDisplay.textContent = currentStones;
+            if (boostButton1) {
+                boostButton1.disabled = currentStones < 1 || playerTech.level >= techData.maxLevel;
+            }
+            if (boostButton10) {
+                boostButton10.disabled = currentStones < 10 || playerTech.level >= techData.maxLevel;
+            }
+          
+          
+              }
+
+          
         } else if (mode === "recovery") {
           if (recoveryUI) {
             recoveryUI.style.display = "block";
@@ -10377,114 +10384,84 @@
         showActiveCultivationModal();
       }
 
-      function boostCultivationProgress() {
+      function boostCultivationProgress(amount = 1) { // Acepta un argumento 'amount', con 1 como valor por defecto
         const player = gameState.player;
         const mode = player.cultivationMode;
+        const timePerStone = 10; // 10 segundos de progreso por cada piedra
 
-        if (
-          !player.isCultivating ||
-          mode.type !== "technique" ||
-          !mode.targetId
-        )
-          return;
-        if ((gameState.inventory["Piedras Espirituales"] || 0) < 1) {
-          showModal(
-            "Piedras Insuficientes",
-            "No tienes suficientes Piedras Espirituales."
-          );
-          return;
+        if (!player.isCultivating || mode.type !== 'technique' || !mode.targetId) return;
+
+        // Comprobamos si el jugador tiene suficientes piedras
+        if ((gameState.inventory["Piedras Espirituales"] || 0) < amount) {
+            showModal("Piedras Insuficientes", `Necesitas al menos ${amount} Piedras Espirituales para hacer esto.`);
+            return;
         }
 
         const techId = mode.targetId;
         const playerTech = player.learnedTechniques[techId];
         const techData = techniqueData[techId];
 
-        if (
-          !playerTech ||
-          !techData ||
-          !techData.cultivationSettings ||
-          playerTech.level >= techData.maxLevel
-        ) {
-          showModal(
-            "Límite Alcanzado",
-            "Esta técnica ya está en su nivel máximo."
-          );
-          return;
+        if (!playerTech || !techData || !techData.cultivationSettings || playerTech.level >= techData.maxLevel) {
+            showModal("Límite Alcanzado", "Esta técnica ya está en su nivel máximo.");
+            return;
         }
 
-        gameState.inventory["Piedras Espirituales"]--;
-        playerTech.currentCultivationProgress =
-          (playerTech.currentCultivationProgress || 0) + 10;
-
+        // Restamos la cantidad de piedras y añadimos el progreso correspondiente
+        gameState.inventory["Piedras Espirituales"] -= amount;
+        playerTech.currentCultivationProgress = (playerTech.currentCultivationProgress || 0) + (amount * timePerStone);
+        
         let leveledUpThisBoost = false;
         let firstLevelUpMessage = "";
 
+        // Bucle para comprobar si se sube de nivel (puede subir varios niveles de golpe)
         while (
-          playerTech.currentCultivationProgress >=
-            playerTech.cultivationTimeToNextLevel &&
-          playerTech.level < techData.maxLevel
+            playerTech.currentCultivationProgress >= playerTech.cultivationTimeToNextLevel &&
+            playerTech.level < techData.maxLevel
         ) {
-          leveledUpThisBoost = true;
-          const progressNeeded = playerTech.cultivationTimeToNextLevel;
-          playerTech.currentCultivationProgress -= progressNeeded;
-          playerTech.level++;
+            leveledUpThisBoost = true;
+            const progressNeeded = playerTech.cultivationTimeToNextLevel;
+            playerTech.currentCultivationProgress -= progressNeeded;
+            playerTech.level++;
 
-          if (!firstLevelUpMessage) {
-            firstLevelUpMessage = `¡Aceleraste '${techData.name}' al Nivel ${playerTech.level}!`;
-            if (playerTech.level >= techData.maxLevel) {
-              firstLevelUpMessage += " (¡Nivel Máximo alcanzado!)";
+            if (!firstLevelUpMessage) {
+                firstLevelUpMessage = `¡Aceleraste '${techData.name}' al Nivel ${playerTech.level}!`;
+                if (playerTech.level >= techData.maxLevel) {
+                    firstLevelUpMessage += " (¡Nivel Máximo alcanzado!)";
+                }
             }
-          }
 
-          if (playerTech.level < techData.maxLevel) {
-            playerTech.cultivationTimeToNextLevel = Math.floor(
-              techData.cultivationSettings.baseTimeToLevelUp *
-                Math.pow(
-                  techData.cultivationSettings.levelTimeMultiplier,
-                  playerTech.level
-                )
-            );
-          } else {
-            playerTech.cultivationTimeToNextLevel = Infinity;
-            playerTech.currentCultivationProgress = 0;
-          }
-          applyTechniqueEffect(techId, playerTech.level);
+            if (playerTech.level < techData.maxLevel) {
+                playerTech.cultivationTimeToNextLevel = Math.floor(
+                    techData.cultivationSettings.baseTimeToLevelUp *
+                    Math.pow(techData.cultivationSettings.levelTimeMultiplier, playerTech.level)
+                );
+            } else {
+                playerTech.cultivationTimeToNextLevel = Infinity;
+                playerTech.currentCultivationProgress = 0;
+            }
+            applyTechniqueEffect(techId, playerTech.level);
         }
-
+        
         recalculatePlayerStats();
         updateUI();
 
         if (leveledUpThisBoost) {
-          stopCultivation(); // Detener el cultivo
-          showModal(
-            "¡Técnica Mejorada con Aceleración!",
-            firstLevelUpMessage + "\n\nEl cultivo se ha detenido."
-          );
-          // ---- CORRECCIÓN CLAVE ----
-          return; // Salir de la función para no ejecutar más código.
+            stopCultivation();
+            showModal("¡Técnica Mejorada con Aceleración!", firstLevelUpMessage + "\n\nEl cultivo se ha detenido para que puedas ver los cambios.");
+            return;
         }
 
         if (playerTech.level >= techData.maxLevel) {
-          stopCultivation();
-          showModal(
-            "Nivel Máximo Alcanzado",
-            `La técnica ${techData.name} ya está en su máximo potencial.`
-          );
-          return;
+            stopCultivation();
+            showModal("Nivel Máximo Alcanzado", `La técnica ${techData.name} ya está en su máximo potencial.`);
+            return;
         }
-
-        if (
-          document.getElementById("activeCultivationModal").style.display ===
-          "flex"
-        ) {
-          showActiveCultivationModal();
+        
+        // Si no se subió de nivel, solo actualizamos la UI del modal
+        if (document.getElementById("activeCultivationModal").style.display === "flex") {
+            showActiveCultivationModal();
         }
-        if (
-          document.getElementById("techniqueModal").style.display === "flex"
-        ) {
-          showTechniquePanel();
-        }
-      }
+    }
 
       function toggleQiConversion() {
         const player = gameState.player;
