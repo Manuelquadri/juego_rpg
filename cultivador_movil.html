@@ -3763,20 +3763,23 @@
         // == GRADO 2 (Rango: Discípulo Principal) - Nivel Terrenal
         // =================================================================
         sword_t2: {
-          id: "sword_t2",
-          name: "Estocada Perfora-Armadura",
-          icon: "🗡️",
-          description:
-            "Un ataque preciso que ignora una porción de la defensa del enemigo.",
-          type: "active_ability",
-          abilityId: "sword_t2",
-          effect: { baseDamageMultiplier: 1.1, defensePenetration: 0.25 },
-          manaCost: 25,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 180,
-            levelTimeMultiplier: 1.6,
-          },
+            id: "sword_t2",
+            name: "Estocada Perfora-Armadura",
+            icon: "🗡️",
+            description: "Un ataque preciso que ignora una porción de la defensa enemiga y puede causar una herida sangrante.",
+            type: "active_ability",
+            abilityId: "sword_t2",
+            effect: {
+                // --- VALORES MEJORADOS ---
+                baseDamageMultiplier: 1.5,      // Aumentado desde 1.1. Ahora es claramente más fuerte.
+                defensePenetration: 0.3,        // Aumentado desde 0.25. Ignora más defensa.
+                bleedChance: 0.3,               // NUEVO: 30% de probabilidad de causar hemorragia.
+                bleedDamagePerTurn: 15,         // NUEVO: Daño de la hemorragia.
+                bleedDuration: 2                // NUEVO: Duración de la hemorragia.
+            },
+            manaCost: 25,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 180, levelTimeMultiplier: 1.6 },
         },
         body_t2: {
           id: "body_t2",
@@ -11248,21 +11251,41 @@
                 break;
 
               case "sword_t2":
-                const defenseToIgnore =
-                  (enemy.defense || 0) *
-                  (techDetails.effect.defensePenetration +
-                    playerTechLevel * 0.02);
-                damageDealt = Math.max(
-                  1,
-                  Math.floor(
-                    player.attack *
-                      (techDetails.effect.baseDamageMultiplier +
-                        (playerTechLevel - 1) * 0.1)
-                  ) -
-                    ((enemy.defense || 0) - defenseToIgnore)
-                );
+                            // Obtenemos los detalles de la técnica y su nivel
+                const estocadaDetails = techniqueData["sword_t2"];
+                const estocadaLevel = player.learnedTechniques["sword_t2"]?.level || 1;
+
+                // --- CÁLCULOS MEJORADOS ---
+                // El multiplicador de daño y la penetración ahora escalan con el nivel de la técnica
+                const damageMultiplier = estocadaDetails.effect.baseDamageMultiplier + ((estocadaLevel - 1) * 0.1);
+                const penetrationPercent = estocadaDetails.effect.defensePenetration + ((estocadaLevel - 1) * 0.02); // +2% por nivel
+
+                // Calculamos el daño
+                const defenseToIgnore = (enemy.defense || 0) * penetrationPercent;
+                const baseDamage = player.attack * damageMultiplier;
+                damageDealt = Math.max(1, Math.floor(baseDamage - ((enemy.defense || 0) - defenseToIgnore)));
+                
                 enemy.hp -= damageDealt;
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) ignora parte de la defensa y causa ${damageDealt} daño!`;
+
+                logMessage = `¡${estocadaDetails.name} (Nv.${estocadaLevel}) ignora ${Math.floor(defenseToIgnore)} de defensa y causa ${damageDealt} de daño!`;
+                showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+
+                // --- LÓGICA PARA LA HEMORRAGIA (BLEED) ---
+                const bleedChance = estocadaDetails.effect.bleedChance + ((estocadaLevel - 1) * 0.05); // La probabilidad de sangrado también mejora
+                if (Math.random() < bleedChance) {
+                    const bleedDmg = estocadaDetails.effect.bleedDamagePerTurn + (estocadaLevel * 2); // El daño de sangrado escala
+                    const bleedDur = estocadaDetails.effect.bleedDuration;
+
+                    // Para no crear una nueva propiedad, podemos reutilizar la de "poison" o "burn".
+                    // Usemos "poison" como si fuera "bleed" para no añadir más complejidad al enemyTurn.
+                    enemy.poisonedTurns = Math.max(enemy.poisonedTurns, bleedDur);
+                    enemy.poisonDamage = Math.max(enemy.poisonDamage, bleedDmg);
+                    
+                    logMessage += ` ¡El golpe causa una herida abierta que sangra!`;
+                    showFloatingText(enemySprite, 'Hemorragia', 'debuff');
+                }
+
+                logBattle(logMessage);
                 break;
 
               case "movement_t2":
