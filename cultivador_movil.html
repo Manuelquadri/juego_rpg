@@ -1889,13 +1889,34 @@
             //ZONAS
             //LÍMITES DE MAPA
             // ... otras zonas (montañas, ruinas, agua sin spawns de monstruos terrestres)
+
+            {
+              x1: 91,
+              y1: 28,
+              x2: 110,
+              y2: 29,
+              type: "SWAMP",
+              name: "Camino a Tierra salvaje",
+              decorations: [
+          
+              ],
+           
+            },
+            {
+              x1: 2,
+              y1: 9,
+              x2: 600,
+              y2: 9,
+              type: "MOUNTAIN_FRENTE",
+              name: "límite norte",
+            }, // Sin spawnSettings = no spawns
             {
               x1: 0,
               y1: 0,
-              x2: 190,
+              x2: 600,
               y2: 8,
               type: "MOUNTAIN_SUP",
-              name: "Montañas del Norte",
+              name: "Montañas Norte",
             }, // Sin spawnSettings = no spawns
             {
               x1: -20,
@@ -1903,15 +1924,23 @@
               x2: 0,
               y2: 600,
               type: "MOUNTAIN_SUP",
-              name: "Montañas del Norte",
+              name: "Montañas del Oeste",
             }, // Sin spawnSettings = no spawns
             {
               x1: 92,
               y1: 0,
-              x2: 190,
+              x2: 110,
+              y2: 27,
+              type: "MOUNTAIN_SUP",
+              name: "Limite mapa este",
+            }, // Sin spawnSettings = no spawns
+            {
+              x1: 92,
+              y1: 30,
+              x2: 110,
               y2: 600,
               type: "MOUNTAIN_SUP",
-              name: "Montañas del Norte",
+              name: "Limite mapa este",
             }, // Sin spawnSettings = no spawns
             {
               x1: 91,
@@ -1978,18 +2007,19 @@
               name: "límite inferior desierto",
             }, // Sin spawnSettings = no spawns
 
-            {
-              x1: 2,
-              y1: 9,
-              x2: 90,
-              y2: 9,
-              type: "MOUNTAIN_FRENTE",
-              name: "límite norte",
-            }, // Sin spawnSettings = no spawns
+           
 
             {
               x1: 91,
               y1: 10,
+              x2: 91,
+              y2: 27,
+              type: "MOUNTAIN_DER",
+              name: "Límite este",
+            }, // Sin spawnSettings = no spawns
+            {
+              x1: 91,
+              y1: 30,
               x2: 91,
               y2: 600,
               type: "MOUNTAIN_DER",
@@ -2253,16 +2283,20 @@
 
             // Zona para Misiones de Diácono
             {
-              x1: 200,
+              x1: 111,
               y1: 10,
               x2: 250,
               y2: 50,
-              type: "MOUNTAIN_FRENTE", // Usaremos un terreno rocoso y hostil
+              type: "GRASSLAND", // Usaremos un terreno rocoso y hostil
               name: "Desfiladero de los Lamentos",
-              isIsolated: true, // Es como un mapa separado
+              isIsolated: false, // Es como un mapa separado
               ambientColor: "#3c2f2f", // Un tono rojizo oscuro
               decorations: [
-                { entityTypeId: "deco_roca_musgosa", density: 0.1 },
+               
+             
+                { entityTypeId: "deco_montaña", density: 0.3 }, // 30% tendrán un árbol normal
+                { entityTypeId: "deco_montaña_large", density: 0.05 },
+    
               ],
               spawnSettings: {
                 targetEntities: [
@@ -2433,6 +2467,13 @@
         "djinn_arenas",
         "gusano_dunas_colosal",
         "guardian_terracota",
+        "murcielago_cristal_sangriento",
+        "mercenario_acorazado",
+        "bandido_desfiladero",
+        "cultivador_secta_rival",
+        "diacono_renegado_jin",
+
+
       ];
       const G_MAX_MAP_ENTITIES = 30;
       const G_RESPAWN_THRESHOLD = 15;
@@ -2556,6 +2597,12 @@
           color: "#706050",
           name: "Ruinas",
         }, // Marrón/Gris para ruinas
+        TERRENO_MONT: {
+          symbol: "🏛️",
+          textureUrl: "img/terreno_mont.png",
+          color: "#706050",
+          name: "Ruinas",
+        },
         DESERT: {
           symbol: "🟨",
           textureUrl: "img/arena.png",
@@ -4794,6 +4841,22 @@
           noInteraction: true,
           discovered: true,
         },
+        deco_montaña: {
+          symbol: "🏛",
+          name: "Montaña",
+          spriteUrl: "img/terreno_mont.png",
+          isDecorative: true,
+          noInteraction: true,
+          discovered: true,
+        },
+        deco_montaña_large: {
+          symbol: "🏛",
+          name: "Montaña",
+          spriteUrl: "img/deco_montaña_large.png",
+          isDecorative: true,
+          noInteraction: true,
+          discovered: true,
+        },
         // === NUEVAS DECORACIONES DE ALTO NIVEL ===
         deco_huesos_gigantes: {
           symbol: "🦴",
@@ -5293,6 +5356,7 @@
         cultivator_adept_hostile: {
           symbol: "😡",
           name: "Cultivador Adepto Agresivo",
+          spriteUrl: "img/cultivador_hostil.png",
           hp: 400,
           level: 15,
           attack: 80,
@@ -5391,6 +5455,7 @@
         bandido_desfiladero: {
           symbol: "😠",
           name: "Bandido del Desfiladero",
+          spriteUrl: "img/mercenario.png",
           typeOverride: "monster",
           hp: 180,
           level: 9,
@@ -5918,7 +5983,7 @@
         cultivador_renegado: {
           symbol: "😡",
           name: "Cultivador Renegado",
-          spriteUrl: "img/cultivador_hostil_2.png", // Un sprite de cultivador más avanzado
+          spriteUrl: "img/cultivador_hostil.png", // Un sprite de cultivador más avanzado
           level: 16,
           hp: 500,
           maxHp: 500,
@@ -6047,12 +6112,12 @@
         cultivador_secta_rival: {
           symbol: "⚔️",
           name: "Cultivador de la Secta de la Llama Negra",
-          spriteUrl: "img/cultivador_rival_3.png",
+          spriteUrl: "img/rival_1.png",
           level: 22,
           hp: 800,
           maxHp: 800,
-          attack: 120,
-          defense: 40,
+          attack: 170,
+          defense: 80,
           exp: 450,
           abilities: [
             { abilityId: "fire_breath", chance: 0.3 },
@@ -6081,10 +6146,10 @@
           name: "Murciélago de Cristal Sangriento",
           spriteUrl: "img/murcielago_sangre.png",
           level: 25,
-          hp: 600,
+          hp: 800,
           maxHp: 600,
-          attack: 150,
-          defense: 30,
+          attack: 190,
+          defense: 80,
           exp: 500,
           abilities: [{ abilityId: "life_drain", chance: 0.4 }],
           lootTable: [
@@ -6103,7 +6168,7 @@
         diacono_renegado_jin: {
           symbol: "👿",
           name: "Diácono Renegado Jin (Jefe)",
-          spriteUrl: "img/diacono_renegado.png",
+          spriteUrl: "img/rival_3.png",
           typeOverride: "monster",
           level: 30,
           hp: 2500,
@@ -8818,7 +8883,17 @@
                     (entity.y - 0.2) * currentTileSize
                   }px`;
                   entityContainer.style.height = `${currentTileSize * 1.2}px`;
-                } else if (entity.originalEntityTypeId === "boss_dem") {
+                }else if (
+                  entity.originalEntityTypeId === "deco_montaña_large"
+                ) {
+                  entityContainer.style.backgroundSize = "180%";
+                  entityContainer.style.top = `${
+                    (entity.y - 0.2) * currentTileSize
+                  }px`;
+                  entityContainer.style.width = `${currentTileSize * 4}px`;
+                  entityContainer.style.height = `${currentTileSize * 1}px`;
+                }
+                 else if (entity.originalEntityTypeId === "boss_dem") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
                     (entity.y - 1.5) * currentTileSize
