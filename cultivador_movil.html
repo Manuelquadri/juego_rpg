@@ -1861,6 +1861,8 @@
             id: null,
             hp: 0, // "Vida" de la habilidad (para los grilletes)
           },
+          tempDefenseBoostTurns: 0,
+          tempDefenseBoostAmount: 0,
           // Nuevos estados para técnicas de alto nivel
           isImmuneToStatus: false, // Inmunidad a quemaduras, veneno, stun, etc.
           passiveHpRegen: 0, // Cantidad de HP a regenerar por segundo pasivamente
@@ -3710,18 +3712,22 @@
           id: "formation_t1",
           name: "Matriz de Escudo de Qi",
           icon: "💠",
-          description:
-            "Crea un escudo temporal que absorbe una pequeña cantidad de daño.",
+          description: "Crea un escudo temporal que absorbe daño. A niveles más altos, el escudo es más resistente e incluso restaura una pequeña cantidad de vida al ser invocado.",
           type: "active_ability",
           abilityId: "formation_t1",
-          effect: { shieldValue: 40, duration: 3 },
+          effect: {
+              // --- VALORES MEJORADOS ---
+              shieldValue: 50,                // Aumentado desde 40. Un mejor punto de partida.
+              shieldIncreasePerLevel: 15,     // Aumentado. +15 de escudo por nivel es muy notable.
+              duration: 3,
+              // --- NUEVO EFECTO SECUNDARIO ---
+              healOnCastLevelReq: 5,          // Requiere nivel 5 de la técnica para empezar a curar.
+              healOnCastAmount: 20            // Cantidad base de la curación.
+          },
           manaCost: 20,
           maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 100,
-            levelTimeMultiplier: 1.8,
-          },
-        },
+          cultivationSettings: { baseTimeToLevelUp: 100, levelTimeMultiplier: 1.8 },
+      },
         fire_t1: {
           id: "fire_t1",
           name: "Chispa Ígnea",
@@ -3771,7 +3777,7 @@
             abilityId: "sword_t2",
             effect: {
                 // --- VALORES MEJORADOS ---
-                baseDamageMultiplier: 1.5,      // Aumentado desde 1.1. Ahora es claramente más fuerte.
+                baseDamageMultiplier: 1.8,      // Aumentado desde 1.1. Ahora es claramente más fuerte.
                 defensePenetration: 0.3,        // Aumentado desde 0.25. Ignora más defensa.
                 bleedChance: 0.3,               // NUEVO: 30% de probabilidad de causar hemorragia.
                 bleedDamagePerTurn: 15,         // NUEVO: Daño de la hemorragia.
@@ -3822,18 +3828,20 @@
           id: "movement_t2",
           name: "Paso Etéreo",
           icon: "👟",
-          description:
-            "Te mueves como el viento, dándote una alta probabilidad de esquivar el próximo ataque.",
+          description: "Esquivas el próximo ataque. El movimiento fluido también aumenta tu defensa temporalmente. El bono de defensa aumenta con el nivel.",
           type: "active_ability",
           abilityId: "movement_t2",
-          effect: { dodgeNextAttack: true },
+          effect: {
+              dodgeNextAttack: true,
+              // --- NUEVAS PROPIEDADES ---
+              tempDefenseBuff: 5,      // Defensa extra que otorga
+              buffDuration: 2,         // Duración del buff en turnos
+              buffIncreasePerLevel: 2  // Cuánto aumenta el buff de defensa por nivel
+          },
           manaCost: 40,
           maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 220,
-            levelTimeMultiplier: 1.9,
-          },
-        },
+          cultivationSettings: { baseTimeToLevelUp: 220, levelTimeMultiplier: 1.9 },
+      },
         fire_t2: {
           id: "fire_t2",
           name: "Aliento de Dragón Menor",
@@ -3866,7 +3874,14 @@
             "Giras como un ciclón, golpeando al enemigo múltiples veces en un solo ataque devastador.",
           type: "active_ability",
           abilityId: "sword_t3",
-          effect: { baseDamageMultiplier: 2.5 },
+          effect: {
+                // --- VALORES MEJORADOS ---
+                baseDamageMultiplier: 2.5,      // Aumentado desde 1.1. Ahora es claramente más fuerte.
+                defensePenetration: 0.1,        // Aumentado desde 0.25. Ignora más defensa.
+                bleedChance: 0.5,               // NUEVO: 30% de probabilidad de causar hemorragia.
+                bleedDamagePerTurn: 15,         // NUEVO: Daño de la hemorragia.
+                bleedDuration: 3                // NUEVO: Duración de la hemorragia.
+            },
           manaCost: 50,
           maxLevel: 10,
           cultivationSettings: {
@@ -11049,6 +11064,14 @@
             player.defenseReductionAmount = 0;
           }
         }
+        if (player.tempDefenseBoostTurns > 0) {
+            player.tempDefenseBoostTurns--;
+            if (player.tempDefenseBoostTurns === 0) {
+                player.defense -= player.tempDefenseBoostAmount; // Restaurar defensa
+                logBattle(`El bono de agilidad se desvanece. (Defensa: ${player.defense})`);
+                player.tempDefenseBoostAmount = 0;
+            }
+        }
         if (player.attackReductionTurns > 0) {
           player.attackReductionTurns--;
           if (player.attackReductionTurns === 0) {
@@ -11289,33 +11312,62 @@
                 break;
 
               case "movement_t2":
+                const etereoDetails = techniqueData["movement_t2"];
+                const etereoLevel = player.learnedTechniques["movement_t2"]?.level || 1;
+
+                // --- LÓGICA PARA APLICAR ESQUIVA Y BUFF ---
                 player.dodgeNextAttack = true;
-                logMessage = `¡Usas ${techDetails.name} (Nv.${playerTechLevel}) y te preparas para esquivar!`;
-                break;
 
-              case "formation_t1":
-                // Definimos las variables para ESTE caso
-                const shieldValue_t1 =
-                  techDetails.effect.shieldValue + playerTechLevel * 5;
-                const shieldDuration_t1 = techDetails.effect.duration;
-
-                // Asignamos el valor del escudo y los turnos al estado del jugador
-                player.magicShieldValue =
-                  (player.magicShieldValue || 0) + shieldValue_t1;
-                // --- LA CORRECCIÓN CLAVE ESTÁ AQUÍ ---
-                player.magicShieldTurns = Math.max(
-                  player.magicShieldTurns || 0,
-                  shieldDuration_t1
-                );
-
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo que absorbe ${shieldValue_t1} de daño!`;
-                showFloatingText(
-                  document.querySelector(".character-sprite"),
-                  `Escudo +${shieldValue_t1}`,
-                  "ability"
-                );
+                // Calculamos y aplicamos el buff de defensa
+                const defenseBonus = etereoDetails.effect.tempDefenseBuff + (etereoDetails.effect.buffIncreasePerLevel * (etereoLevel - 1));
+                
+                // Evitamos acumular el mismo buff, lo refrescamos
+                if (player.tempDefenseBoostAmount > 0) {
+                    player.defense -= player.tempDefenseBoostAmount; // Quita el buff anterior
+                }
+                player.defense += defenseBonus;
+                player.tempDefenseBoostAmount = defenseBonus;
+                player.tempDefenseBoostTurns = etereoDetails.effect.buffDuration;
+                
+                logMessage = `¡Usas ${etereoDetails.name} (Nv.${etereoLevel})! Te preparas para esquivar y tu defensa aumenta en ${defenseBonus} por ${player.tempDefenseBoostTurns} turnos.`;
+                showFloatingText(playerSprite, '¡Esquiva!', 'ability');
+                showFloatingText(playerSprite, `Defensa +${defenseBonus}`, 'ability');
+                
                 logBattle(logMessage);
                 break;
+
+                case "formation_t1":
+                  const shieldDetails = techniqueData["formation_t1"];
+                  const shieldLevel = player.learnedTechniques["formation_t1"]?.level || 1;
+
+                  // --- CÁLCULO DE ESCUDO MEJORADO ---
+                  const shieldBase = shieldDetails.effect.shieldValue;
+                  const shieldBonusPerLevel = shieldDetails.effect.shieldIncreasePerLevel;
+                  const shieldValue = shieldBase + (shieldBonusPerLevel * (shieldLevel - 1));
+                  const shieldDuration = shieldDetails.effect.duration;
+
+                  // Aplicamos el escudo
+                  player.magicShieldValue = (player.magicShieldValue || 0) + shieldValue;
+                  player.magicShieldTurns = Math.max(player.magicShieldTurns || 0, shieldDuration);
+
+                  logMessage = `¡${shieldDetails.name} (Nv.${shieldLevel}) crea un escudo que absorbe ${shieldValue} de daño! (Total: ${Math.floor(player.magicShieldValue)})`;
+                  showFloatingText(playerSprite, `Escudo +${shieldValue}`, 'ability');
+
+                  // --- LÓGICA PARA LA CURACIÓN SECUNDARIA ---
+                  const healReqLevel = shieldDetails.effect.healOnCastLevelReq;
+                  if (shieldLevel >= healReqLevel) {
+                      const healBase = shieldDetails.effect.healOnCastAmount;
+                      // La curación también puede escalar un poco
+                      const healAmount = healBase + ((shieldLevel - healReqLevel) * 5);
+                      
+                      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+                      
+                      logMessage += ` El flujo de Qi regenera ${healAmount} de vida.`;
+                      showFloatingText(playerSprite, `+${healAmount}`, 'heal');
+                  }
+                  
+                  logBattle(logMessage);
+                  break;
 
               case "formation_t2":
                 const rootTechDetails = techniqueData["formation_t2"];
@@ -12456,86 +12508,64 @@
         populateBattleActionButtons();
     }
 
-      function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
-        const player = gameState.player;
-        const playerSprite = document.querySelector(".character-sprite");
-        let finalDamage = damageAmount;
-        console.log(
-          `[APPLY_DAMAGE] Función llamada. Daño inicial: ${damageAmount}, Fuente: ${sourceName}`
-        );
-        console.log(
-          `[APPLY_DAMAGE] Estado del escudo ANTES de absorber -> Valor: ${
-            player.magicShieldValue || 0
-          }, Turnos: ${player.magicShieldTurns || 0}`
-        );
-        // 1. Lógica de absorción del escudo (¡LA PARTE CLAVE!)
-        if (
-          finalDamage > 0 &&
-          (player.magicShieldValue || 0) > 0 &&
-          (player.magicShieldTurns || 0) > 0
-        ) {
-          console.log(
-            "[APPLY_DAMAGE] Condición para absorber daño CUMPLIDA. Escudo está activo."
-          );
-          const absorbedByShield = Math.min(
-            finalDamage,
-            player.magicShieldValue
-          );
-          player.magicShieldValue -= absorbedByShield;
-          finalDamage -= absorbedByShield;
-          console.log(
-            `[APPLY_DAMAGE] Escudo absorbió: ${absorbedByShield}. Daño restante: ${finalDamage}. Valor del escudo restante: ${player.magicShieldValue}`
-          );
+    function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
+      const player = gameState.player;
+      const playerSprite = document.querySelector('.character-sprite');
 
-          logBattle(
-            `¡Tu escudo absorbe ${absorbedByShield} de daño! (Restante: ${Math.floor(
-              player.magicShieldValue
-            )})`
-          );
-          showFloatingText(
-            playerSprite,
-            `Absorbe ${absorbedByShield}`,
-            "ability"
-          );
+      // --- CORRECCIÓN CLAVE: Declarar incomingDamage PRIMERO ---
+      let incomingDamage = damageAmount; 
+
+      // --- LÓGICA DE ESQUIVAR ---
+      // Ahora 'incomingDamage' ya está definido y se puede usar en la condición.
+      if (player.dodgeNextAttack && incomingDamage > 0) {
+          
+          const etereoDetails = techniqueData["movement_t2"];
+          const etereoLevel = player.learnedTechniques["movement_t2"]?.level || 1;
+          // La mejora de "no consumir" (Opción 2) la implementaremos aquí
+          const noConsumeChance = (etereoDetails.effect.noConsumeChancePerLevel || 0) * (etereoLevel - 1);
+
+          logBattle(`¡Esquivas por completo el ataque de ${sourceName}!`);
+          showFloatingText(playerSprite, '¡Esquivado!', 'ability');
+
+          // Comprobamos si el efecto se mantiene
+          if (Math.random() > noConsumeChance) {
+              player.dodgeNextAttack = false; // Se consume normalmente
+          } else {
+              logBattle("¡Tu movimiento fue tan fluido que sigues listo para esquivar!");
+              showFloatingText(playerSprite, '¡Aún Etéreo!', 'ability');
+          }
+
+          return 0; // Anulamos todo el daño y terminamos la función.
+      }
+      
+      // --- LÓGICA DE ABSORCIÓN DE DAÑO POR ESCUDO ---
+      if (incomingDamage > 0 && player.magicShieldValue > 0 && player.magicShieldTurns > 0) {
+          
+          const absorbedByShield = Math.min(incomingDamage, player.magicShieldValue);
+          player.magicShieldValue -= absorbedByShield;
+          incomingDamage -= absorbedByShield;
+
+          logBattle(`¡Tu escudo absorbe ${absorbedByShield} de daño! (Restante: ${Math.floor(player.magicShieldValue)})`);
+          showFloatingText(playerSprite, `Absorbe ${absorbedByShield}`, 'ability');
 
           if (player.magicShieldValue <= 0) {
-            console.log("[APPLY_DAMAGE] ¡Tu barrera mágica se ha roto!");
-            logBattle("¡Tu barrera mágica se ha roto!");
-            player.magicShieldTurns = 0; // Un escudo roto ya no tiene turnos.
+              logBattle("¡Tu barrera mágica se ha roto!");
+              player.magicShieldTurns = 0;
           }
-        } else {
-          console.log(
-            "[APPLY_DAMAGE] Condición para absorber daño NO cumplida. El daño pasará directamente."
-          );
-        }
-
-        // 2. Aquí podrías añadir otras lógicas de mitigación de daño (ej. reducción pasiva) si las tienes
-
-        // 3. Aplicar el daño final al HP del jugador
-        if (finalDamage > 0) {
-          player.hp -= finalDamage;
-          console.log(
-            `[APPLY_DAMAGE] Aplicando ${finalDamage} de daño final al HP del jugador. Nuevo HP: ${player.hp}`
-          );
-          logBattle(`${sourceName} te causa ${finalDamage} de daño.`);
-          showFloatingText(playerSprite, `-${finalDamage}`, "damage");
-        } else if (damageAmount > 0) {
-          console.log(`[APPLY_DAMAGE] El ataque fue completamente absorbido.`);
-          // Esto se ejecuta si el daño original era positivo pero fue completamente absorbido
-          logBattle(
-            `¡Tu defensa absorbió completamente el ataque de ${sourceName}!`
-          );
-          showFloatingText(playerSprite, "¡Bloqueado!", "ability");
-        } else {
-          console.log(
-            `[APPLY_DAMAGE] No se aplicó daño (daño inicial fue ${damageAmount}).`
-          );
-        }
-
-        // Devuelve el daño final que realmente se infligió al HP, puede ser útil.
-        return finalDamage;
       }
 
+      // --- APLICAR DAÑO RESTANTE ---
+      if (incomingDamage > 0) {
+          player.hp -= incomingDamage;
+          logBattle(`Recibes ${Math.floor(incomingDamage)} de daño de ${sourceName}.`);
+          showFloatingText(playerSprite, `-${Math.floor(incomingDamage)}`, 'damage');
+      } else if (damageAmount > 0) {
+          logBattle(`¡Tu defensa absorbió completamente el ataque de ${sourceName}!`);
+          showFloatingText(playerSprite, '¡Bloqueado!', 'ability');
+      }
+
+      return incomingDamage;
+  }
       function showBattleReview() {
         const reviewLog = document.getElementById("battleReviewLog");
         reviewLog.innerHTML = ""; // Limpiar contenido anterior
