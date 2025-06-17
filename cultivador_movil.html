@@ -4078,19 +4078,22 @@
           id: "movement_t3",
           name: "Parpadeo de Sombra",
           icon: "👻",
-          description:
-            "Te teletransportas instantáneamente detrás del enemigo para un golpe crítico garantizado.",
+          description: "Te teletransportas instantáneamente detrás del enemigo para un golpe crítico garantizado. Su potencia aumenta con el nivel.", // Descripción mejorada
           type: "active_ability",
           abilityId: "movement_t3",
-          effect: { baseDamageMultiplier: 2.0, isCritical: true },
-          manaCost: 55, // isCritical necesitará lógica en battleAction
+          effect: { 
+              baseDamageMultiplier: 2.0, 
+              multiplierIncreasePerLevel: 0.2, // <-- NUEVA PROPIEDAD DE ESCALADO
+              isCritical: true 
+          },
+          manaCost: 55,
           cooldown: 3,
           maxLevel: 10,
           cultivationSettings: {
-            baseTimeToLevelUp: 400,
-            levelTimeMultiplier: 1.9,
+              baseTimeToLevelUp: 400,
+              levelTimeMultiplier: 1.9,
           },
-        },
+      },
 
         // =================================================================
         // == GRADO 4 (Rango: Anciano) - Nivel Soberano
@@ -11607,13 +11610,27 @@
                 
                 logBattle(logMessage);
                 break;              
-              case "movement_t3": // Parpadeo de Sombra
-                      damageDealt = Math.max(1, Math.floor((player.attack * (techDetails.effect.baseDamageMultiplier || 2.0)) * 1.5) - enemy.defense); // 1.5x por crítico
-                      enemy.hp -= damageDealt;
-                      logMessage = `¡Con ${techDetails.name}, apareces detrás del enemigo para un golpe crítico de ${damageDealt}!`;
-                      showFloatingText(playerSprite, '¡Golpe Súbito!', 'ability');
-                      showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-                      break;               
+              case "movement_t3": { // Parpadeo de Sombra
+                    const effect = techDetails.effect;
+                    
+                    // Calculamos el multiplicador actual: Base + (Nivel - 1) * AumentoPorNivel
+                    const currentMultiplier = effect.baseDamageMultiplier + ((playerTechLevel - 1) * (effect.multiplierIncreasePerLevel || 0));
+                    
+                    let baseDamage = player.attack * currentMultiplier;
+
+                    // Aplicamos el multiplicador de crítico si la técnica lo especifica
+                    if (effect.isCritical) {
+                        baseDamage *= 1.5; // Multiplicador de crítico estándar (150%)
+                    }
+
+                    const damageDealt = Math.max(1, Math.floor(baseDamage) - (enemy.defense || 0));
+                    enemy.hp -= damageDealt;
+
+                    logMessage = `¡Con ${techDetails.name} (Nv.${playerTechLevel}), apareces para un golpe crítico de ${damageDealt}!`;
+                    showFloatingText(playerSprite, '¡Golpe Súbito!', 'ability');
+                    showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                    break;
+                }              
               case "movement_t4": // Danza del Viento Espectral (TIER 4 - Creada)
                     damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.2)) - enemy.defense);
                     enemy.hp -= damageDealt;
