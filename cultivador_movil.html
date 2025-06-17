@@ -75,6 +75,12 @@
         height: 100%; /* Ahora esto funcionará, porque el padre (.stat-bar) tiene una altura fija */
         transition: width 0.3s linear;
       }
+      #fullscreenIcon {
+        margin-right: 8px;
+        display: inline-block;
+        /* Para el ícono de salir */
+        font-family: 'Arial Unicode MS', 'Apple Symbols', 'sans-serif';
+      }
       /****************************************
        * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
        ****************************************/
@@ -14520,6 +14526,9 @@
                   <h2>Menú Principal</h2>
                   <button class="cultivation-option-btn" onclick="saveGame(); closeModal();">💾 Guardar Partida</button>
                   <button class="cultivation-option-btn" onclick="triggerFileUpload(); closeModal();">📁 Cargar Partida</button>
+                  <button id="fullscreenBtn" class="cultivation-option-btn" onclick="toggleFullscreen()">
+                      <span id="fullscreenIcon">⛶</span> Pantalla Completa
+                  </button>
                   <button class="cultivation-option-btn" onclick="showHelp();">❓ Ayuda</button>
                   <button class="cultivation-option-btn" onclick="closeModal();">↩️ Volver al Juego</button>
               `;
@@ -14548,6 +14557,51 @@
         hideTouchControls();
         updateTopNavVisibility();
         updateStatsPanelVisibility();
+      }
+
+      function toggleFullscreen() {
+          if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+              openFullscreen();
+          } else {
+              closeFullscreen();
+          }
+      }
+      function openFullscreen() {
+          const elem = document.documentElement; // Queremos que todo el documento sea pantalla completa
+          if (elem.requestFullscreen) {
+              elem.requestFullscreen();
+          } else if (elem.mozRequestFullScreen) { /* Firefox */
+              elem.mozRequestFullScreen();
+          } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+              elem.webkitRequestFullscreen();
+          } else if (elem.msRequestFullscreen) { /* IE/Edge */
+              elem.msRequestFullscreen();
+          }
+          updateFullscreenButton();
+      }
+      function closeFullscreen() {
+          if (document.exitFullscreen) {
+              document.exitFullscreen();
+          } else if (document.mozCancelFullScreen) { /* Firefox */
+              document.mozCancelFullScreen();
+          } else if (document.webkitExitFullscreen) { /* Chrome, Safari and Opera */
+              document.webkitExitFullscreen();
+          } else if (document.msExitFullscreen) { /* IE/Edge */
+              document.msExitFullscreen();
+          }
+          updateFullscreenButton();
+      }
+      function updateFullscreenButton() {
+          const fullscreenBtn = document.getElementById('fullscreenBtn');
+          const fullscreenIcon = document.getElementById('fullscreenIcon');
+          if (!fullscreenBtn || !fullscreenIcon) return; // Salida temprana si el modal no está abierto
+
+          // Comprobamos si algún navegador está en modo de pantalla completa
+          if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+              fullscreenBtn.innerHTML = '<span id="fullscreenIcon"> keluar </span> Salir de Pantalla Completa';
+          } else {
+              fullscreenBtn.innerHTML = '<span id="fullscreenIcon">⛶</span> Pantalla Completa';
+          }
       }
 
       function openSectHallInterface() {
@@ -14850,6 +14904,10 @@
         updateTopNavVisibility();
 
         // --- INICIO DEL REEMPLAZO DE EVENT LISTENERS ---
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
         document.addEventListener("keydown", (e) => {
           if (
             isAnyModalOpen() ||
