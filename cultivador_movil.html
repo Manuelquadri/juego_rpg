@@ -207,6 +207,14 @@
         z-index: 150;
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
         backdrop-filter: blur(4px);
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+      }
+      .quick-slot-bar.hidden {
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none; /* Importante para que no sea clickeable cuando está invisible */
       }
 
       .quick-slot {
@@ -10879,7 +10887,7 @@
         const player = gameState.player;
         if (player.isCultivating) stopCultivation();
         hideTouchControls();
-
+        document.getElementById('quickSlotBar').classList.add('hidden');
         player.isMoving = false;
         if (player.animationTimer) clearInterval(player.animationTimer);
         if (player.idleTimeout) clearTimeout(player.idleTimeout);
@@ -10928,7 +10936,7 @@
         // Ahora estas funciones recibirán un objeto enemigo COMPLETO y correcto.
         populateBattleActionButtons();
         updateBattleUI(); 
-        
+        updateGameOverlayVisibility();
         logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
         updateTopNavVisibility();
         updatePlayerBarsOnMap();
@@ -12857,6 +12865,7 @@
        const player = gameState.player;
         
         // Resetea todos los buffs/debuffs temporales del jugador al final del combate
+        player.abilityCooldowns = {};
         player.defenseBoostTurns = 0;
         player.defenseBoostAmount = 0;
         player.dodgeNextAttack = false;
@@ -12870,6 +12879,7 @@
         gameState.battle.active = false;
         document.getElementById("battleScreen").style.display = "none";
         document.getElementById("battleLog").innerHTML = "";
+        document.getElementById('quickSlotBar').classList.remove('hidden');
         // Ocultar las barras sobre el sprite en batalla explícitamente al finalizar
         const barsInBattleContainer = document.getElementById(
           "playerInBattleSpriteBarsContainer"
