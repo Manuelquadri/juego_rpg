@@ -150,7 +150,6 @@
         border-radius: 8px;
         padding: 10px;
         margin: 0;
-        margin-top: 60px;
       }
 
       .stats-panel .stat-bar {
@@ -461,14 +460,13 @@
       }
 
       .battle-area {
-          flex: 1 1 auto; /* <-- Clave: Crecer y encogerse, con base automática */
-          display: flex;
-          align-items: center;
-          justify-content: space-around;
-          padding: 10px; /* Un padding base razonable */
-          gap: 10px;
-          overflow-y: auto; /* <-- Clave: Si los personajes no caben, esta zona hará scroll, no toda la pantalla */
-          min-height: 0; /* Un truco de flexbox para que el overflow funcione correctamente en algunos navegadores */
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 20px 10px;
+        gap: 10px;
+        overflow-y: auto;
       }
 
       .character,
@@ -821,7 +819,6 @@
           top: 10px;
           left: 10px;
           backdrop-filter: blur(2px);
-          margin-top: 30px;
         }
 
         #toggleMapControlsBtn {
@@ -867,7 +864,7 @@
           font-size: 0.75em;
         }
       }
-      @media (max-height: 400px) and (min-width: 600px), (orientation: landscape) {
+      @media (max-height: 500px) and (min-width: 600px), (orientation: landscape) {
 
         /* --- Acciones de Batalla más Compactas (LÓGICA MEJORADA) --- */
         .battle-actions {
@@ -898,24 +895,21 @@
             text-align: center;
         }
         .battle-area {
-            /* En landscape, los personajes pueden ir uno al lado del otro */
-            flex-direction: row; 
-            align-items: center; /* Centrar verticalmente */
-            padding: 5px 10px; /* Menos padding vertical, más horizontal */
-        }
+          padding-top: 5px;   /* Reduce el espacio superior */
+          padding-bottom: 5px;/* Reduce el espacio inferior */
+      }
 
-        .character, .enemy {
-            /* Reduce el padding vertical de los contenedores de personajes */
-            padding-top: 15px; 
-            padding-bottom: 15px;
-        }
+      .character, .enemy {
+          /* Reduce el padding vertical de los contenedores de personajes */
+          padding-top: 15px; 
+          padding-bottom: 15px;
+      }
         /* --- Ajustes al resto de la UI en modo horizontal --- */
         .stats-panel {
             top: 10px;
             left: 10px;
             padding: 6px;
             font-size: 0.75rem;
-            margin-top: 15px;
         }
 
         .stats-panel h3 {
