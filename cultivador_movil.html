@@ -627,6 +627,12 @@
         max-height: 90vh;
         overflow-y: auto;
       }
+      .inventory-modal-item .item-description {
+          font-size: 0.9em;
+          opacity: 0.8;
+          margin-top: 4px;
+          margin-bottom: 8px; /* <-- Añade este margen inferior */
+      }
 
       .cultivation-option-btn {
         display: block;
@@ -12987,46 +12993,141 @@
 
       function showTechniquePanel() {
         const container = document.getElementById("learnedTechniquesContainer");
-        container.innerHTML = "";
+        container.innerHTML = ""; // Limpiar contenido anterior
+        
         const player = gameState.player;
         if (Object.keys(player.learnedTechniques).length === 0) {
-          container.innerHTML = "<p>Aún no has aprendido ninguna técnica.</p>";
+            container.innerHTML = "<p style='text-align: center; opacity: 0.7;'>Aún no has aprendido ninguna técnica.</p>";
+        } else {
+            // Ordenamos las técnicas para una mejor visualización (opcional)
+            const sortedTechIds = Object.keys(player.learnedTechniques).sort();
+
+            sortedTechIds.forEach(techId => {
+                const techInfo = techniqueData[techId];
+                const playerTech = player.learnedTechniques[techId];
+                if (!techInfo) return; // Salto de seguridad
+
+                const div = document.createElement("div");
+                // Usamos la misma clase que los ítems del inventario para un estilo consistente
+                div.className = "inventory-modal-item"; 
+                
+                let levelText = playerTech.level >= techInfo.maxLevel 
+                    ? `<span style="color: #f4d03f;">(MAX)</span>`
+                    : `(Nv. ${playerTech.level} / ${techInfo.maxLevel})`;
+                
+                // --- LLAMADA A LA NUEVA FUNCIÓN DE DETALLES ---
+                const detailsText = getTechniqueDetailsAsText(techInfo, playerTech.level);
+                
+                let cultivationProgressText = '';
+                if (techInfo.cultivationSettings && playerTech.level < techInfo.maxLevel) {
+                    const progress = playerTech.currentCultivationProgress || 0;
+                    const timeToNext = playerTech.cultivationTimeToNextLevel || (techInfo.cultivationSettings.baseTimeToLevelUp || Infinity);
+                    cultivationProgressText = `<div style="font-size: 0.8em; opacity: 0.7; margin-top: 5px;">Progreso de Cultivo: ${Math.floor(progress)}s / ${timeToNext}s</div>`;
+                }
+
+                div.innerHTML = `
+                    <div class="item-details">
+                        <div class="item-name">${techInfo.icon || "📜"} ${techInfo.name} ${levelText}</div>
+                        <div class="item-description">${techInfo.description}</div>
+                        ${detailsText}
+                        ${cultivationProgressText}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
         }
-        for (const techId in player.learnedTechniques) {
-          const techInfo = techniqueData[techId];
-          const playerTech = player.learnedTechniques[techId];
-          if (!techInfo) continue;
-          const div = document.createElement("div");
-          div.className = "technique-item";
-          let levelText =
-            playerTech.level >= techInfo.maxLevel
-              ? `Nivel: ${playerTech.level} (MAX)`
-              : `Nivel: ${playerTech.level} / ${techInfo.maxLevel}`;
-          let description = techInfo.description;
-          // Podrías añadir lógica aquí para mostrar el efecto actual basado en el nivel
-          // Ejemplo: if (techInfo.effect.baseDamageMultiplier) description += ` (Daño actual: ${...})`;
-          div.innerHTML = `<strong>${techInfo.name} ${
-            techInfo.icon || ""
-          }</strong> (${levelText})<br><small>${description}</small><br>`;
-          if (
-            techInfo.cultivationSettings &&
-            playerTech.level < techInfo.maxLevel
-          ) {
-            const progress = playerTech.currentCultivationProgress || 0;
-            const timeToNext =
-              playerTech.cultivationTimeToNextLevel ||
-              (techInfo.cultivationSettings
-                ? techInfo.cultivationSettings.baseTimeToLevelUp
-                : Infinity);
-            div.innerHTML += `<small>Progreso Cultivo: ${Math.floor(
-              progress
-            )}s / ${timeToNext}s para Nv. ${playerTech.level + 1}</small><br>`;
-          }
-          container.appendChild(div);
-        }
+        
         document.getElementById("techniqueModal").style.display = "flex";
         hideTouchControls();
+    }
+
+    function getTechniqueDetailsAsText(techInfo, currentLevel) {
+      if (!techInfo) return "";
+
+      const effect = techInfo.effect || {};
+      let details = [];
+      const isMaxLevel = currentLevel >= techInfo.maxLevel;
+      const nextLevel = currentLevel + 1;
+
+      // Función de ayuda interna para calcular valores y generar texto
+      const createDetailLine = (label, baseValue, increasePerLevel, unit = '', decimals = 2, isPercentage = false) => {
+          if (baseValue === undefined) return null;
+
+          const scaleFactor = isPercentage ? 100 : 1;
+          const currentVal = baseValue + ((currentLevel - 1) * (increasePerLevel || 0));
+          const nextVal = baseValue + ((nextLevel - 1) * (increasePerLevel || 0));
+          
+          let text = `${label}: ${(currentVal * scaleFactor).toFixed(decimals)}${unit}`;
+          
+          if (!isMaxLevel && nextVal.toFixed(decimals + 2) !== currentVal.toFixed(decimals + 2)) {
+              text += ` <span style="color:#66ff66;">(Próx: ${(nextVal * scaleFactor).toFixed(decimals)}${unit})</span>`;
+          }
+          return text;
+      };
+      
+      // --- LÓGICA DE DETALLES REFACTORIZADA ---
+
+      // 1. Daño
+      let damageLine = createDetailLine("Daño", effect.baseDamageMultiplier, effect.multiplierIncreasePerLevel, 'x Ataque', 2);
+      if (damageLine) details.push(damageLine);
+      
+      // 2. Daño por Turno (DoT)
+      let dotLine = createDetailLine("Daño/Turno", effect.damagePerTurn || effect.burnDamagePerTurn || effect.bleedDamagePerTurn, 2, '', 0); // Asumiendo un escalado fijo de +2 por nivel
+      if (dotLine) details.push(dotLine);
+
+      // 3. Probabilidad de Efecto
+      let chanceLine = createDetailLine("Prob. Efecto", effect.baseStunChance || effect.bleedChance || effect.stunChance, effect.stunChanceIncreasePerLevel || 0.03, '%', 0, true);
+      if (chanceLine) details.push(chanceLine);
+
+      // 4. Reducción de Stats
+      let reductionLine = createDetailLine("Reducción Stats", effect.baseReduction, effect.reductionIncreasePerLevel, '', 0);
+      if (reductionLine) details.push(reductionLine);
+
+      // 5. Duración
+      if (effect.duration || effect.baseDuration) {
+          const currentDuration = effect.duration || effect.baseDuration;
+          let text = `Duración: ${currentDuration} turnos`;
+          if (!isMaxLevel && effect.levelForExtraTurn && nextLevel >= effect.levelForExtraTurn && currentLevel < effect.levelForExtraTurn) {
+              text += ` <span style="color:#66ff66;">(Próx: ${currentDuration + 1} turnos)</span>`;
+          }
+          details.push(text);
       }
+
+      // 6. Golpes Múltiples
+      if (effect.baseHits) {
+          const currentHits = Math.round(effect.baseHits + (currentLevel - 1) * (effect.hitsIncreasePerLevel || 0));
+          const nextHits = Math.round(effect.baseHits + (nextLevel - 1) * (effect.hitsIncreasePerLevel || 0));
+          let text = `Golpes: ${currentHits}`;
+          if (!isMaxLevel && nextHits > currentHits) text += ` <span style="color:#66ff66;">(Próx: ${nextHits})</span>`;
+          details.push(text);
+      }
+      
+      // 7. Habilidades Pasivas que mejoran STATS BASE (ej. Piel de Acero)
+      if (techInfo.type === 'passive_stat' && effect.statToBoost) {
+          // Las pasivas se aplican una vez por cada nivel que se sube, no tienen un "próximo nivel" visible.
+          // Mostramos el beneficio total que se obtiene por cada nivel de la técnica.
+          details.push(`Efecto Pasivo: +${effect.value} a ${effect.statToBoost.replace('base','').replace('Max',' Máximo ')} por nivel.`);
+      }
+
+      // 8. Habilidades Pasivas de CULTIVO (ej. Absorción de Qi)
+      if (techInfo.type === 'passive_cultivation' && effect.statToBoost) {
+          details.push(`Efecto de Cultivo: +${effect.value} a ${effect.statToBoost.replace('Base','/s')} por nivel.`);
+      }
+
+      // 9. Efectos Únicos y Fijos
+      if (effect.isCritical) details.push("Especial: Siempre es un Golpe Crítico.");
+      if (effect.ignoreDefense) details.push("Especial: Ignora la defensa del enemigo.");
+      if (effect.dodgeNextAttack) details.push("Especial: Esquiva el próximo ataque.");
+      
+      // Construir el string final
+      if (details.length > 0) {
+          return `<div style="margin-top: 8px; padding-left: 10px; border-left: 2px solid #555; font-size: 0.85em; line-height: 1.6;">
+                      ${details.join('<br>')}
+                  </div>`;
+      }
+
+      return "";
+  }
 
       function startTechniqueRefinement(techId) {}
 
