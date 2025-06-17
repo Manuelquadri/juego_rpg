@@ -342,13 +342,13 @@
       }
 
       #toggleMapControlsBtn {
-        display: none;
-        position: fixed;
-        top: 60px; /* <--- CORREGIDO (10px + 45px del botón de arriba + 5px de espacio) */
-        right: 10px;
-        z-index: 1005;
-        padding: 8px 12px;
-        font-size: 14px;
+          display: none; /* Se controla por JS y media queries */
+          position: fixed;
+          top: 60px; /* Posición respecto a la ventana */
+          right: 10px;
+          z-index: 200; /* Aseguramos que esté al mismo nivel que los otros controles */
+          padding: 8px 12px;
+          font-size: 14px;
       }
 
       #toggleMapControlsBtn.hidden-during-battle {
@@ -690,6 +690,22 @@
         z-index: 200;
         display: none;
         font-size: 0.8em;
+      }
+      #touch-controls-overlay {
+          /* Este contenedor no tiene tamaño, solo sirve para agrupar 
+            y asegurar que sus hijos 'fixed' se muestren correctamente */
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none; /* Clave: Permite que los clics "atraviesen" el overlay y lleguen al mapa */
+          z-index: 199; /* Justo debajo de los controles individuales */
+      }
+
+      /* Cualquier elemento clickeable DENTRO del overlay debe reactivar los pointer-events */
+      #touch-controls-overlay > * {
+          pointer-events: auto;
       }
       /* --- Estilos para Modal de Inventario --- */
       .inventory-modal-item {
@@ -1254,7 +1270,7 @@
     </div>
 
     <input type="file" id="fileInput" accept=".json" style="display: none" />
-    <button id="toggleMapControlsBtn">Ocultar Controles</button>
+   
 
     <!-- ======================================================================= -->
     <!-- 2. CONTENEDOR PRINCIPAL DEL JUEGO (El mundo que se mueve) -->
@@ -1325,7 +1341,16 @@
     </div>
     <button id="action-button-touch">Acción</button>
     <!-- <<--- FIN DEL CONTENEDOR PRINCIPAL DEL JUEGO -->
-
+      <!-- === INICIO DE LA NUEVA SECCIÓN DE CONTROLES TÁCTILES === -->
+    <div id="touch-controls-overlay">
+      <div id="joystick-container">
+          <div id="joystick-pad">
+              <div id="joystick-handle"></div>
+          </div>
+      </div>
+      <button id="action-button-touch">Acción</button>
+      <button id="toggleMapControlsBtn">Ocultar Controles</button>
+  </div>
     <!-- ======================================================================= -->
     <!-- 3. TODAS LAS PANTALLAS Y MODALES SUPERPUESTOS -->
     <!-- Al estar fuera del game-container, no se verán borrosos en móvil. -->
@@ -7813,40 +7838,43 @@
         updateStatsPanelVisibility();
       }
       function showTouchControls() {
-        const joystick = document.getElementById("joystick-container");
-        const actionBtn = document.getElementById("action-button-touch");
+        const controlsOverlay = document.getElementById('touch-controls-overlay');
+        const toggleBtn = document.getElementById('toggleMapControlsBtn');
 
-        if (
-          isMobileView() &&
-          !mapControlsManuallyHidden &&
-          !gameState.battle.active &&
-          !isAnyModalOpen()
-        ) {
-          if (joystick) joystick.style.display = "block";
-          if (actionBtn) actionBtn.style.display = "block";
+        if (!controlsOverlay || !toggleBtn) return;
+
+        const shouldShow = isMobileView() && !mapControlsManuallyHidden && !gameState.battle.active && !isAnyModalOpen();
+
+        if (shouldShow) {
+            controlsOverlay.style.display = 'block';
+            toggleBtn.style.display = 'block'; // Aseguramos que el botón de toggle también sea visible
         } else {
-          if (joystick) joystick.style.display = "none";
-          if (actionBtn) actionBtn.style.display = "none";
+            controlsOverlay.style.display = 'none';
+            // El botón de toggle también se oculta si no estamos en vista móvil
+            if(!isMobileView()) {
+                toggleBtn.style.display = 'none';
+            }
         }
-      }
+    }
 
       function hideTouchControls() {
-        const joystick = document.getElementById("joystick-container");
-        const actionBtn = document.getElementById("action-button-touch");
-        if (joystick) joystick.style.display = "none";
-        if (actionBtn) actionBtn.style.display = "none";
+          const controlsOverlay = document.getElementById('touch-controls-overlay');
+          if (controlsOverlay) {
+              controlsOverlay.style.display = 'none';
+          }
       }
 
       function toggleMapControlsVisibility() {
-        mapControlsManuallyHidden = !mapControlsManuallyHidden;
-        const btn = document.getElementById("toggleMapControlsBtn");
-        if (mapControlsManuallyHidden) {
-          hideTouchControls();
-          btn.textContent = "Mostrar Controles";
-        } else {
-          showTouchControls();
-          btn.textContent = "Ocultar Controles";
-        }
+          mapControlsManuallyHidden = !mapControlsManuallyHidden;
+          const btn = document.getElementById("toggleMapControlsBtn");
+          
+          if (mapControlsManuallyHidden) {
+              btn.textContent = "Mostrar Controles";
+              hideTouchControls(); // Esta función ahora oculta el overlay completo
+          } else {
+              btn.textContent = "Ocultar Controles";
+              showTouchControls(); // Esta función ahora muestra el overlay completo si se cumplen las condiciones
+          }
       }
       function handleTeleporterInteraction(entity) {
         if (!entity.teleporterId) return;
