@@ -3998,28 +3998,21 @@
         // == GRADO 3 (Rango: Diácono) - Nivel Celestial
         // =================================================================
         sword_t3: {
-          id: "sword_t3",
-          name: "Danza de Espada Ciclónica",
-          icon: "🌪️",
-          description:
-            "Giras como un ciclón, golpeando al enemigo múltiples veces en un solo ataque devastador.",
-          type: "active_ability",
-          abilityId: "sword_t3",
-          effect: {
-                // --- VALORES MEJORADOS ---
-                baseDamageMultiplier: 2.5,      // Aumentado desde 1.1. Ahora es claramente más fuerte.
-                defensePenetration: 0.1,        // Aumentado desde 0.25. Ignora más defensa.
-                bleedChance: 0.5,               // NUEVO: 30% de probabilidad de causar hemorragia.
-                bleedDamagePerTurn: 15,         // NUEVO: Daño de la hemorragia.
-                bleedDuration: 3                // NUEVO: Duración de la hemorragia.
+            id: "sword_t3",
+            name: "Danza de Espada Ciclónica",
+            icon: "🌪️",
+            description: "Giras como un ciclón, golpeando al enemigo múltiples veces. El número de golpes aumenta con el nivel.",
+            type: "active_ability",
+            abilityId: "sword_t3",
+            effect: {
+                baseDamageMultiplier: 1.1,
+                baseHits: 3, // <-- Nuevo: Golpes base
+                hitsIncreasePerLevel: 0.5 // <-- Nuevo: Medio golpe por nivel (se redondeará)
             },
-          manaCost: 50,
-          cooldown: 2,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 300,
-            levelTimeMultiplier: 1.6,
-          },
+            manaCost: 50,
+            cooldown: 2,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 300, levelTimeMultiplier: 1.6 },
         },
         body_t3: {
           id: "body_t3",
@@ -4036,43 +4029,40 @@
           },
         },
         formation_t3: {
-          id: "formation_t3",
-          name: "Matriz de Supresión Espiritual",
-          icon: "🕸️",
-          description:
-            "Crea un campo que debilita al enemigo, reduciendo su ataque y defensa por varios turnos.",
-          type: "active_ability",
-          abilityId: "formation_t3",
-          effect: { attackReduction: 15, defenseReduction: 15, duration: 4 },
-          manaCost: 45,
-          cooldown: 5,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 320,
-            levelTimeMultiplier: 1.8,
-          },
+            id: "formation_t3",
+            name: "Matriz de Supresión Espiritual",
+            icon: "🕸️",
+            description: "Crea un campo que debilita al enemigo, reduciendo su ataque y defensa. El efecto es más potente con el nivel.",
+            type: "active_ability",
+            abilityId: "formation_t3",
+            effect: { 
+                baseReduction: 15, // <-- Nuevo
+                reductionIncreasePerLevel: 3, // <-- Nuevo
+                duration: 4 
+            },
+            manaCost: 45,
+            cooldown: 5,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 320, levelTimeMultiplier: 1.8 },
         },
         lightning_t3: {
-          id: "lightning_t3",
-          name: "Jaula de Rayos",
-          icon: "⛓️",
-          description:
-            "Encierra al enemigo en una jaula eléctrica, causando daño continuo y con alta probabilidad de aturdir.",
-          type: "active_ability",
-          abilityId: "lightning_t3",
-          effect: {
-            baseDamageMultiplier: 1.2,
-            damagePerTurn: 20,
-            stunChance: 0.5,
-            duration: 3,
-          },
-          manaCost: 60,
-          cooldown: 4,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 380,
-            levelTimeMultiplier: 1.8,
-          },
+            id: "lightning_t3",
+            name: "Jaula de Rayos",
+            icon: "⛓️",
+            description: "Encierra al enemigo en una jaula eléctrica, causando daño y con alta probabilidad de aturdir, ambos mejoran con el nivel.",
+            type: "active_ability",
+            abilityId: "lightning_t3",
+            effect: {
+                baseDamageMultiplier: 1.2,
+                damageMultiplierIncreasePerLevel: 0.1, // <-- Nuevo
+                baseStunChance: 0.5, // <-- Nuevo
+                stunChanceIncreasePerLevel: 0.03, // <-- Nuevo
+                duration: 2
+            },
+            manaCost: 60,
+            cooldown: 4,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 380, levelTimeMultiplier: 1.8 },
         },
         movement_t3: {
           id: "movement_t3",
@@ -4099,21 +4089,22 @@
         // == GRADO 4 (Rango: Anciano) - Nivel Soberano
         // =================================================================
         sword_t4: {
-          id: "sword_t4",
-          name: "Intenteción de Espada del Tirano",
-          icon: "👑",
-          description:
-            "Canalizas tu Qi en la espada para liberar una onda de energía que daña y aturde.",
-          type: "active_ability",
-          abilityId: "sword_t4",
-          effect: { baseDamageMultiplier: 2.8, stunChance: 0.4 },
-          manaCost: 70,
-          cooldown: 1,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 500,
-            levelTimeMultiplier: 1.5,
-          },
+            id: "sword_t4",
+            name: "Intento de Espada del Tirano",
+            icon: "👑",
+            description: "Canalizas tu Qi para una onda de energía que daña y puede aturdir. Su poder aumenta con el nivel.",
+            type: "active_ability",
+            abilityId: "sword_t4",
+            effect: { 
+                baseDamageMultiplier: 2.8,
+                multiplierIncreasePerLevel: 0.25, // <-- Nuevo
+                baseStunChance: 0.4, // <-- Nuevo
+                stunChanceIncreasePerLevel: 0.02, // <-- Nuevo
+            },
+            manaCost: 70,
+            cooldown: 1,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 500, levelTimeMultiplier: 1.5 },
         },
         body_t4: {
           id: "body_t4",
@@ -4130,55 +4121,54 @@
           },
         },
         fire_t4: {
-          id: "fire_t4",
-          name: "Sol Abrasador",
-          icon: "☀️",
-          description:
-            "Creas un sol en miniatura que explota, causando daño masivo a todos los enemigos.",
-          type: "active_ability",
-          abilityId: "fire_t4",
-          effect: { baseDamageMultiplier: 2.5, aoe: true },
-          manaCost: 80,
-          cooldown: 4,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 550,
-            levelTimeMultiplier: 1.6,
-          },
+            id: "fire_t4",
+            name: "Sol Abrasador",
+            icon: "☀️",
+            description: "Creas un sol en miniatura que explota, causando daño masivo que escala con el nivel.",
+            type: "active_ability",
+            abilityId: "fire_t4",
+            effect: { 
+                baseDamageMultiplier: 2.5,
+                multiplierIncreasePerLevel: 0.3, // <-- Nuevo
+                aoe: true 
+            },
+            manaCost: 80,
+            cooldown: 4,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 550, levelTimeMultiplier: 1.6 },
         },
         lightning_t4: {
-          id: "lightning_t4",
-          name: "Llamada del Juicio del Trueno",
-          icon: "🌩️",
-          description:
-            "Invocas un rayo celestial que golpea al enemigo, ignorando toda su defensa.",
-          type: "active_ability",
-          abilityId: "lightning_t4",
-          effect: { baseDamageMultiplier: 2.0, ignoreDefense: true },
-          manaCost: 75,
-          cooldown: 4,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 580,
-            levelTimeMultiplier: 1.7,
-          },
+            id: "lightning_t4",
+            name: "Llamada del Juicio del Trueno",
+            icon: "🌩️",
+            description: "Invocas un rayo celestial que ignora la defensa. Su daño base aumenta con el nivel.",
+            type: "active_ability",
+            abilityId: "lightning_t4",
+            effect: { 
+                baseDamageMultiplier: 2.0,
+                multiplierIncreasePerLevel: 0.25, // <-- Nuevo
+                ignoreDefense: true 
+            },
+            manaCost: 75,
+            cooldown: 4,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 580, levelTimeMultiplier: 1.7 },
         },
         formation_t4: {
-          id: "formation_t4",
-          name: "Santuario Dorado Protector",
-          icon: "🏰",
-          description:
-            "Una matriz defensiva definitiva que te hace inmune al daño por 2 turnos.",
-          type: "active_ability",
-          abilityId: "formation_t4",
-          effect: { immunityDuration: 2 },
-          manaCost: 100,
-          cooldown: 8,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 620,
-            levelTimeMultiplier: 1.8,
-          },
+            id: "formation_t4",
+            name: "Santuario Dorado Protector",
+            icon: "🏰",
+            description: "Una matriz defensiva definitiva que te hace inmune al daño. A niveles altos, dura un turno más.",
+            type: "active_ability",
+            abilityId: "formation_t4",
+            effect: { 
+                baseDuration: 2, // <-- Nuevo
+                levelForExtraTurn: 7 // <-- Nuevo: A nivel 7, dura un turno extra
+            },
+            manaCost: 100,
+            cooldown: 8,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 620, levelTimeMultiplier: 1.8 },
         },
         movement_t4: {
           id: "movement_t4",
@@ -11176,7 +11166,7 @@
          // Actualizamos los botones AHORA para que reflejen la reducción del turno actual
         populateBattleActionButtons();
 
-        let playerTechLevel = 0;
+        let playerTechLevel = 1;
         if (
           abilityDetails &&
           abilityDetails.source === "technique" &&
@@ -11184,7 +11174,7 @@
         ) {
           playerTechLevel =
             player.learnedTechniques[abilityDetails.sourceTechniqueId]?.level ||
-            0;
+            1;
         }
 
         // --- Aplicar DoTs y HoTs al JUGADOR ---
@@ -11329,7 +11319,7 @@
             }
             let damageDealt = 0;
             let logMessage = "";
-
+            const effect = techDetails.effect;
             // --- Lógica Centralizada para Habilidades ---
             switch (action) {
               case "sword_t1"://Tajo del Viento Veloz
@@ -11402,38 +11392,31 @@
 
               logBattle(logMessage);
               break;
-              case "sword_t3": // Danza de Espada Ciclónica
-                      const hits = 3 + Math.floor(playerTechLevel / 3);
-                      let totalDamage = 0;
-                      showFloatingText(playerSprite, techDetails.name, 'ability');
-                      for (let i = 0; i < hits; i++) {
-                          damageDealt = Math.max(1, Math.floor((player.attack * (techDetails.effect.baseDamageMultiplier || 1.1) / hits) - enemy.defense));
-                          enemy.hp -= damageDealt;
-                          totalDamage += damageDealt;
-                      }
-                      logMessage = `¡${techDetails.name} golpea ${hits} veces, causando un total de ${totalDamage} de daño!`;
-                      showFloatingText(enemySprite, `-${totalDamage}`, 'damage');
-                      break;
-              case "sword_t4":// Intención de Espada del Tirano
-              damageDealt = Math.max(
-                1,
-                Math.floor(
-                  player.attack *
-                    (techDetails.effect.baseDamageMultiplier +
-                      (playerTechLevel - 1) * 0.15)
-                ) - (enemy.defense || 0)
-              );
-              enemy.hp -= damageDealt;
-              showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-              logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
-              if (
-                Math.random() <
-                techDetails.effect.stunChance + playerTechLevel * 0.02
-              ) {
-                enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
-                logMessage += " ¡El enemigo queda aturdido!";
-              }
-              break;      
+              case "sword_t3": { // Danza de Espada Ciclónica
+                    const hits = Math.round(effect.baseHits + (playerTechLevel - 1) * effect.hitsIncreasePerLevel);
+                    let totalDamage = 0;
+                    for (let i = 0; i < hits; i++) {
+                        const damageDealt = Math.max(1, Math.floor((player.attack * effect.baseDamageMultiplier) - enemy.defense));
+                        enemy.hp -= damageDealt;
+                        totalDamage += damageDealt;
+                    }
+                    logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea ${hits} veces, causando ${totalDamage} de daño!`;
+                    showFloatingText(enemySprite, `-${totalDamage}`, 'damage');
+                    break;
+                }
+              case "sword_t4": { // Intento de Espada del Tirano
+                    const currentMultiplier = effect.baseDamageMultiplier + (playerTechLevel - 1) * effect.multiplierIncreasePerLevel;
+                    const damageDealt = Math.max(1, Math.floor(player.attack * currentMultiplier) - enemy.defense);
+                    enemy.hp -= damageDealt;
+                    logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
+                    const stunChance = effect.baseStunChance + (playerTechLevel - 1) * effect.stunChanceIncreasePerLevel;
+                    if (Math.random() < stunChance) {
+                        enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
+                        logMessage += " ¡El enemigo queda aturdido!";
+                    }
+                    showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                    break;
+                }
               case "sword_t5": // Corte que Divide Cielos y Tierra
               damageDealt = Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel * 0.5)));
               enemy.hp -= damageDealt;
@@ -11499,12 +11482,14 @@
                 }
                 break;
               case "fire_t4": // Sol Abrasador (TIER 4)
-                  damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.3)) - enemy.defense);
-                  enemy.hp -= damageDealt;
-                  logMessage = `¡Creas un Sol Abrasador que inflige ${damageDealt} de daño masivo!`;
-                  showFloatingText(playerSprite, techDetails.name, 'ability');
-                  showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-                  break;
+              case "fire_t4": { // Sol Abrasador
+                    const currentMultiplier = effect.baseDamageMultiplier + (playerTechLevel - 1) * effect.multiplierIncreasePerLevel;
+                    const damageDealt = Math.max(1, Math.floor(player.attack * currentMultiplier) - enemy.defense);
+                    enemy.hp -= damageDealt;
+                    logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) inflige ${damageDealt} de daño masivo!`;
+                    showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                    break;
+                }
               case "fire_t5": // Llama del Fénix Renaciente
                         damageDealt = Math.max(1, Math.floor(player.attack * techDetails.effect.baseDamageMultiplier) - enemy.defense);
                         enemy.hp -= damageDealt;
@@ -11540,24 +11525,28 @@
                 showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                 showFloatingText(enemySprite, 'Defensa ↓', 'debuff');
                 break;
-              case "lightning_t3": // Jaula de Rayos
-                        damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier || 1.2)) - enemy.defense);
-                        enemy.hp -= damageDealt;
-                        const stunChance = techDetails.effect.stunChance + (playerTechLevel * 0.05);
-                        logMessage = `¡${techDetails.name} electrocuta con ${damageDealt} de daño!`;
-                        if (Math.random() < stunChance) {
-                            enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 2); // Aturde por 2 turnos
-                            logMessage += " ¡El enemigo queda paralizado!";
-                            showFloatingText(enemySprite, '¡Aturdido!', 'debuff');
-                        }
-                        showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-                        break;
-              case "lightning_t4": // Llamada del Juicio del Trueno
-                        damageDealt = Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel * 0.2)));
-                        enemy.hp -= damageDealt;
-                        logMessage = `¡${techDetails.name} ignora toda defensa, causando ${damageDealt} de daño verdadero!`;
-                        showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-                        break;          
+              case "lightning_t3": { // Jaula de Rayos
+                  const currentMultiplier = effect.baseDamageMultiplier + (playerTechLevel - 1) * effect.damageMultiplierIncreasePerLevel;
+                  const damageDealt = Math.max(1, Math.floor(player.attack * currentMultiplier) - enemy.defense);
+                  enemy.hp -= damageDealt;
+                  logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) electrocuta con ${damageDealt} de daño!`;
+                  const stunChance = effect.baseStunChance + (playerTechLevel - 1) * effect.stunChanceIncreasePerLevel;
+                  if (Math.random() < stunChance) {
+                      enemy.stunnedTurns = Math.max(enemy.stunnedTurns, effect.duration);
+                      logMessage += ` ¡El enemigo queda paralizado!`;
+                      showFloatingText(enemySprite, '¡Paralizado!', 'debuff');
+                  }
+                  showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                  break;
+              }
+              case "lightning_t4": { // Llamada del Juicio del Trueno
+                    const currentMultiplier = effect.baseDamageMultiplier + (playerTechLevel - 1) * effect.multiplierIncreasePerLevel;
+                    const damageDealt = Math.floor(player.attack * currentMultiplier); // Ignora defensa
+                    enemy.hp -= damageDealt;
+                    logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) ignora la defensa, causando ${damageDealt} de daño verdadero!`;
+                    showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                    break;
+                }          
               case "lightning_t5": // Tribulación de los Nueve Cielos (TIER 5)
                 damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.4)) - enemy.defense);
                 enemy.hp -= damageDealt;
@@ -11731,41 +11720,23 @@
 
                 logBattle(logMessage);
                 break;
-              case "formation_t3":
-                // Definimos las variables para ESTE caso
-                const shieldValue_t3 =
-                  techDetails.effect.shieldValue + playerTechLevel * 20;
-                const shieldDuration_t3 = techDetails.effect.duration;
-
-                // Asignamos el valor del escudo y los turnos al estado del jugador
-                player.magicShieldValue =
-                  (player.magicShieldValue || 0) + shieldValue_t3;
-                // --- Y LA CORRECCIÓN CLAVE ESTÁ AQUÍ TAMBIÉN ---
-                player.magicShieldTurns = Math.max(
-                  player.magicShieldTurns || 0,
-                  shieldDuration_t3
-                );
-
-                // ... (resto de la lógica para aplicar debuffs al enemigo) ...
-
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) crea un escudo de ${shieldValue_t3} y debilita al enemigo!`;
-                showFloatingText(
-                  document.querySelector(".character-sprite"),
-                  `Escudo +${shieldValue_t3}`,
-                  "ability"
-                );
-                showFloatingText(
-                  document.getElementById("enemySprite"),
-                  "Defensa ↓ / Ataque ↓",
-                  "debuff"
-                );
-                logBattle(logMessage);
-                break;              
-              case "formation_t4": // Santuario Dorado Protector
-                      player.intangibleTurns = techDetails.effect.immunityDuration;
-                      logMessage = `¡${techDetails.name} te envuelve! Te vuelves inmune al daño por ${player.intangibleTurns} turnos.`;
-                      showFloatingText(playerSprite, '¡Invulnerable!', 'ability');
-                      break;
+              case "formation_t3": { // Matriz de Supresión Espiritual
+                    const reduction = effect.baseReduction + (playerTechLevel - 1) * effect.reductionIncreasePerLevel;
+                    enemy.defenseReductionTurns = Math.max(enemy.defenseReductionTurns, effect.duration);
+                    enemy.defenseReductionAmount = Math.max(enemy.defenseReductionAmount, reduction);
+                    enemy.attackReductionTurns = Math.max(enemy.attackReductionTurns, effect.duration);
+                    enemy.attackReductionAmount = Math.max(enemy.attackReductionAmount, reduction);
+                    logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) debilita al enemigo! Su Ataque y Defensa se reducen en ${reduction}.`;
+                    showFloatingText(enemySprite, 'Ata/Def ↓', 'debuff');
+                    break;
+                }      
+              case "formation_t4": { // Santuario Dorado Protector
+                  const duration = effect.baseDuration + (playerTechLevel >= effect.levelForExtraTurn ? 1 : 0);
+                  player.intangibleTurns = duration;
+                  logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) te hace inmune al daño por ${duration} turnos!`;
+                  showFloatingText(playerSprite, '¡Invulnerable!', 'ability');
+                  break;
+              }
               case "formation_t5": // Matriz de Reversión del Cosmos
                 player.damageToHealingTurns = techDetails.effect.damageToHealingDuration;
                 logMessage = `¡Activaste ${techDetails.name}! Durante ${player.damageToHealingTurns} turnos, el daño recibido te curará.`;
