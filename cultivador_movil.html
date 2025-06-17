@@ -30,6 +30,8 @@
         flex-grow: 1;
         /* El padding-top crea el espacio para la barra de navegación superior */
         padding-top: 55px; /* Ajusta este valor si cambia la altura de la barra */
+        position: relative;
+        z-index: 1;
       }
 
       .sidebar {
@@ -794,8 +796,7 @@
           padding-top: 0; /* En móvil, no hay espacio arriba, el menú es un overlay */
           /* --- CORRECCIÓN CLAVE --- */
           /* Hacemos que el contenedor del juego pueda estar detrás de la barra */
-          position: relative;
-          z-index: 1;
+        
         }
 
         .map-container {
