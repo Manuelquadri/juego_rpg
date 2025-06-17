@@ -784,18 +784,38 @@
         }
 
         .top-nav-bar {
-          flex-direction: column;
-          justify-content: flex-start;
-          align-items: stretch;
-          height: auto;
-          padding-top: 60px;
-          /* --- CORRECCIÓN CLAVE --- */
-          /* Aseguramos que la barra esté por encima del game-container */
-          z-index: 200;
-          transform: translateY(-100%);
-          transition: transform 0.4s ease-in-out;
-        }
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        height: auto; /* <-- Correcto */
+        padding-top: 60px; /* <-- Correcto */
+        z-index: 200;
+        transform: translateY(-100%);
+        transition: transform 0.4s ease-in-out;
 
+        /* 1. Establecemos una altura máxima. No puede ser más alto que la pantalla. */
+        max-height: 100vh; 
+        
+        /* 2. LA CLAVE: Si el contenido se desborda, creamos un scroll vertical. */
+        overflow-y: auto; 
+
+        /* 3. (Opcional pero recomendado) Mejoramos la estética de la barra de scroll en navegadores Webkit (Chrome, Safari) */
+        scrollbar-width: thin;
+        scrollbar-color: #d4af37 rgba(0, 0, 0, 0.3);
+        }
+        /* Para navegadores Webkit (Chrome, Safari, Edge) */
+        .top-nav-bar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .top-nav-bar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .top-nav-bar::-webkit-scrollbar-thumb {
+            background-color: #b8941f;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
         .top-nav-bar.open {
           transform: translateY(0);
         }
