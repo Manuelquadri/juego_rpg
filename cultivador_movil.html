@@ -8,6 +8,11 @@
       /****************************************
        * 1. ESTILOS GENERALES Y LAYOUT
        ****************************************/
+       html, body {
+          width: 100%;
+          height: 100%;
+          overflow: hidden; /* Previene el scroll en el body, muy importante */
+      }
       * {
         margin: 0;
         padding: 0;
@@ -27,6 +32,9 @@
       .game-container {
         display: flex;
         flex-grow: 1;
+        position: relative;
+        width: 100%;
+        height: 100%;
         /* El padding-top crea el espacio para la barra de navegación superior */
         padding-top: 55px; /* Ajusta este valor si cambia la altura de la barra */
       }
@@ -439,11 +447,11 @@
        ****************************************/
 
       .battle-screen {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
+        height: 100vh; 
         background: linear-gradient(135deg, #1a1a2e, #16213e);
         display: none;
         flex-direction: column;
@@ -886,10 +894,19 @@
             justify-content: center;
             text-align: center;
         }
+        .battle-area {
+            padding-top: 5px;   /* Reduce el espacio superior */
+            padding-bottom: 5px;/* Reduce el espacio inferior */
+        }
 
+        .character, .enemy {
+            /* Reduce el padding vertical de los contenedores de personajes */
+            padding-top: 15px; 
+            padding-bottom: 15px;
+        }
         /* --- Ajustes al resto de la UI en modo horizontal --- */
         .stats-panel {
-            top: 10px;
+            top: 60px;
             left: 10px;
             padding: 6px;
             font-size: 0.75rem;
