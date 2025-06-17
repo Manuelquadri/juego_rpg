@@ -460,13 +460,14 @@
       }
 
       .battle-area {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        padding: 20px 10px;
-        gap: 10px;
-        overflow-y: auto;
+          flex: 1 1 auto; /* <-- Clave: Crecer y encogerse, con base automática */
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          padding: 10px; /* Un padding base razonable */
+          gap: 10px;
+          overflow-y: auto; /* <-- Clave: Si los personajes no caben, esta zona hará scroll, no toda la pantalla */
+          min-height: 0; /* Un truco de flexbox para que el overflow funcione correctamente en algunos navegadores */
       }
 
       .character,
@@ -895,8 +896,10 @@
             text-align: center;
         }
         .battle-area {
-            padding-top: 5px;   /* Reduce el espacio superior */
-            padding-bottom: 5px;/* Reduce el espacio inferior */
+            /* En landscape, los personajes pueden ir uno al lado del otro */
+            flex-direction: row; 
+            align-items: center; /* Centrar verticalmente */
+            padding: 5px 10px; /* Menos padding vertical, más horizontal */
         }
 
         .character, .enemy {
