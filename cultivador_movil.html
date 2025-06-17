@@ -450,6 +450,7 @@
         flex-direction: column;
         z-index: 300;
         overflow: hidden;
+        max-height: 100dvh; 
       }
 
       .battle-area {
@@ -775,7 +776,7 @@
         }
 
         .map-container {
-          height: 100vh;
+          max-height: 100dvh; 
         }
 
         #mobileMenuBtn,
@@ -794,7 +795,7 @@
         transition: transform 0.4s ease-in-out;
 
         /* 1. Establecemos una altura máxima. No puede ser más alto que la pantalla. */
-        max-height: 100vh; 
+        max-height: 100dvh; 
         
         /* 2. LA CLAVE: Si el contenido se desborda, creamos un scroll vertical. */
         overflow-y: auto; 
