@@ -539,7 +539,7 @@
       }
       #enemyInBattleInfoContainer {
         min-width: 70px;
-        max-width: 190px;
+        max-width: 300px;
         align-items: center;
         padding: 2px 4px;
         background-color: rgba(10, 10, 10, 0.6);
@@ -944,6 +944,27 @@
         .slot-key-hint {
             font-size: 10px;
         }
+        
+       
+
+        /* 2. Ajustamos los sprites y nombres para que ocupen el espacio liberado */
+        .character,
+        .enemy {
+            padding: 10px 0; /* Reducimos drásticamente el padding vertical */
+            justify-content: center; /* Centramos el contenido restante (sprite y nombre) */
+        }
+
+        .character-sprite,
+        .enemy-sprite {
+            margin-bottom: 8px; /* Un pequeño margen entre el sprite y el nombre */
+        }
+
+        /* 3. Aseguramos que la información sobre el sprite del enemigo sea visible */
+        #enemyInBattleInfoContainer {
+            /* Es posible que necesitemos ajustar su posición si se descuadra */
+            transform: translate(-50%, 5px); /* Empuja la barra un poco hacia abajo para que no se pegue al borde */
+        }
+        
 
         }
       /****************************************
@@ -1324,11 +1345,11 @@
           <div class="character-sprite">🧘</div>
           <h3 id="playerBattleName">Cultivador</h3>
           <div>Vida: <span id="playerBattleHp">100/100</span></div>
-          <div class="stat-bar">
+          <div class="stat-bar"style="display: none;">
             <div
               class="stat-fill hp-fill"
               id="playerBattleHpBar"
-              style="width: 100%"
+              style="display:none"
             ></div>
           </div>
         </div>
@@ -1347,11 +1368,11 @@
           <div class="enemy-sprite" id="enemySprite"></div>
           <h3 id="enemyName">Demonio</h3>
           <div>Vida: <span id="enemyHp">80/80</span></div>
-          <div class="stat-bar">
+          <div class="stat-bar"style="display: none;">
             <div
               class="stat-fill hp-fill"
               id="enemyHpBar"
-              style="width: 100%"
+              
             ></div>
           </div>
         </div>
