@@ -1634,7 +1634,32 @@
         <button onclick="closeModal()" class="close-modal-btn">Cerrar</button>
       </div>
     </div>
+    <!-- Modal para Gestión de Técnicas -->
+    <div class="modal" id="manageTechniquesModal">
+      <div class="modal-content" style="max-width: 800px; text-align: left;">
+          <h3 style="text-align: center;">Gestionar Técnicas de Combate</h3>
+          <div id="technique-management-container" style="display: flex; gap: 20px; margin-top: 20px;">
+              
+              <!-- Columna de Técnicas Equipadas -->
+              <div id="equipped-techniques-panel" style="flex: 1; border-right: 1px solid #555; padding-right: 20px;">
+                  <h4>Equipadas (5 máx.)</h4>
+                  <div id="equipped-techniques-list">
+                      <!-- Los slots equipados se generarán aquí -->
+                  </div>
+              </div>
 
+              <!-- Columna de Técnicas Aprendidas (disponibles para equipar) -->
+              <div id="available-techniques-panel" style="flex: 2;">
+                  <h4>Técnicas Aprendidas</h4>
+                  <div id="available-techniques-list" style="max-height: 400px; overflow-y: auto;">
+                      <!-- La lista de técnicas disponibles se generará aquí -->
+                  </div>
+              </div>
+
+          </div>
+          <button onclick="closeManageTechniquesModal()" style="display: block; margin: 20px auto 0;">Cerrar</button>
+      </div>
+  </div>
     <!-- Modal para Técnicas -->
     <div class="modal" id="techniqueModal">
       <div class="modal-content" style="max-width: 600px; text-align: left">
@@ -1648,6 +1673,9 @@
             padding-right: 10px;
           "
         ></div>
+        <button onclick="openManageTechniquesModal()" style="display: block; margin: 20px auto 10px; background-color: #3a7c6a;">
+          ⚔️ Gestionar Técnicas de Combate
+      </button>
         <button
           onclick="closeTechniqueModal()"
           style="display: block; margin: 20px auto 0"
@@ -1758,6 +1786,7 @@
           expToNext: 100,
           realm: "Mortal",
           quickSlots: [null, null, null, null, null], // 5 slots, inicialmente vacíos
+          equippedTechniques: [null, null, null, null, null],
           isCultivating: false,
           cultivationMode: {
             type: null,
@@ -1827,6 +1856,7 @@
           //BUFF
           defenseBoostTurns: 0,
           defenseBoostAmount: 0,
+          abilityCooldowns: {},
           // ===  DEBUFFS ===
           defenseReductionTurns: 0,
           defenseReductionAmount: 0,
@@ -1871,9 +1901,10 @@
           damageToHealingTurns: 0, // Turnos para convertir daño en curación
           intangibleTurns: 0, // Turnos de ser intangible (inmune a daño directo)
           canRevive: false, // Flag activado por Llama del Fénix
-          // Fin nuevos estados
-          // Para Aura de Pureza
+         
           immuneTurns: 0,
+          silencedTurns: 0, // Turnos en que no puede usar habilidades especiales
+          sealedTurns: 0,   // Turnos en que no puede realizar ninguna acción
         },
         cultivationInterval: null,
         inventory: {
@@ -2417,6 +2448,7 @@
             sealedTurns: 0,
             reflectDamageTurns: 0, // Para el aura de espinas
             reflectDamageMultiplier: 0,
+            stunChance:0,
           },
 
           playerTurn: true,
@@ -2478,6 +2510,7 @@
         "bandido_desfiladero",
         "cultivador_secta_rival",
         "diacono_renegado_jin",
+        "cultivador_renegado",
 
 
       ];
@@ -3817,6 +3850,22 @@
             levelTimeMultiplier: 1.8,
           },
         },
+        movement_t1: {
+          id: "movement_t1",
+          name: "Paso Veloz",
+          icon: "👟",
+          description: "Un movimiento rápido que te reposiciona, aumentando temporalmente tu defensa para el siguiente turno.",
+          type: "active_ability",
+          abilityId: "movement_t1",
+          effect: { 
+              tempDefenseBuff: 10, // Un bono fijo y simple para una técnica inicial
+              buffDuration: 2,     // Dura tu turno actual y el siguiente del enemigo
+              buffIncreasePerLevel: 2 // Aumenta el bono en 2 por cada nivel
+          },
+          manaCost: 15,
+          maxLevel: 10,
+          cultivationSettings: { baseTimeToLevelUp: 100, levelTimeMultiplier: 1.7 }
+      },
 
         // =================================================================
         // == GRADO 2 (Rango: Discípulo Principal) - Nivel Terrenal
@@ -3837,6 +3886,7 @@
                 bleedDuration: 2                // NUEVO: Duración de la hemorragia.
             },
             manaCost: 25,
+            cooldown: 2,
             maxLevel: 10,
             cultivationSettings: { baseTimeToLevelUp: 180, levelTimeMultiplier: 1.6 },
         },
@@ -3871,6 +3921,7 @@
             manaUpkeep: 5, // Maná que consume por turno para mantenerla
           },
           manaCost: 30, // Coste inicial para lanzarla
+          cooldown: 3,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 190,
@@ -3909,12 +3960,30 @@
             burnDuration: 3,
           },
           manaCost: 35,
+          cooldown: 3,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 200,
             levelTimeMultiplier: 1.7,
           },
         },
+        lightning_t2: {
+          id: "lightning_t2",
+          name: "Látigo de Trueno",
+          icon: "⚡️",
+          description: "Un chasquido de energía eléctrica que golpea al enemigo, reduciendo su defensa temporalmente.",
+          type: "active_ability",
+          abilityId: "lightning_t2",
+          effect: { 
+              baseDamageMultiplier: 1.4, 
+              defenseReduction: 10, // Cuánto reduce la defensa
+              duration: 2           // Por cuántos turnos
+          },
+          manaCost: 28,
+          cooldown: 2,
+          maxLevel: 10,
+          cultivationSettings: { baseTimeToLevelUp: 190, levelTimeMultiplier: 1.8 }
+      },
 
         // =================================================================
         // == GRADO 3 (Rango: Diácono) - Nivel Celestial
@@ -3936,6 +4005,7 @@
                 bleedDuration: 3                // NUEVO: Duración de la hemorragia.
             },
           manaCost: 50,
+          cooldown: 2,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 300,
@@ -3966,6 +4036,7 @@
           abilityId: "formation_t3",
           effect: { attackReduction: 15, defenseReduction: 15, duration: 4 },
           manaCost: 45,
+          cooldown: 5,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 320,
@@ -3987,6 +4058,7 @@
             duration: 3,
           },
           manaCost: 60,
+          cooldown: 4,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 380,
@@ -4003,6 +4075,7 @@
           abilityId: "movement_t3",
           effect: { baseDamageMultiplier: 2.0, isCritical: true },
           manaCost: 55, // isCritical necesitará lógica en battleAction
+          cooldown: 3,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 400,
@@ -4023,6 +4096,7 @@
           abilityId: "sword_t4",
           effect: { baseDamageMultiplier: 2.8, stunChance: 0.4 },
           manaCost: 70,
+          cooldown: 1,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 500,
@@ -4053,6 +4127,7 @@
           abilityId: "fire_t4",
           effect: { baseDamageMultiplier: 2.5, aoe: true },
           manaCost: 80,
+          cooldown: 4,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 550,
@@ -4069,6 +4144,7 @@
           abilityId: "lightning_t4",
           effect: { baseDamageMultiplier: 2.0, ignoreDefense: true },
           manaCost: 75,
+          cooldown: 4,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 580,
@@ -4085,12 +4161,29 @@
           abilityId: "formation_t4",
           effect: { immunityDuration: 2 },
           manaCost: 100,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 620,
             levelTimeMultiplier: 1.8,
           },
         },
+        movement_t4: {
+          id: "movement_t4",
+          name: "Danza del Viento Espectral",
+          icon: "💃",
+          description: "Un ataque veloz que confunde al enemigo, permitiéndote esquivar con certeza el siguiente golpe recibido.",
+          type: "active_ability",
+          abilityId: "movement_t4",
+          effect: { 
+              baseDamageMultiplier: 1.8, 
+              dodgeNextAttack: true // El efecto es simple: atacar y preparar una esquiva.
+          },
+          manaCost: 65,
+          cooldown: 1,
+          maxLevel: 10,
+          cultivationSettings: { baseTimeToLevelUp: 600, levelTimeMultiplier: 1.8 }
+      },
 
         // =================================================================
         // == GRADO 5 (Rango: Gran Anciano) - Nivel Transcendente
@@ -4109,6 +4202,7 @@
             criticalChance: 0.3,
           },
           manaCost: 120,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 800,
@@ -4143,6 +4237,7 @@
           abilityId: "fire_t5",
           effect: { baseDamageMultiplier: 3.5, aoe: true, reviveChance: 0.25 },
           manaCost: 150,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 850,
@@ -4164,6 +4259,7 @@
             duration: 2,
           },
           manaCost: 140,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 880,
@@ -4180,6 +4276,7 @@
           abilityId: "formation_t5",
           effect: { damageToHealingDuration: 3, reflectDamage: 0.5 },
           manaCost: 180,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 950,
@@ -4224,6 +4321,7 @@
             executeThreshold: 0.2,
           },
           manaCost: 200,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 1200,
@@ -4263,6 +4361,7 @@
             burnDuration: 5,
           },
           manaCost: 250,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 1300,
@@ -4284,6 +4383,7 @@
             stunChance: 0.8,
           },
           manaCost: 220,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 1350,
@@ -4300,6 +4400,7 @@
           abilityId: "formation_t6",
           effect: { sealDuration: 4, damagePerTurn: 50 },
           manaCost: 300,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 1500,
@@ -4316,6 +4417,7 @@
           abilityId: "movement_t6",
           effect: { baseDamageMultiplier: 3.0, unavoidable: true, multiHit: 5 },
           manaCost: 280,
+          cooldown: 6,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 1250,
@@ -4341,6 +4443,7 @@
             lifeSteal: 0.5,
           },
           manaCost: 350,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 2000,
@@ -4380,6 +4483,7 @@
             burnDamagePerTurn: 200,
           },
           manaCost: 400,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 2200,
@@ -4401,6 +4505,7 @@
             chainLightning: 10,
           },
           manaCost: 380,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 2300,
@@ -4417,6 +4522,7 @@
           abilityId: "formation_t7",
           effect: { randomCatastrophicEffects: true, reality_distortion: 5 },
           manaCost: 450,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 2800,
@@ -4437,6 +4543,7 @@
             spacialDistortion: true,
           },
           manaCost: 420,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 2400,
@@ -4461,6 +4568,7 @@
             ignoreAllProtections: true,
           },
           manaCost: 500,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 3500,
@@ -4500,6 +4608,7 @@
             universeScaleDamage: true,
           },
           manaCost: 600,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 3800,
@@ -4521,6 +4630,7 @@
             temporalDamage: true,
           },
           manaCost: 550,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 3600,
@@ -4541,6 +4651,7 @@
             existenceControl: 7,
           },
           manaCost: 700,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 4500,
@@ -4561,6 +4672,7 @@
             omnipresence: true,
           },
           manaCost: 650,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 4200,
@@ -4585,6 +4697,7 @@
             conceptualDamage: true,
           },
           manaCost: 800,
+          cooldown: 8,
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 6000,
@@ -6836,6 +6949,11 @@
         "Rollo: Dedo de Relámpago": {
           description: "Enseña 'Dedo de Relámpago'.",
           effect: (ps) => learnTechniqueFromRoll(ps, "lightning_t1"),
+          canUse: () => true,
+        },
+        "Rollo: Paso Veloz": {
+          description: "Enseña 'Paso Veloz'.",
+          effect: (ps) => learnTechniqueFromRoll(ps, "movement_t1"),
           canUse: () => true,
         },
 
@@ -10715,45 +10833,40 @@
       }
 
       function recalculatePlayerStats() {
-        const player = gameState.player;
-        // Reiniciar stats a base
-        player.maxHp = player.baseMaxHp;
-        player.maxMana = player.baseMaxMana;
-        player.attack = player.baseAttack;
-        player.defense = player.baseDefense;
+    const player = gameState.player;
+    // Reiniciar stats a base
+    player.maxHp = player.baseMaxHp;
+    player.maxMana = player.baseMaxMana;
+    player.attack = player.baseAttack;
+    player.defense = player.baseDefense;
 
-        // Asegurar que HP y Mana actuales no excedan los máximos recalculados
-        player.hp = Math.min(player.hp, player.maxHp);
-        player.mana = Math.min(player.mana, player.maxMana);
+    player.hp = Math.min(player.hp, player.maxHp);
+    player.mana = Math.min(player.mana, player.maxMana);
 
-        gameState.activeCombatAbilities = []; // Reiniciar lista de habilidades de combate activas
+    gameState.activeCombatAbilities = []; // Limpiar la lista
 
-        // Procesar técnicas aprendidas para habilidades de combate activas y efectos pasivos directos
-        for (const techId in player.learnedTechniques) {
-          const playerTech = player.learnedTechniques[techId];
-          if (playerTech.level > 0) {
-            // Solo si la técnica ha sido cultivada al menos al nivel 1 (o 0 si así lo defines)
-            const techInfo = techniqueData[techId];
-            if (
-              techInfo?.type === "active_ability" &&
-              !gameState.activeCombatAbilities.find(
-                (ab) => ab.id === techInfo.abilityId
-              )
-            ) {
-              gameState.activeCombatAbilities.push({
-                id: techInfo.abilityId,
-                name: techInfo.name,
-                source: "technique",
-                sourceTechniqueId: techId, // Guardar el ID de la técnica fuente es útil
-              });
-            }
-            // Si tienes técnicas pasivas que modifican stats como "Fortificación Corporal Básica",
-            // sus efectos ya se aplicaron al player.baseStat cuando se aprendieron/subieron de nivel en applyTechniqueEffect.
-            // recalculatePlayerStats se encarga de que maxHp, attack, etc., se actualicen desde baseMaxHp, baseAttack.
-          }
+    for (const techId in player.learnedTechniques) {
+        const playerTech = player.learnedTechniques[techId];
+        const techInfo = techniqueData[techId]; // techId es la clave correcta (ej. 'sword_t1')
+
+        // Filtro de seguridad: Si la técnica no existe o no es de combate, la ignoramos.
+        if (!techInfo || techInfo.type !== "active_ability") {
+            continue; 
         }
-        updateUI(); // Actualizar la UI con los stats recalculados
-      }
+
+        // Solo añadimos habilidades activas y que tengan al menos nivel 1
+        if (playerTech.level > 0) {
+            // === LA CORRECCIÓN CLAVE ESTÁ AQUÍ ===
+            // Guardamos directamente la clave de la técnica (techId) que es lo único que necesitamos.
+            gameState.activeCombatAbilities.push({
+                id: techInfo.abilityId,        // El ID de la acción (lo que se pasa a battleAction)
+                name: techInfo.name,           // El nombre para mostrar en el botón
+                sourceTechniqueId: techId      // La clave para buscar en techniqueData. ¡Esta es la pieza clave!
+            });
+        }
+    }
+    updateUI();
+}
 
       function startBattle(mapEntity) {
         updateStatsPanelVisibility();
@@ -10761,58 +10874,65 @@
         battleLogHistory = [];
         const toggleBtn = document.getElementById("toggleMapControlsBtn");
         if (toggleBtn) {
-          toggleBtn.classList.add("hidden-during-battle");
+            toggleBtn.classList.add("hidden-during-battle");
         }
         const player = gameState.player;
         if (player.isCultivating) stopCultivation();
         hideTouchControls();
 
-        // Detener animación de caminar al entrar en batalla
         player.isMoving = false;
-        if (player.animationTimer) {
-          clearInterval(player.animationTimer);
-          player.animationTimer = null;
-        }
-        if (player.idleTimeout) {
-          clearTimeout(player.idleTimeout);
-          player.idleTimeout = null;
-        }
-        player.currentDirection = "down"; // O la dirección que quieras en batalla
-        player.currentFrame = 0; // Frame idle
-        updatePlayerSpriteVisual(); // Actualizar para mostrar el sprite de batalla
+        if (player.animationTimer) clearInterval(player.animationTimer);
+        if (player.idleTimeout) clearTimeout(player.idleTimeout);
+        player.currentFrame = 0;
+        updatePlayerSpriteVisual();
 
+        // Obtenemos la definición ORIGINAL y COMPLETA del enemigo.
+        const enemyDefinition = entityTypes[mapEntity.originalEntityTypeId] || entityTypes[mapEntity.type];
+
+        if (!enemyDefinition) {
+            console.error(`¡CRÍTICO! No se encontró la definición para el enemigo:`, mapEntity);
+            showModal("Error de Batalla", "No se pudieron cargar los datos del enemigo.");
+            return;
+        }
+
+        // Construimos el objeto del enemigo de forma segura.
         gameState.battle.active = true;
         gameState.battle.enemy = {
-          ...mapEntity,
-          hp: mapEntity.hp,
-          maxHp: mapEntity.maxHp || mapEntity.hp,
-          entityRef: mapEntity,
-          frozenTurns: 0,
-          stunnedTurns: 0,
-          burningTurns: 0,
-          burnDamage: 0,
-          poisonedTurns: 0,
-          poisonDamage: 0,
-          defenseReductionTurns: 0,
-          defenseReductionAmount: 0,
-          rootedTurns: 0,
-          rootDamage: 0,
-          attackReductionTurns: 0,
-          attackReductionAmount: 0,
-          // Nuevos estados para efectos de alto nivel
-          silencedTurns: 0, // Turnos en que no puede usar habilidades especiales
-          sealedTurns: 0, // Turnos en que no puede realizar ninguna acción
+            ...enemyDefinition,         // 1. Copiamos el "molde" completo (con spriteUrl, abilities, etc.).
+            ...mapEntity,               // 2. Sobreescribimos con el estado actual (como el hp).
+            entityRef: mapEntity,       // 3. Guardamos la referencia a la entidad del mapa.
+            // 4. Reseteamos los estados de combate.
+            frozenTurns: 0,
+            stunnedTurns: 0,
+            burningTurns: 0,
+            burnDamage: 0,
+            poisonedTurns: 0,
+            poisonDamage: 0,
+            defenseReductionTurns: 0,
+            defenseReductionAmount: 0,
+            attackReductionTurns: 0,
+            attackReductionAmount: 0,
+            rootedTurns: 0,
+            rootDamage: 0,
+            silencedTurns: 0,
+            sealedTurns: 0,
         };
+        
+        if (!gameState.battle.enemy.maxHp) {
+            gameState.battle.enemy.maxHp = gameState.battle.enemy.hp;
+        }
+        
         gameState.battle.playerTurn = true;
-
         document.getElementById("battleScreen").style.display = "flex";
+        
+        // Ahora estas funciones recibirán un objeto enemigo COMPLETO y correcto.
         populateBattleActionButtons();
-        updateBattleUI();
+        updateBattleUI(); 
+        
         logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
         updateTopNavVisibility();
         updatePlayerBarsOnMap();
-      }
-
+    }
       function showFloatingText(targetElement, text, type) {
         // --- ¡ESTA ES LA VERIFICACIÓN CLAVE! ---
         if (
@@ -10862,58 +10982,59 @@
       }
 
       function populateBattleActionButtons() {
-        const battleActionButtons = document.getElementById(
-          "battleActionButtons"
-        );
+        const battleActionButtons = document.getElementById("battleActionButtons");
         battleActionButtons.innerHTML = `
               <button onclick="battleAction('attack')">⚔️ Atacar</button>
               <button onclick="battleAction('defend')">🛡️ Defender</button>
               <button onclick="battleAction('qi_fist')">🧘 Puño de Qi</button>
               <button onclick="battleAction('escape')">🏃 Huir</button>
           `;
-        gameState.activeCombatAbilities.forEach((ability) => {
-          const abilityButton = document.createElement("button");
-          let buttonText = `✨ ${ability.name}`;
-          let canAfford = true;
-          if (ability.source === "technique" && ability.sourceTechniqueId) {
-            const techLevel =
-              gameState.player.learnedTechniques[ability.sourceTechniqueId]
-                ?.level;
-            if (techLevel > 0) buttonText += ` (Nv.${techLevel})`;
-            else {
-              abilityButton.disabled = true;
-              abilityButton.title = "Requiere refinamiento";
+          
+        // Iteramos sobre las técnicas equipadas en los slots.
+        gameState.player.equippedTechniques.forEach((techId) => {
+            // Si el slot está vacío (null) o la técnica no existe (por un save antiguo), lo saltamos.
+            if (!techId || !techniqueData[techId]) {
+                return;
             }
-          }
-          const techDetails =
-            ability.source === "technique" && ability.sourceTechniqueId
-              ? techniqueData[ability.sourceTechniqueId]
-              : null;
-          let manaCost = 0;
-          if (
-            techDetails &&
-            techDetails.effect &&
-            techDetails.effect.manaCost
-          ) {
-            manaCost = techDetails.effect.manaCost;
-          } else if (ability.id === "qi_blast_minor") {
-            manaCost = 15;
-          } else if (techDetails && techDetails.manaCost) {
-            manaCost = techDetails.manaCost;
-          }
-          if (manaCost > 0 && gameState.player.mana < manaCost) {
-            canAfford = false;
-          }
+            
+            const techDetails = techniqueData[techId];
+            const playerTech = gameState.player.learnedTechniques[techId];
+            
+            // Comprobación de seguridad: si una técnica está equipada pero el jugador ya no la conoce, no mostramos el botón.
+            if (!playerTech) {
+                console.warn(`Técnica equipada '${techId}' no encontrada en el libro de hechizos del jugador.`);
+                return;
+            }
 
-          abilityButton.textContent = buttonText;
-          abilityButton.onclick = () => battleAction(ability.id, ability);
-          abilityButton.disabled = abilityButton.disabled || !canAfford;
-          if (!canAfford && !abilityButton.disabled)
-            abilityButton.title = "Maná insuficiente";
+            const abilityButton = document.createElement("button");
+            const techLevel = playerTech.level || 0;
 
-          battleActionButtons.appendChild(abilityButton);
+            let buttonText = `✨ ${techDetails.name} (Nv.${techLevel})`;
+            let canUse = techLevel > 0;
+            let reason = canUse ? "" : "Error: Técnica equipada sin nivel";
+            
+            const manaCost = techDetails.manaCost || 0;
+            if (canUse && gameState.player.mana < manaCost) {
+                canUse = false;
+                reason = "Maná insuficiente";
+            }
+            
+            const cooldownTurns = gameState.player.abilityCooldowns[techDetails.abilityId] || 0;
+            if (canUse && cooldownTurns > 0) {
+                canUse = false;
+                reason = `Enfriamiento: ${cooldownTurns} turnos`;
+                buttonText += ` (${cooldownTurns}t)`;
+            }
+
+            abilityButton.textContent = buttonText;
+            // El onclick pasa el ID de la acción a `battleAction`.
+            abilityButton.onclick = () => battleAction(techDetails.abilityId);
+            abilityButton.disabled = !canUse;
+            abilityButton.title = reason;
+
+            battleActionButtons.appendChild(abilityButton);
         });
-      }
+    }
 
       function updateExtraStatsUI() {
         // Actualizar Zona
@@ -10936,157 +11057,92 @@
       function updateBattleUI() {
         const player = gameState.player;
         const enemy = gameState.battle.enemy;
-        const battleScreenActive =
-          document.getElementById("battleScreen").style.display === "flex";
+        const battleScreenActive = document.getElementById("battleScreen").style.display === "flex";
 
-        // --- Actualización del Jugador (Barras sobre el sprite) ---
-        const playerBarsContainer = document.getElementById(
-          "playerInBattleSpriteBarsContainer"
-        );
-        const playerSpriteInBattle = document.querySelector(
-          ".battle-area .character .character-sprite"
-        );
-
-        if (playerBarsContainer && playerSpriteInBattle && battleScreenActive) {
-          playerBarsContainer.style.display = "flex";
-          const spriteTop = playerSpriteInBattle.offsetTop;
-          const spriteLeft = playerSpriteInBattle.offsetLeft;
-          const spriteWidth = playerSpriteInBattle.offsetWidth;
-          const barContainerHeight = playerBarsContainer.offsetHeight;
-
-          playerBarsContainer.style.top = `${
-            spriteTop - barContainerHeight - 3
-          }px`;
-          playerBarsContainer.style.left = `${spriteLeft + spriteWidth / 2}px`;
-
-          const playerHpFill = document.getElementById(
-            "playerInBattleSpriteHpFill"
-          );
-          const playerManaFill = document.getElementById(
-            "playerInBattleSpriteManaFill"
-          );
-          if (playerHpFill)
-            playerHpFill.style.width = `${Math.max(
-              0,
-              (player.hp / player.maxHp) * 100
-            )}%`;
-          if (playerManaFill)
-            playerManaFill.style.width = `${Math.max(
-              0,
-              (player.mana / player.maxMana) * 100
-            )}%`;
-        } else if (playerBarsContainer) {
-          playerBarsContainer.style.display = "none";
-        }
-
-        // --- Actualización del Enemigo (Info y barras sobre el sprite) ---
-        const enemyInfoContainer = document.getElementById(
-          "enemyInBattleInfoContainer"
-        );
+        // --- Declaraciones de Elementos del DOM al principio ---
+        const playerBarsContainer = document.getElementById("playerInBattleSpriteBarsContainer");
+        const playerSpriteInBattle = document.querySelector(".battle-area .character .character-sprite");
+        const enemyInfoContainer = document.getElementById("enemyInBattleInfoContainer");
         const enemySpriteEl = document.getElementById("enemySprite");
 
-        let enemyHpPercent = 0;
-        if (enemy) {
-          enemyHpPercent = Math.max(
-            0,
-            (enemy.hp / (enemy.maxHp || enemy.hp)) * 100
-          );
+        // --- Lógica del Jugador ---
+        if (playerBarsContainer && playerSpriteInBattle && battleScreenActive) {
+            playerBarsContainer.style.display = "flex";
+            const spriteTop = playerSpriteInBattle.offsetTop;
+            const spriteLeft = playerSpriteInBattle.offsetLeft;
+            const spriteWidth = playerSpriteInBattle.offsetWidth;
+            const barContainerHeight = playerBarsContainer.offsetHeight;
+
+            playerBarsContainer.style.top = `${spriteTop - barContainerHeight - 3}px`;
+            playerBarsContainer.style.left = `${spriteLeft + spriteWidth / 2}px`;
+
+            const playerHpFill = document.getElementById("playerInBattleSpriteHpFill");
+            const playerManaFill = document.getElementById("playerInBattleSpriteManaFill");
+            if (playerHpFill) playerHpFill.style.width = `${Math.max(0, (player.hp / player.maxHp) * 100)}%`;
+            if (playerManaFill) playerManaFill.style.width = `${Math.max(0, (player.mana / player.maxMana) * 100)}%`;
+        } else if (playerBarsContainer) {
+            playerBarsContainer.style.display = "none";
         }
 
-        if (
-          enemy &&
-          enemyInfoContainer &&
-          enemySpriteEl &&
-          battleScreenActive
-        ) {
-          enemyInfoContainer.style.display = "flex";
-
-          // Calculamos la posición del contenedor de la barra de vida del enemigo
-          const spriteTop = enemySpriteEl.offsetTop;
-          const spriteLeft = enemySpriteEl.offsetLeft;
-          const spriteWidth = enemySpriteEl.offsetWidth;
-          const infoContainerHeight = enemyInfoContainer.offsetHeight;
-
-          // Posicionamos el contenedor encima del sprite del enemigo
-          enemyInfoContainer.style.top = `${
-            spriteTop - infoContainerHeight - 5
-          }px`;
-          enemyInfoContainer.style.left = `${spriteLeft + spriteWidth / 2}px`;
-
-          const enemyNameLevelEl = document.getElementById(
-            "enemyBattleNameLevel"
-          );
-          const enemySpriteHpFill = document.getElementById(
-            "enemyInBattleSpriteHpFill"
-          );
-
-          if (enemyNameLevelEl) {
-            let enemyDisplayName = enemy.name;
-
-            // Priorizamos la etiqueta de estatus (Jefe/Élite)
-            if (enemy.isBoss) {
-              enemyDisplayName += ` (Jefe)`;
-            } else if (enemy.isMiniBoss) {
-              enemyDisplayName += ` (Élite)`;
-            }
-
-            // Luego, añadimos el nivel si existe
-            if (enemy.level) {
-              enemyDisplayName += ` - Nv. ${enemy.level}`;
-            }
-
-            enemyNameLevelEl.textContent = enemyDisplayName;
-            // Coloreamos el nombre del jefe para que destaque
-            if (enemy.isBoss) {
-              enemyNameLevelEl.style.color = "#ff4d4d"; // Rojo
-              enemyNameLevelEl.style.fontWeight = "bold";
-            } else {
-              // Si no es jefe, aplicamos la lógica de color por nivel
-              const nameStyle = getEnemyNameColor(
-                player.level,
-                enemy.level || 1
-              );
-              enemyNameLevelEl.style.color = nameStyle.color;
-              enemyNameLevelEl.style.fontWeight = nameStyle.fontWeight;
-            }
-          }
-          if (enemySpriteHpFill)
-            enemySpriteHpFill.style.width = `${enemyHpPercent}%`;
-        } else if (enemyInfoContainer) {
-          enemyInfoContainer.style.display = "none";
-        }
-
-        // --- Actualización del resto de la UI de batalla (paneles principales) ---
-        if (battleScreenActive) {
-          document.getElementById(
-            "playerBattleName"
-          ).textContent = `Cultivador (Nv.${player.level})`;
-          document.getElementById("playerBattleHp").textContent = `${Math.floor(
-            player.hp
-          )}/${player.maxHp}`;
-          document.getElementById("playerBattleHpBar").style.width = `${
-            (player.hp / player.maxHp) * 100
-          }%`;
-
-          if (enemy && enemySpriteEl) {
+        // --- Lógica del Enemigo ---
+        if (enemy && enemySpriteEl && enemyInfoContainer && battleScreenActive) {
+            // --- LÓGICA DEL SPRITE (AHORA DENTRO DEL BLOQUE SEGURO) ---
             if (enemy.spriteUrl) {
-              enemySpriteEl.style.backgroundImage = `url('${enemy.spriteUrl}')`;
-              enemySpriteEl.textContent = "";
+                enemySpriteEl.style.backgroundImage = `url('${enemy.spriteUrl}')`;
+                enemySpriteEl.textContent = "";
             } else {
-              enemySpriteEl.style.backgroundImage = "none";
-              enemySpriteEl.textContent = enemy.symbol || "?";
+                enemySpriteEl.style.backgroundImage = "none";
+                enemySpriteEl.textContent = enemy.symbol || "?";
             }
+            
+            // El resto de la lógica para las barras y el nombre del enemigo
+            enemyInfoContainer.style.display = "flex";
+            const spriteTop = enemySpriteEl.offsetTop;
+            const spriteLeft = enemySpriteEl.offsetLeft;
+            const spriteWidth = enemySpriteEl.offsetWidth;
+            const infoContainerHeight = enemyInfoContainer.offsetHeight;
 
+            enemyInfoContainer.style.top = `${spriteTop - infoContainerHeight - 5}px`;
+            enemyInfoContainer.style.left = `${spriteLeft + spriteWidth / 2}px`;
+
+            const enemyNameLevelEl = document.getElementById("enemyBattleNameLevel");
+            const enemySpriteHpFill = document.getElementById("enemyInBattleSpriteHpFill");
+            const enemyHpPercent = Math.max(0, (enemy.hp / (enemy.maxHp || enemy.hp)) * 100);
+
+            if (enemyNameLevelEl) {
+                let enemyDisplayName = enemy.name;
+                if (enemy.isBoss) {
+                    enemyDisplayName += ` (Jefe)`;
+                } else if (enemy.isMiniBoss) {
+                    enemyDisplayName += ` (Élite)`;
+                }
+                if (enemy.level) {
+                    enemyDisplayName += ` - Nv. ${enemy.level}`;
+                }
+                enemyNameLevelEl.textContent = enemyDisplayName;
+
+                const nameStyle = getEnemyNameColor(player.level, enemy.level || 1);
+                enemyNameLevelEl.style.color = nameStyle.color;
+                enemyNameLevelEl.style.fontWeight = nameStyle.fontWeight;
+            }
+            if (enemySpriteHpFill) enemySpriteHpFill.style.width = `${enemyHpPercent}%`;
+
+            // Paneles de HP/Nombre principales del enemigo
             document.getElementById("enemyName").textContent = enemy.name;
-            document.getElementById("enemyHp").textContent = `${Math.floor(
-              enemy.hp
-            )}/${enemy.maxHp || enemy.hp}`;
-            document.getElementById(
-              "enemyHpBar"
-            ).style.width = `${enemyHpPercent}%`;
-          }
+            document.getElementById("enemyHp").textContent = `${Math.floor(enemy.hp)}/${enemy.maxHp || enemy.hp}`;
+            document.getElementById("enemyHpBar").style.width = `${enemyHpPercent}%`;
+            
+        } else if (enemyInfoContainer) {
+            enemyInfoContainer.style.display = "none";
         }
-      }
+
+        // --- Lógica de los Paneles Principales del Jugador ---
+        if (battleScreenActive) {
+            document.getElementById("playerBattleName").textContent = `Cultivador (Nv.${player.level})`;
+            document.getElementById("playerBattleHp").textContent = `${Math.floor(player.hp)}/${player.maxHp}`;
+            document.getElementById("playerBattleHpBar").style.width = `${(player.hp / player.maxHp) * 100}%`;
+        }
+    }
 
       function battleAction(action, abilityDetails = null) {
         if (!gameState.battle.playerTurn || !gameState.battle.active) return;
@@ -11095,6 +11151,18 @@
         const playerSprite = document.querySelector('.character-sprite');
         const enemySprite = document.getElementById('enemySprite');
         let actionTaken = true;
+        // --- NUEVO: REDUCIR ENFRIAMIENTOS AL INICIO DEL TURNO ---
+        for (const abilityId in player.abilityCooldowns) {
+            if (player.abilityCooldowns[abilityId] > 0) {
+                player.abilityCooldowns[abilityId]--;
+            }
+            // Opcional: limpiar del objeto si llega a 0 para no tener un objeto gigante
+            if (player.abilityCooldowns[abilityId] === 0) {
+                delete player.abilityCooldowns[abilityId];
+            }
+        }
+         // Actualizamos los botones AHORA para que reflejen la reducción del turno actual
+        populateBattleActionButtons();
 
         let playerTechLevel = 0;
         if (
@@ -11206,16 +11274,7 @@
             logBattle("Clon Fantasma desaparece.");
           }
         }
-        if (player.elementalTurns > 0 && action !== "summon_elemental") {
-          player.elementalTurns--;
-          if (player.elementalTurns === 0) {
-            player.attack -= player.tempAttackBonus;
-            player.defense -= player.tempDefenseBonus;
-            logBattle("Elemental invocado desaparece.");
-            player.tempAttackBonus = 0;
-            player.tempDefenseBonus = 0;
-          }
-        }
+     
 
         if (player.hp <= 0) {
           player.hp = 0;
@@ -11246,14 +11305,22 @@
         const techDetails = techniqueData[action]; // Obtener detalles de la técnica por su ID
         if (techDetails && techDetails.type === "active_ability") {
           const manaCost = techDetails.manaCost || 0;
+          if ((player.abilityCooldowns[action] || 0) > 0) {
+              logBattle(`¡La técnica ${techDetails.name} aún está en enfriamiento!`);
+              return; // Detiene la acción, pero no consume el turno. El jugador puede elegir otra cosa.
+          }
           if (player.mana >= manaCost) {
             player.mana -= manaCost;
+             // --- ESTABLECER ENFRIAMIENTO DESPUÉS DE USAR ---
+             if (techDetails.cooldown) {
+                player.abilityCooldowns[action] = techDetails.cooldown;
+            }
             let damageDealt = 0;
             let logMessage = "";
 
             // --- Lógica Centralizada para Habilidades ---
             switch (action) {
-              case "sword_t1":
+              case "sword_t1"://Tajo del Viento Veloz
                 const swordTechDetails = techniqueData["sword_t1"];
                 const swordManaCost = swordTechDetails.manaCost || 10;
                 if (player.mana >= swordManaCost) {
@@ -11286,9 +11353,117 @@
                 }
 
                 break;
+              case "sword_t2"://Estocada Perfora-Armadura
+                          // Obtenemos los detalles de la técnica y su nivel
+              const estocadaDetails = techniqueData["sword_t2"];
+              const estocadaLevel = player.learnedTechniques["sword_t2"]?.level || 1;
 
-              case "sword_t3":
-              case "fire_t2":
+              // --- CÁLCULOS MEJORADOS ---
+              // El multiplicador de daño y la penetración ahora escalan con el nivel de la técnica
+              const damageMultiplier = estocadaDetails.effect.baseDamageMultiplier + ((estocadaLevel - 1) * 0.1);
+              const penetrationPercent = estocadaDetails.effect.defensePenetration + ((estocadaLevel - 1) * 0.02); // +2% por nivel
+
+              // Calculamos el daño
+              const defenseToIgnore = (enemy.defense || 0) * penetrationPercent;
+              const baseDamage = player.attack * damageMultiplier;
+              damageDealt = Math.max(1, Math.floor(baseDamage - ((enemy.defense || 0) - defenseToIgnore)));
+              
+              enemy.hp -= damageDealt;
+
+              logMessage = `¡${estocadaDetails.name} (Nv.${estocadaLevel}) ignora ${Math.floor(defenseToIgnore)} de defensa y causa ${damageDealt} de daño!`;
+              showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+
+              // --- LÓGICA PARA LA HEMORRAGIA (BLEED) ---
+              const bleedChance = estocadaDetails.effect.bleedChance + ((estocadaLevel - 1) * 0.05); // La probabilidad de sangrado también mejora
+              if (Math.random() < bleedChance) {
+                  const bleedDmg = estocadaDetails.effect.bleedDamagePerTurn + (estocadaLevel * 2); // El daño de sangrado escala
+                  const bleedDur = estocadaDetails.effect.bleedDuration;
+
+                  // Para no crear una nueva propiedad, podemos reutilizar la de "poison" o "burn".
+                  // Usemos "poison" como si fuera "bleed" para no añadir más complejidad al enemyTurn.
+                  enemy.poisonedTurns = Math.max(enemy.poisonedTurns, bleedDur);
+                  enemy.poisonDamage = Math.max(enemy.poisonDamage, bleedDmg);
+                  
+                  logMessage += ` ¡El golpe causa una herida abierta que sangra!`;
+                  showFloatingText(enemySprite, 'Hemorragia', 'debuff');
+              }
+
+              logBattle(logMessage);
+              break;
+              case "sword_t3": // Danza de Espada Ciclónica
+                      const hits = 3 + Math.floor(playerTechLevel / 3);
+                      let totalDamage = 0;
+                      showFloatingText(playerSprite, techDetails.name, 'ability');
+                      for (let i = 0; i < hits; i++) {
+                          damageDealt = Math.max(1, Math.floor((player.attack * (techDetails.effect.baseDamageMultiplier || 1.1) / hits) - enemy.defense));
+                          enemy.hp -= damageDealt;
+                          totalDamage += damageDealt;
+                      }
+                      logMessage = `¡${techDetails.name} golpea ${hits} veces, causando un total de ${totalDamage} de daño!`;
+                      showFloatingText(enemySprite, `-${totalDamage}`, 'damage');
+                      break;
+              case "sword_t4":// Intención de Espada del Tirano
+              damageDealt = Math.max(
+                1,
+                Math.floor(
+                  player.attack *
+                    (techDetails.effect.baseDamageMultiplier +
+                      (playerTechLevel - 1) * 0.15)
+                ) - (enemy.defense || 0)
+              );
+              enemy.hp -= damageDealt;
+              showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+              logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
+              if (
+                Math.random() <
+                techDetails.effect.stunChance + playerTechLevel * 0.02
+              ) {
+                enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
+                logMessage += " ¡El enemigo queda aturdido!";
+              }
+              break;      
+              case "sword_t5": // Corte que Divide Cielos y Tierra
+              damageDealt = Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel * 0.5)));
+              enemy.hp -= damageDealt;
+              logMessage = `¡${techDetails.name} corta la realidad misma, infligiendo ${damageDealt} de daño absoluto!`;
+              showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+              break;
+              case "sword_t6": // Espada del Emperador Celestial
+                    logMessage = `¡${techDetails.name} desata un poder absoluto!`;
+                    if (enemy.hp / enemy.maxHp <= (techDetails.effect.executeThreshold || 0.2)) {
+                        damageDealt = enemy.hp;
+                        enemy.hp = 0;
+                        logMessage += " ¡El enemigo es ejecutado por decreto celestial!";
+                        showFloatingText(enemySprite, '¡EJECUTADO!', 'damage');
+                    } else {
+                        damageDealt = Math.floor(player.attack * techDetails.effect.baseDamageMultiplier);
+                        enemy.hp -= damageDealt;
+                        logMessage += ` Causa ${damageDealt} de daño que ignora toda protección.`;
+                        showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                    }
+                break;
+              
+              case "fire_t1"://Chispa Ígnea
+                damageDealt = Math.max(
+                  1,
+                  Math.floor(
+                    player.attack *
+                      (techDetails.effect.baseDamageMultiplier +
+                        (playerTechLevel - 1) * 0.1)
+                  ) - (enemy.defense || 0)
+                );
+                enemy.hp -= damageDealt;
+                enemy.burningTurns = Math.max(
+                  enemy.burningTurns,
+                  techDetails.effect.burnDuration
+                );
+                enemy.burnDamage = Math.max(
+                  enemy.burnDamage,
+                  techDetails.effect.burnDamagePerTurn + playerTechLevel
+                );
+                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño y quema al enemigo!`;
+                break;
+              case "fire_t2"://Aliento de Dragón Menor
                 damageDealt = Math.max(
                   1,
                   Math.floor(
@@ -11311,88 +11486,95 @@
                   logMessage += ` e inflige una quemadura intensa.`;
                 }
                 break;
+              case "fire_t4": // Sol Abrasador (TIER 4)
+                  damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.3)) - enemy.defense);
+                  enemy.hp -= damageDealt;
+                  logMessage = `¡Creas un Sol Abrasador que inflige ${damageDealt} de daño masivo!`;
+                  showFloatingText(playerSprite, techDetails.name, 'ability');
+                  showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                  break;
+              case "fire_t5": // Llama del Fénix Renaciente
+                        damageDealt = Math.max(1, Math.floor(player.attack * techDetails.effect.baseDamageMultiplier) - enemy.defense);
+                        enemy.hp -= damageDealt;
+                        player.canRevive = true;
+                        logMessage = `¡${techDetails.name} incinera al enemigo con ${damageDealt} de daño y te imbuye con la esencia del Fénix!`;
+                        showFloatingText(playerSprite, 'Fénix Interior', 'ability');
+                        showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                break;  
+              
 
-              case "fire_t1":
-                damageDealt = Math.max(
-                  1,
-                  Math.floor(
-                    player.attack *
-                      (techDetails.effect.baseDamageMultiplier +
-                        (playerTechLevel - 1) * 0.1)
-                  ) - (enemy.defense || 0)
-                );
-                enemy.hp -= damageDealt;
-                enemy.burningTurns = Math.max(
-                  enemy.burningTurns,
-                  techDetails.effect.burnDuration
-                );
-                enemy.burnDamage = Math.max(
-                  enemy.burnDamage,
-                  techDetails.effect.burnDamagePerTurn + playerTechLevel
-                );
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño y quema al enemigo!`;
-                break;
-
-              case "lightning_t1":
-              case "sword_t4":
-                damageDealt = Math.max(
-                  1,
-                  Math.floor(
-                    player.attack *
-                      (techDetails.effect.baseDamageMultiplier +
-                        (playerTechLevel - 1) * 0.15)
-                  ) - (enemy.defense || 0)
-                );
-                enemy.hp -= damageDealt;
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
-                if (
-                  Math.random() <
-                  techDetails.effect.stunChance + playerTechLevel * 0.02
-                ) {
-                  enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
-                  logMessage += " ¡El enemigo queda aturdido!";
-                }
-                break;
-
-              case "sword_t2":
-                            // Obtenemos los detalles de la técnica y su nivel
-                const estocadaDetails = techniqueData["sword_t2"];
-                const estocadaLevel = player.learnedTechniques["sword_t2"]?.level || 1;
-
-                // --- CÁLCULOS MEJORADOS ---
-                // El multiplicador de daño y la penetración ahora escalan con el nivel de la técnica
-                const damageMultiplier = estocadaDetails.effect.baseDamageMultiplier + ((estocadaLevel - 1) * 0.1);
-                const penetrationPercent = estocadaDetails.effect.defensePenetration + ((estocadaLevel - 1) * 0.02); // +2% por nivel
-
-                // Calculamos el daño
-                const defenseToIgnore = (enemy.defense || 0) * penetrationPercent;
-                const baseDamage = player.attack * damageMultiplier;
-                damageDealt = Math.max(1, Math.floor(baseDamage - ((enemy.defense || 0) - defenseToIgnore)));
+              case "lightning_t1": // Dedo de Relámpago (TIER 1)
+                  damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.1)) - enemy.defense);
+                  enemy.hp -= damageDealt;
+                  logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
+                  const stunChanceT1 = techDetails.effect.stunChance + (playerTechLevel * 0.03);
+                  if (Math.random() < stunChanceT1) {
+                      enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
+                      logMessage += " ¡El enemigo queda aturdido!";
+                      showFloatingText(enemySprite, '¡Aturdido!', 'debuff');
+                  }
+                  showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                  break;
+              case "lightning_t2": // Látigo de Trueno (TIER 2 - Creada)
+                damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.15)) - enemy.defense);
+                const defenseReduction = techDetails.effect.defenseReduction + playerTechLevel;
+                const duration = techDetails.effect.duration;
                 
                 enemy.hp -= damageDealt;
+                enemy.defenseReductionTurns = Math.max(enemy.defenseReductionTurns, duration);
+                enemy.defenseReductionAmount = Math.max(enemy.defenseReductionAmount, defenseReduction);
 
-                logMessage = `¡${estocadaDetails.name} (Nv.${estocadaLevel}) ignora ${Math.floor(defenseToIgnore)} de defensa y causa ${damageDealt} de daño!`;
+                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} de daño y reduce la defensa del enemigo en ${defenseReduction}!`;
                 showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-
-                // --- LÓGICA PARA LA HEMORRAGIA (BLEED) ---
-                const bleedChance = estocadaDetails.effect.bleedChance + ((estocadaLevel - 1) * 0.05); // La probabilidad de sangrado también mejora
-                if (Math.random() < bleedChance) {
-                    const bleedDmg = estocadaDetails.effect.bleedDamagePerTurn + (estocadaLevel * 2); // El daño de sangrado escala
-                    const bleedDur = estocadaDetails.effect.bleedDuration;
-
-                    // Para no crear una nueva propiedad, podemos reutilizar la de "poison" o "burn".
-                    // Usemos "poison" como si fuera "bleed" para no añadir más complejidad al enemyTurn.
-                    enemy.poisonedTurns = Math.max(enemy.poisonedTurns, bleedDur);
-                    enemy.poisonDamage = Math.max(enemy.poisonDamage, bleedDmg);
-                    
-                    logMessage += ` ¡El golpe causa una herida abierta que sangra!`;
-                    showFloatingText(enemySprite, 'Hemorragia', 'debuff');
+                showFloatingText(enemySprite, 'Defensa ↓', 'debuff');
+                break;
+              case "lightning_t3": // Jaula de Rayos
+                        damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier || 1.2)) - enemy.defense);
+                        enemy.hp -= damageDealt;
+                        const stunChance = techDetails.effect.stunChance + (playerTechLevel * 0.05);
+                        logMessage = `¡${techDetails.name} electrocuta con ${damageDealt} de daño!`;
+                        if (Math.random() < stunChance) {
+                            enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 2); // Aturde por 2 turnos
+                            logMessage += " ¡El enemigo queda paralizado!";
+                            showFloatingText(enemySprite, '¡Aturdido!', 'debuff');
+                        }
+                        showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                        break;
+              case "lightning_t4": // Llamada del Juicio del Trueno
+                        damageDealt = Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel * 0.2)));
+                        enemy.hp -= damageDealt;
+                        logMessage = `¡${techDetails.name} ignora toda defensa, causando ${damageDealt} de daño verdadero!`;
+                        showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                        break;          
+              case "lightning_t5": // Tribulación de los Nueve Cielos (TIER 5)
+                damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.4)) - enemy.defense);
+                enemy.hp -= damageDealt;
+                logMessage = `¡Invocas la ${techDetails.name}, causando ${damageDealt} de daño celestial!`;
+                const paralyzeChanceT5 = techDetails.effect.paralyzeChance + (playerTechLevel * 0.04);
+                if (Math.random() < paralyzeChanceT5) {
+                    enemy.stunnedTurns = Math.max(enemy.stunnedTurns, techDetails.effect.duration || 2);
+                    logMessage += ` ¡El poder de la tribulación lo deja paralizado por ${enemy.stunnedTurns} turnos!`;
+                    showFloatingText(enemySprite, '¡Paralizado!', 'debuff');
                 }
-
-                logBattle(logMessage);
+                showFloatingText(playerSprite, '¡Tribulación!', 'ability');
+                showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                 break;
 
-              case "movement_t2":
+              case "movement_t1": { // Paso Veloz (TIER 1)
+                  const defenseBonus = techDetails.effect.tempDefenseBuff + ((playerTechLevel - 1) * techDetails.effect.buffIncreasePerLevel);
+                  
+                  if(player.tempDefenseBoostAmount > 0) {
+                      player.defense -= player.tempDefenseBoostAmount;
+                  }
+                  player.defense += defenseBonus;
+                  player.tempDefenseBoostAmount = defenseBonus;
+                  player.tempDefenseBoostTurns = techDetails.effect.buffDuration;
+                  
+                  logMessage = `¡Ejecutas un ${techDetails.name}! Tu defensa aumenta en ${defenseBonus} por ${player.tempDefenseBoostTurns} turnos.`;
+                  showFloatingText(playerSprite, `Defensa +${defenseBonus}`, 'ability');
+                  break;
+              }
+              case "movement_t2"://Paso Etéreo
                 const etereoDetails = techniqueData["movement_t2"];
                 const etereoLevel = player.learnedTechniques["movement_t2"]?.level || 1;
 
@@ -11415,9 +11597,36 @@
                 showFloatingText(playerSprite, `Defensa +${defenseBonus}`, 'ability');
                 
                 logBattle(logMessage);
-                break;
+                break;              
+              case "movement_t3": // Parpadeo de Sombra
+                      damageDealt = Math.max(1, Math.floor((player.attack * (techDetails.effect.baseDamageMultiplier || 2.0)) * 1.5) - enemy.defense); // 1.5x por crítico
+                      enemy.hp -= damageDealt;
+                      logMessage = `¡Con ${techDetails.name}, apareces detrás del enemigo para un golpe crítico de ${damageDealt}!`;
+                      showFloatingText(playerSprite, '¡Golpe Súbito!', 'ability');
+                      showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                      break;               
+              case "movement_t4": // Danza del Viento Espectral (TIER 4 - Creada)
+                    damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.2)) - enemy.defense);
+                    enemy.hp -= damageDealt;
+                    player.dodgeNextAttack = true;
+                    logMessage = `¡Ejecutas la ${techDetails.name}! Causas ${damageDealt} de daño y te preparas para esquivar.`;
+                    showFloatingText(playerSprite, '¡Esquiva!', 'ability');
+                    showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                    break;
+              case "movement_t5": // Paso del Vacío Infinito
+                player.intangibleTurns = techDetails.effect.intangibleTurns;
+                const numHits = techDetails.effect.multiHit;
+                let totalVoidDamage = 0;
+                for (let i = 0; i < numHits; i++) {
+                    damageDealt = Math.max(1, Math.floor((player.attack * (techDetails.effect.baseDamageMultiplier / numHits)) - enemy.defense));
+                    enemy.hp -= damageDealt;
+                    totalVoidDamage += damageDealt;
+                }
+                logMessage = `¡Con ${techDetails.name} te vuelves intangible por ${player.intangibleTurns} turnos y golpeas ${numHits} veces, causando un total de ${totalVoidDamage} de daño!`;
+                showFloatingText(enemySprite, `-${totalVoidDamage}`, 'damage');
+                break;        
 
-                case "formation_t1":
+              case "formation_t1":
                   const shieldDetails = techniqueData["formation_t1"];
                   const shieldLevel = player.learnedTechniques["formation_t1"]?.level || 1;
 
@@ -11449,7 +11658,6 @@
                   
                   logBattle(logMessage);
                   break;
-
               case "formation_t2":
                 const rootTechDetails = techniqueData["formation_t2"];
                 const rootTechLevel =
@@ -11526,78 +11734,25 @@
                   "debuff"
                 );
                 logBattle(logMessage);
-                break;
-              case "sword_t5": // Corte que Divide Cielos y Tierra
-                const baseDmg_t5 =
-                  player.attack * techDetails.effect.baseDamageMultiplier;
-                let finalDmg_t5 = baseDmg_t5;
-                logMessage = `¡${techDetails.name} desata un poder que ignora la defensa!`;
-                if (Math.random() < (techDetails.effect.criticalChance || 0)) {
-                  finalDmg_t5 *= 1.5;
-                  logMessage += " ¡Es un golpe crítico!";
-                }
-                enemy.hp -= Math.floor(finalDmg_t5);
-                logMessage += ` Causa ${Math.floor(
-                  finalDmg_t5
-                )} daño verdadero.`;
-                break;
-
-              case "fire_t5": // Llama del Fénix Renaciente
-                const fireDmg_t5 = Math.floor(
-                  player.attack * techDetails.effect.baseDamageMultiplier
-                );
-                enemy.hp -= fireDmg_t5;
-                player.canRevive = true; // Activa la bandera de resurrección
-                logMessage = `¡${techDetails.name} incinera al enemigo con ${fireDmg_t5} de daño y te imbuye con la esencia del Fénix!`;
-                break;
-
+                break;              
+              case "formation_t4": // Santuario Dorado Protector
+                      player.intangibleTurns = techDetails.effect.immunityDuration;
+                      logMessage = `¡${techDetails.name} te envuelve! Te vuelves inmune al daño por ${player.intangibleTurns} turnos.`;
+                      showFloatingText(playerSprite, '¡Invulnerable!', 'ability');
+                      break;
               case "formation_t5": // Matriz de Reversión del Cosmos
-                player.damageToHealingTurns =
-                  techDetails.effect.damageToHealingDuration;
+                player.damageToHealingTurns = techDetails.effect.damageToHealingDuration;
                 logMessage = `¡Activaste ${techDetails.name}! Durante ${player.damageToHealingTurns} turnos, el daño recibido te curará.`;
-                break;
-
-              case "movement_t5": // Paso del Vacío Infinito
-                player.intangibleTurns = techDetails.effect.intangibleTurns;
-                const hits_t5 = techDetails.effect.multiHit;
-                let totalDmg_t5 = 0;
-                for (let i = 0; i < hits_t5; i++) {
-                  const hitDmg = Math.max(
-                    1,
-                    Math.floor(
-                      (player.attack *
-                        techDetails.effect.baseDamageMultiplier) /
-                        hits_t5
-                    ) - enemy.defense
-                  );
-                  enemy.hp -= hitDmg;
-                  totalDmg_t5 += hitDmg;
-                }
-                logMessage = `¡Con ${techDetails.name} te vuelves intangible por ${player.intangibleTurns} turnos y golpeas ${hits_t5} veces, causando un total de ${totalDmg_t5} de daño!`;
-                break;
-
-              case "sword_t6": // Espada del Emperador Celestial
-                logMessage = `¡${techDetails.name} desata un poder absoluto!`;
-                if (
-                  enemy.hp / enemy.maxHp <=
-                  (techDetails.effect.executeThreshold || 0.2)
-                ) {
-                  enemy.hp = 0;
-                  logMessage +=
-                    " ¡El enemigo es ejecutado por decreto celestial!";
-                } else {
-                  const swordDmg_t6 = Math.floor(
-                    player.attack * techDetails.effect.baseDamageMultiplier
-                  );
-                  enemy.hp -= swordDmg_t6;
-                  logMessage += ` Causa ${swordDmg_t6} de daño que ignora toda protección.`;
-                }
-                break;
-
+                showFloatingText(playerSprite, 'Inversión Cósmica', 'ability');
+                break;                  
               case "formation_t6": // Matriz del Sello del Demonio
-                enemy.sealedTurns = techDetails.effect.sealDuration;
-                logMessage = `¡${techDetails.name} sella completamente al enemigo por ${enemy.sealedTurns} turnos!`;
-                break;
+                      enemy.sealedTurns = techDetails.effect.sealDuration;
+                      logMessage = `¡${techDetails.name} sella completamente al enemigo por ${enemy.sealedTurns} turnos! No podrá realizar ninguna acción.`;
+                      showFloatingText(enemySprite, '¡SELLADO!', 'debuff');
+                      break; 
+
+             
+
 
               default:
                 logBattle(`Técnica ${action} no implementada en batalla.`);
@@ -12345,7 +12500,7 @@
         const playerSprite = document.querySelector('.character-sprite');
         const enemySprite = document.getElementById('enemySprite');
 
-        // --- Declaraciones de variables al inicio de la función ---
+        // --- PROCESAR EFECTOS DE ESTADO EN EL ENEMIGO AL INICIO DE SU TURNO ---
         let canEnemyAct = true;
         let reasonForInaction = "";
         let chosenAbility = null;
@@ -12421,7 +12576,21 @@
                 player.activeChanneledAbility.hp = 0;
             }
         }
-
+        
+        // 2. Reducir duración de debuffs
+        if(enemy.defenseReductionTurns > 0) {
+            enemy.defenseReductionTurns--;
+            if (enemy.defenseReductionTurns === 0) {
+                logBattle(`La defensa de ${enemy.name} vuelve a la normalidad.`);
+                // La restauración de la estadística se maneja mejor en el momento de la aplicación para evitar errores.
+            }
+        }
+        if(enemy.attackReductionTurns > 0) {
+            enemy.attackReductionTurns--;
+            if (enemy.attackReductionTurns === 0) {
+                logBattle(`El ataque de ${enemy.name} vuelve a la normalidad.`);
+            }
+        }
         // 4. EJECUCIÓN DE LA ACCIÓN DEL ENEMIGO
         if (canEnemyAct) {
             if (enemy.abilities && enemy.silencedTurns <= 0) {
@@ -12555,6 +12724,15 @@
                 player.activeChanneledAbility.hp = 0;
             }
         }
+        // Desgaste del bono de defensa temporal de "Paso Veloz"
+        if (player.tempDefenseBoostTurns > 0) {
+            player.tempDefenseBoostTurns--;
+            if (player.tempDefenseBoostTurns === 0) {
+                player.defense -= player.tempDefenseBoostAmount; // Restaura la defensa
+                logBattle(`El bono de agilidad de ${techniqueData["movement_t1"].name} se desvanece.`);
+                player.tempDefenseBoostAmount = 0;
+            }
+        }
 
         if (player.hp <= 0) {
           player.hp = 0;
@@ -12592,11 +12770,23 @@
     function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
       const player = gameState.player;
       const playerSprite = document.querySelector('.character-sprite');
-
-      // --- CORRECCIÓN CLAVE: Declarar incomingDamage PRIMERO ---
       let incomingDamage = damageAmount; 
-
-      // --- LÓGICA DE ESQUIVAR ---
+      
+      // 1. INMUNIDAD TOTAL (por Santuario Dorado, etc.)
+      if (player.intangibleTurns > 0) {
+            logBattle(`¡Tu Santuario Dorado anula completamente el ataque de ${sourceName}!`);
+            showFloatingText(playerSprite, '¡Inmune!', 'ability');
+            return 0; // No se recibe daño
+        }
+      // 2. CONVERSIÓN DE DAÑO A CURACIÓN (por Matriz de Reversión)
+      if (player.damageToHealingTurns > 0) {
+            const healingAmount = Math.floor(incomingDamage * 1.2); // Convierte a 120% de curación
+            player.hp = Math.min(player.maxHp, player.hp + healingAmount);
+            logBattle(`¡La Matriz de Reversión convierte ${Math.floor(incomingDamage)} de daño en ${healingAmount} de curación!`);
+            showFloatingText(playerSprite, `+${healingAmount}`, 'heal');
+            return 0; // No se recibe daño, al contrario
+        }
+      // 3. LÓGICA DE ESQUIVAR ---
       // Ahora 'incomingDamage' ya está definido y se puede usar en la condición.
       if (player.dodgeNextAttack && incomingDamage > 0) {
           
@@ -12663,7 +12853,20 @@
       }
 
       function endBattle(victory) {
-        const player = gameState.player;
+       // --- MODIFICACIÓN PARA RESETEAR ESTADOS DE COMBATE ---
+       const player = gameState.player;
+        
+        // Resetea todos los buffs/debuffs temporales del jugador al final del combate
+        player.defenseBoostTurns = 0;
+        player.defenseBoostAmount = 0;
+        player.dodgeNextAttack = false;
+        player.healingRainTurns = 0;
+        player.magicShieldValue = 0;
+        player.magicShieldTurns = 0;
+        player.canRevive = false; // El poder del Fénix se desvanece fuera del combate
+        player.intangibleTurns = 0;
+        player.damageToHealingTurns = 0;
+
         gameState.battle.active = false;
         document.getElementById("battleScreen").style.display = "none";
         document.getElementById("battleLog").innerHTML = "";
@@ -13209,8 +13412,95 @@
         openShop();
         updateUI();
       }
+      
+    function openManageTechniquesModal() {
+        // Primero cerramos el modal de visualización para evitar que se superpongan.
+        closeTechniqueModal();
 
-      function sellToShop(itemName, quantityToSell, totalStonesEarned) {}
+        const player = gameState.player;
+        const equippedList = document.getElementById('equipped-techniques-list');
+        const availableList = document.getElementById('available-techniques-list');
+        
+        equippedList.innerHTML = '';
+        availableList.innerHTML = '';
+
+        // --- Rellenar los slots de técnicas equipadas ---
+        for (let i = 0; i < 5; i++) {
+            const techId = player.equippedTechniques[i];
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'inventory-modal-item';
+            slotDiv.style.cursor = 'pointer';
+
+            if (techId && techniqueData[techId]) {
+                const techInfo = techniqueData[techId];
+                slotDiv.innerHTML = `
+                    <div class="item-details">
+                        <div class="item-name">${techInfo.icon || '📜'} ${techInfo.name}</div>
+                        <div class="item-description">Slot ${i + 1} - Clic para desequipar</div>
+                    </div>
+                `;
+                slotDiv.onclick = () => unequipTechnique(i);
+            } else {
+                slotDiv.innerHTML = `
+                    <div class="item-details" style="opacity: 0.5;">
+                        <div class="item-name">Slot ${i + 1} (Vacío)</div>
+                    </div>
+                `;
+            }
+            equippedList.appendChild(slotDiv);
+        }
+
+        // --- Rellenar la lista de técnicas disponibles ---
+        for (const techId in player.learnedTechniques) {
+            const techInfo = techniqueData[techId];
+            const playerTech = player.learnedTechniques[techId];
+
+            if (techInfo && techInfo.type === 'active_ability' && playerTech.level > 0) {
+                if (player.equippedTechniques.includes(techId)) {
+                    continue;
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inventory-modal-item assignable-item';
+                itemDiv.innerHTML = `
+                    <div class="item-details">
+                        <div class="item-name">${techInfo.icon || '📜'} ${techInfo.name} (Nv. ${playerTech.level})</div>
+                        <div class="item-description">${techInfo.description}</div>
+                    </div>
+                `;
+                itemDiv.onclick = () => equipTechnique(techId);
+                availableList.appendChild(itemDiv);
+            }
+        }
+        
+        document.getElementById('manageTechniquesModal').style.display = 'flex';
+        hideTouchControls();
+    }
+    function closeManageTechniquesModal() {
+        document.getElementById('manageTechniquesModal').style.display = 'none';
+        showTouchControls();
+        // Al cerrar, volvemos a mostrar el panel de técnicas para una experiencia fluida.
+        showTechniquePanel();
+    }
+
+    function equipTechnique(techId) {
+        const player = gameState.player;
+        const firstEmptySlot = player.equippedTechniques.indexOf(null);
+
+        if (firstEmptySlot !== -1) {
+            player.equippedTechniques[firstEmptySlot] = techId;
+            openManageTechniquesModal(); // Refrescar el modal
+        } else {
+            showModal("Slots Llenos", "No tienes más slots de técnicas disponibles. Desequipa una para hacer espacio.");
+            setTimeout(() => closeModal(), 2000);
+        }
+    }
+
+    function unequipTechnique(slotIndex) {
+        gameState.player.equippedTechniques[slotIndex] = null;
+        openManageTechniquesModal(); // Refrescar el modal
+    }  
+    function sellToShop(itemName, quantityToSell, totalStonesEarned) {}
 
       function saveGame() {
         try {
@@ -13238,141 +13528,88 @@
       // --- CARGA DE PARTIDA ---
 
       function loadGameFromFile(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            // Detener procesos activos antes de cargar
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
             if (gameState.player.isCultivating) stopCultivation();
             if (gameState.battle.active) endBattle(false);
 
             const loadedGameState = JSON.parse(e.target.result);
 
-            if (
-              !loadedGameState.player ||
-              !loadedGameState.map ||
-              !loadedGameState.inventory
-            ) {
-              throw new Error(
-                "Formato de guardado incorrecto o datos esenciales faltantes."
-              );
+            if (!loadedGameState.player || !loadedGameState.map || !loadedGameState.inventory) {
+                throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
             }
 
-            // Copia profunda y segura de los datos principales
-            gameState.player = JSON.parse(
-              JSON.stringify(loadedGameState.player)
-            );
-            gameState.inventory = JSON.parse(
-              JSON.stringify(loadedGameState.inventory)
-            );
-            gameState.map.entities = loadedGameState.map.entities
-              ? JSON.parse(JSON.stringify(loadedGameState.map.entities))
-              : [];
+            // --- INICIO DE LA CORRECCIÓN DE COMPATIBILIDAD ---
 
-            // --- INICIO DE LA REPARACIÓN DE MISIONES ACTIVAS ---
-            // Esta rutina asegura que las misiones cargadas de una partida antigua
-            // tengan la información de objetivo más reciente del código del juego.
-            if (
-              gameState.player.secta &&
-              gameState.player.secta.misionesActivas
-            ) {
-              console.log(
-                "Ejecutando rutina de reparación de misiones en partida guardada..."
-              );
-              gameState.player.secta.misionesActivas.forEach((misionActiva) => {
-                const masterMisionData = MISIONES_DATA[misionActiva.id];
-                if (masterMisionData && masterMisionData.objetivo) {
-                  // Si el objetivo original guardado no existe, o si no tiene la propiedad npcEntrega
-                  // mientras que la definición maestra sí la tiene, lo reparamos.
-                  // La forma más segura es simplemente volver a clonar el objeto de objetivo maestro.
-                  if (
-                    !misionActiva.objetivoOriginal ||
-                    misionActiva.objetivoOriginal.npcEntrega !==
-                      masterMisionData.objetivo.npcEntrega
-                  ) {
-                    console.log(
-                      `Reparando objetivo de la misión activa '${misionActiva.id}'. Se añadirá/actualizará la información del objetivo.`
-                    );
-                    misionActiva.objetivoOriginal = JSON.parse(
-                      JSON.stringify(masterMisionData.objetivo)
-                    );
-                  }
+            // 1. Cargamos el estado del jugador del archivo en una variable temporal
+            const loadedPlayer = loadedGameState.player;
+
+            // 2. Saneamos y aseguramos que todas las propiedades modernas existan
+            
+            // Si falta abilityCooldowns en el save, lo creamos como un objeto vacío.
+            if (!loadedPlayer.abilityCooldowns) {
+                console.warn("Archivo de guardado antiguo detectado. Inicializando 'abilityCooldowns'.");
+                loadedPlayer.abilityCooldowns = {};
+            }
+            
+            // ¡NUEVA CORRECCIÓN! Si falta equippedTechniques, lo creamos como un array de 5 nulos.
+            if (!loadedPlayer.equippedTechniques) {
+                console.warn("Archivo de guardado antiguo detectado. Inicializando 'equippedTechniques'.");
+                loadedPlayer.equippedTechniques = [null, null, null, null, null];
+            }
+
+            // Saneamos las técnicas aprendidas para eliminar las que ya no existen en el juego
+            const techniquesToSanitize = loadedPlayer.learnedTechniques || {};
+            const sanitizedTechniques = {}; 
+            for (const techId in techniquesToSanitize) {
+                if (techniqueData[techId]) {
+                    sanitizedTechniques[techId] = techniquesToSanitize[techId];
+                } else {
+                    console.warn(`Técnica obsoleta '${techId}' eliminada del guardado.`);
                 }
-              });
             }
-            // --- FIN DE LA REPARACIÓN DE MISIONES ---
+            loadedPlayer.learnedTechniques = sanitizedTechniques;
 
-            // --- INICIO DE LA REPARACIÓN DE TÉCNICAS (ya la tenías) ---
-            if (gameState.player.learnedTechniques) {
-              console.log(
-                "Ejecutando rutina de reparación de técnicas en partida guardada..."
-              );
-              for (const techId in gameState.player.learnedTechniques) {
-                const playerTech = gameState.player.learnedTechniques[techId];
-                const techDef = techniqueData[techId];
+            // 3. Asignamos el objeto del jugador, ahora completamente saneado, a nuestro gameState
+            gameState.player = loadedPlayer;
 
-                if (playerTech && techDef && techDef.cultivationSettings) {
-                  if (playerTech.level < techDef.maxLevel) {
-                    const expectedTime = Math.floor(
-                      techDef.cultivationSettings.baseTimeToLevelUp *
-                        Math.pow(
-                          techDef.cultivationSettings.levelTimeMultiplier,
-                          playerTech.level
-                        )
-                    );
-                    if (
-                      playerTech.cultivationTimeToNextLevel !== expectedTime
-                    ) {
-                      console.log(
-                        `Corrigiendo 'cultivationTimeToNextLevel' para la técnica '${techDef.name}' (Nivel ${playerTech.level}). Valor antiguo: ${playerTech.cultivationTimeToNextLevel}, Nuevo valor: ${expectedTime}`
-                      );
-                      playerTech.cultivationTimeToNextLevel = expectedTime;
-                    }
-                  } else {
-                    if (playerTech.cultivationTimeToNextLevel !== Infinity) {
-                      playerTech.cultivationTimeToNextLevel = Infinity;
-                    }
-                  }
-                }
-              }
-            }
-            // --- FIN DE LA REPARACIÓN DE TÉCNICAS ---
+            // --- FIN DE LA CORRECCIÓN DE COMPATIBILIDAD ---
 
-            // Resetear estados transitorios que no deben guardarse
+            gameState.inventory = JSON.parse(JSON.stringify(loadedGameState.inventory));
+            gameState.map.entities = loadedGameState.map.entities ? JSON.parse(JSON.stringify(loadedGameState.map.entities)) : [];
+
+            // Resetear estados transitorios
             gameState.player.isCultivating = false;
             if (gameState.cultivationInterval) {
-              clearInterval(gameState.cultivationInterval);
-              gameState.cultivationInterval = null;
+                clearInterval(gameState.cultivationInterval);
+                gameState.cultivationInterval = null;
             }
 
-            // Reconstruir y refrescar el juego
+            // Reconstruir el juego
             generateMap(true);
-            recalculatePlayerStats();
+            // Ya no necesitas llamar a recalculatePlayerStats aquí
             renderQuickSlotBar();
             updatePlayerPosition("loadGameFromFile_end");
 
-            showModal(
-              "Partida Cargada",
-              "¡Partida restaurada con éxito! (Se aplicaron correcciones de compatibilidad)"
-            );
-          } catch (error) {
+            showModal("Partida Cargada", "¡Partida restaurada con éxito! (Compatibilidad aplicada)");
+
+        } catch (error) {
             showModal("Error al Cargar", `Hubo un problema: ${error.message}`);
             console.error("Error loading game:", error);
-          } finally {
+        } finally {
             event.target.value = null;
-          }
-        };
-        reader.onerror = () => {
-          showModal(
-            "Error de Lectura",
-            "No se pudo leer el archivo de guardado."
-          );
-          event.target.value = null;
-        };
-        reader.readAsText(file);
-      }
+        }
+    };
+    reader.onerror = () => {
+        showModal("Error de Lectura", "No se pudo leer el archivo de guardado.");
+        event.target.value = null;
+    };
+    reader.readAsText(file);
+}
 
       function renderQuickSlotBar() {
         const bar = document.getElementById("quickSlotBar");
