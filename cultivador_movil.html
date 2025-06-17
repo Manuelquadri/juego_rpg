@@ -657,7 +657,7 @@
         width: 120px;
         height: 120px;
         z-index: 200;
-        display: none;
+        /* display: none;  SE MUESTRA/OCULTA CON EL OVERLAY PADRE */
         opacity: 0.7;
       }
       #joystick-pad {
@@ -688,7 +688,7 @@
         height: 70px;
         border-radius: 50%;
         z-index: 200;
-        display: none;
+        /* display: none; SE MUESTRA/OCULTA CON EL OVERLAY PADRE */
         font-size: 0.8em;
       }
       #touch-controls-overlay {
@@ -701,6 +701,7 @@
           height: 100%;
           pointer-events: none; /* Clave: Permite que los clics "atraviesen" el overlay y lleguen al mapa */
           z-index: 199; /* Justo debajo de los controles individuales */
+          display: none; /* Por defecto, oculto. JS lo controla. */
       }
 
       /* Cualquier elemento clickeable DENTRO del overlay debe reactivar los pointer-events */
@@ -1334,14 +1335,11 @@
         </div>
       </div>
     </div>
-    <div id="joystick-container">
-      <div id="joystick-pad">
-        <div id="joystick-handle"></div>
-      </div>
-    </div>
-    <button id="action-button-touch">Acción</button>
+    
     <!-- <<--- FIN DEL CONTENEDOR PRINCIPAL DEL JUEGO -->
-      <!-- === INICIO DE LA NUEVA SECCIÓN DE CONTROLES TÁCTILES === -->
+      
+    <!-- === INICIO DE LA NUEVA SECCIÓN DE CONTROLES TÁCTILES === -->
+    <!-- Este es el contenedor correcto que el JavaScript mostrará u ocultará -->
     <div id="touch-controls-overlay">
       <div id="joystick-container">
           <div id="joystick-pad">
@@ -1349,9 +1347,9 @@
           </div>
       </div>
       <button id="action-button-touch">Acción</button>
-      
-  </div>
-  <button id="toggleMapControlsBtn">Ocultar Controles</button>
+    </div>
+    <button id="toggleMapControlsBtn">Ocultar Controles</button>
+
     <!-- ======================================================================= -->
     <!-- 3. TODAS LAS PANTALLAS Y MODALES SUPERPUESTOS -->
     <!-- Al estar fuera del game-container, no se verán borrosos en móvil. -->
