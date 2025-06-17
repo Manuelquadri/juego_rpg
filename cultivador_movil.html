@@ -1650,7 +1650,7 @@
               
               <!-- Columna de Técnicas Equipadas -->
               <div id="equipped-techniques-panel" style="flex: 1; border-right: 1px solid #555; padding-right: 20px;">
-                  <h4>Equipadas (5 máx.)</h4>
+                  <h4>Equipadas (3 máx.)</h4>
                   <div id="equipped-techniques-list">
                       <!-- Los slots equipados se generarán aquí -->
                   </div>
@@ -1794,7 +1794,7 @@
           expToNext: 100,
           realm: "Mortal",
           quickSlots: [null, null, null, null, null], // 5 slots, inicialmente vacíos
-          equippedTechniques: [null, null, null, null, null],
+          equippedTechniques: [null, null, null],
           isCultivating: false,
           cultivationMode: {
             type: null,
@@ -13435,7 +13435,7 @@
         availableList.innerHTML = '';
 
         // --- Rellenar los slots de técnicas equipadas ---
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 3; i++) {
             const techId = player.equippedTechniques[i];
             const slotDiv = document.createElement('div');
             slotDiv.className = 'inventory-modal-item';
