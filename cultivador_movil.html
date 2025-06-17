@@ -7843,15 +7843,23 @@
 
         if (!controlsOverlay || !toggleBtn) return;
 
-        const shouldShow = isMobileView() && !mapControlsManuallyHidden && !gameState.battle.active && !isAnyModalOpen();
+        // === CORRECCIÓN CLAVE ===
+        // Comprobamos si el navegador está en modo de pantalla completa.
+        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        
+        // Los controles deben mostrarse si estamos en vista móvil O si el juego está en pantalla completa.
+        const forceShowDueToDeviceOrMode = isMobileView() || isFullscreen;
+
+        // La condición final para mostrar los controles
+        const shouldShow = forceShowDueToDeviceOrMode && !mapControlsManuallyHidden && !gameState.battle.active && !isAnyModalOpen();
 
         if (shouldShow) {
             controlsOverlay.style.display = 'block';
-            toggleBtn.style.display = 'block'; // Aseguramos que el botón de toggle también sea visible
+            toggleBtn.style.display = 'block';
         } else {
             controlsOverlay.style.display = 'none';
-            // El botón de toggle también se oculta si no estamos en vista móvil
-            if(!isMobileView()) {
+            // También ocultamos el botón de toggle si no estamos en una vista que los requiera
+            if (!forceShowDueToDeviceOrMode) {
                 toggleBtn.style.display = 'none';
             }
         }
@@ -7904,6 +7912,12 @@
           // Si ya está activado, simplemente abrimos el menú de viaje.
           openTeleportModal();
         }
+      }
+
+      function handleFullscreenChange() {
+          updateFullscreenButton();
+          // Vuelve a comprobar si los controles deben ser visibles después de cambiar de modo.
+          showTouchControls(); 
       }
 
       function openTeleportModal() {
@@ -14933,10 +14947,10 @@
         updateTopNavVisibility();
 
         // --- INICIO DEL REEMPLAZO DE EVENT LISTENERS ---
-        document.addEventListener('fullscreenchange', updateFullscreenButton);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
-        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
-        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
         document.addEventListener("keydown", (e) => {
           if (
             isAnyModalOpen() ||
