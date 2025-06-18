@@ -8074,20 +8074,29 @@
         if (playerState.learnedTechniques[techId]) {
           return `Ya conoces esta técnica: ${techniqueData[techId].name}.`;
         }
-        const techCultivationSettings =
-          techniqueData[techId].cultivationSettings;
+        
+        const techCultivationSettings = techniqueData[techId].cultivationSettings;
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        // La técnica se aprende directamente en Nivel 1 para tener efecto inmediato.
         playerState.learnedTechniques[techId] = {
-          level: 0,
+          level: 1, 
           currentCultivationProgress: 0,
+          // Calculamos el tiempo para el SIGUIENTE nivel (Nivel 2)
           cultivationTimeToNextLevel: techCultivationSettings
-            ? techCultivationSettings.baseTimeToLevelUp
-            : 60,
+            ? Math.floor(techCultivationSettings.baseTimeToLevelUp * Math.pow(techCultivationSettings.levelTimeMultiplier, 1))
+            : 120,
         };
+
+        // Después de aprenderla, recalculamos las estadísticas para aplicar su efecto.
+        recalculatePlayerStats(); 
+        // --- FIN DE LA CORRECCIÓN ---
+
         if (techId === "qi_to_hp_conversion_1") {
           playerState.canUseQiConversion = true;
           updateToggleQiConversionButtonVisibility();
         }
-        return `Has aprendido '${techniqueData[techId].name}'. Puedes cultivarla para mejorarla.`;
+        return `Has aprendido '${techniqueData[techId].name}' (Nivel 1). Puedes cultivarla para mejorarla.`;
       }
 
       function showModal(title, text, nonInteractive = false) {
@@ -11032,10 +11041,14 @@
         player.defense = player.baseDefense;
         player.damageReduction = 0; // Reiniciamos la reducción de daño
         player.passiveHpRegen = 0;   // Reiniciamos la regeneración pasiva
-        
+        // Reseteamos las estadísticas de cultivo a sus valores por defecto antes de aplicar los bonos.
+        player.qiPerSecondBase = 1;     // Valor base de Qi por segundo.
+        player.expPerSecondBase = 0.5;   // Valor base de EXP por segundo.
+        player.hpPerSecondBase = 1;      // Valor base de HP por segundo.
         // Limpiamos la lista de habilidades activas para reconstruirla.
+        
         gameState.activeCombatAbilities = [];
-
+        
         // 2. Iteramos sobre TODAS las técnicas aprendidas por el jugador.
         for (const techId in player.learnedTechniques) {
             const playerTech = player.learnedTechniques[techId];
@@ -11057,6 +11070,14 @@
                     } else {
                         // Para stats que no son base, como 'damageReduction'
                         player[statToBoost] = (player[statToBoost] || 0) + effectValue;
+                    }
+                    break;
+                case 'passive_cultivation':
+                    // Multiplicamos el valor del efecto por el nivel de la técnica.
+                    const cultivationBonus = techInfo.effect.value * playerTech.level;
+                    const cultivationStatToBoost = techInfo.effect.statToBoost;
+                    if (player.hasOwnProperty(cultivationStatToBoost)) {
+                        player[cultivationStatToBoost] += cultivationBonus;
                     }
                     break;
                     
