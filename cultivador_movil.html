@@ -4319,22 +4319,27 @@
             levelTimeMultiplier: 1.5,
           },
         },
-        fire_t5: {
-          id: "fire_t5",
-          name: "Llama del Fénix Renaciente",
-          icon: "🔥",
-          description:
-            "Invocas el fuego sagrado del fénix que causa daño masivo y puede resucitarte al morir.",
-          type: "active_ability",
-          abilityId: "fire_t5",
-          effect: { baseDamageMultiplier: 3.5, aoe: true, reviveChance: 0.25 },
-          manaCost: 150,
-          cooldown: 6,
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 850,
-            levelTimeMultiplier: 1.5,
-          },
+        fire_t4: {
+            id: "fire_t4",
+            name: "Sol Abrasador",
+            icon: "☀️",
+            description: "Creas un sol en miniatura que explota, causando daño masivo y dejando una quemadura intensa que escala con el nivel.", // Descripción actualizada
+            type: "active_ability",
+            abilityId: "fire_t4",
+            effect: { 
+                baseDamageMultiplier: 2.5,
+                multiplierIncreasePerLevel: 0.3, 
+                aoe: true,
+                // --- INICIO DE LA MODIFICACIÓN ---
+                burnDamagePerTurn: 30,       // Daño de quemadura base.
+                burnDuration: 3,           // Duración de la quemadura en turnos.
+                burnIncreasePerLevel: 5    // El daño de la quemadura aumenta en 5 por cada nivel.
+                // --- FIN DE LA MODIFICACIÓN ---
+            },
+            manaCost: 80,
+            cooldown: 4,
+            maxLevel: 10,
+            cultivationSettings: { baseTimeToLevelUp: 550, levelTimeMultiplier: 1.6 },
         },
         lightning_t5: {
           id: "lightning_t5",
@@ -11665,12 +11670,26 @@
                   logMessage += ` e inflige una quemadura intensa.`;
                 }
                 break;
-              case "fire_t4": // Sol Abrasador (TIER 4)
-              case "fire_t4": { // Sol Abrasador
+              
+                case "fire_t4": { // Sol Abrasador
                     const currentMultiplier = effect.baseDamageMultiplier + (playerTechLevel - 1) * effect.multiplierIncreasePerLevel;
                     const damageDealt = Math.max(1, Math.floor(player.attack * currentMultiplier) - enemy.defense);
                     enemy.hp -= damageDealt;
                     logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) inflige ${damageDealt} de daño masivo!`;
+                    
+                    // --- INICIO DE LA MODIFICACIÓN ---
+                    // Calculamos el daño de la quemadura, incluyendo el escalado por nivel.
+                    const burnDamage = effect.burnDamagePerTurn + (playerTechLevel - 1) * (effect.burnIncreasePerLevel || 0);
+                    
+                    // Aplicamos la quemadura al enemigo. Usamos Math.max para no reemplazar una quemadura más fuerte.
+                    enemy.burningTurns = Math.max(enemy.burningTurns, effect.burnDuration);
+                    enemy.burnDamage = Math.max(enemy.burnDamage, burnDamage);
+                    
+                    // Actualizamos el mensaje del log y mostramos un texto flotante.
+                    logMessage += ` ¡El enemigo queda envuelto en llamas, sufriendo una quemadura intensa!`;
+                    showFloatingText(enemySprite, '¡Quemadura!', 'debuff');
+                    // --- FIN DE LA MODIFICACIÓN ---
+
                     showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                     break;
                 }
