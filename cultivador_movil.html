@@ -8758,11 +8758,17 @@
 
       // Función para llamar en el bucle principal del juego o con setInterval
       function gameTickUpdater() {
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Definimos la variable 'player' para que apunte al estado del jugador.
+        const player = gameState.player; 
+        // --- FIN DE LA CORRECCIÓN ---
+
         const now = Date.now();
         const deltaTime = (now - gameState.lastGameTimeUpdate) / 1000;
         gameState.gameTime += deltaTime;
         gameState.lastGameTimeUpdate = now;
-        // === NUEVA LÓGICA DE REGENERACIÓN PASIVA ===
+
+        // Ahora, esta lógica de regeneración funcionará porque 'player' está definido.
         if (player.passiveHpRegen > 0 && player.hp < player.maxHp) {
           player.hp = Math.min(
             player.maxHp,
@@ -8770,7 +8776,6 @@
           );
           updateUI(); // Actualizar la UI para ver la regeneración
         }
-        // === FIN DE LA NUEVA LÓGICA ===
 
         gameState.map.terrainZones.forEach((zone) => {
           if (zone.spawnSettings) {
@@ -8780,7 +8785,6 @@
                 zone.spawnSettings.respawnTimer = 0;
             }
 
-            // Comprobar si CUALQUIER tipo de entidad en la zona necesita reaparecer
             let needsRespawn = false;
             for (const target of zone.spawnSettings.targetEntities) {
               if (target.currentCount < target.count) {
@@ -8788,23 +8792,19 @@
                 break;
               }
             }
-            // Ajustado el cooldown del chequeo de respawn para ser más frecuente (e.g. 5-10s)
-            const SPAWN_CHECK_COOLDOWN = 10; // Segundos
+            
+            const SPAWN_CHECK_COOLDOWN = 10;
             if (
               needsRespawn &&
               zone.spawnSettings.respawnTimer <= 0 &&
               gameState.gameTime - (zone.spawnSettings.lastSpawnCheck || 0) >
                 SPAWN_CHECK_COOLDOWN
             ) {
-              console.log(
-                `gameTickUpdater: Zone "${zone.name}" needs respawn and timer is 0. Calling populateZoneWithObjects.`
-              ); // LOG
-              zone.spawnSettings.lastSpawnCheck = gameState.gameTime; // Actualizar ANTES de llamar para evitar bucles rápidos
-              populateZoneWithObjects(zone, false); // false porque no es población inicial
+              zone.spawnSettings.lastSpawnCheck = gameState.gameTime; 
+              populateZoneWithObjects(zone, false);
             }
           }
         });
-        // ...
       }
 
       let animationFrameIndex = 0; // Para ciclar a través de PLAYER_WALK_CYCLE
