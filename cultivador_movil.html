@@ -10996,40 +10996,63 @@
       }
 
       function recalculatePlayerStats() {
-    const player = gameState.player;
-    // Reiniciar stats a base
-    player.maxHp = player.baseMaxHp;
-    player.maxMana = player.baseMaxMana;
-    player.attack = player.baseAttack;
-    player.defense = player.baseDefense;
-    player.damageReduction = 0;    
-    player.hp = Math.min(player.hp, player.maxHp);
-    player.mana = Math.min(player.mana, player.maxMana);
+        const player = gameState.player;
+        
+        // 1. Reiniciar TODAS las estadísticas a sus valores base.
+        player.maxHp = player.baseMaxHp;
+        player.maxMana = player.baseMaxMana;
+        player.attack = player.baseAttack;
+        player.defense = player.baseDefense;
+        player.damageReduction = 0; // Reiniciamos la reducción de daño
+        player.passiveHpRegen = 0;   // Reiniciamos la regeneración pasiva
+        
+        // Limpiamos la lista de habilidades activas para reconstruirla.
+        gameState.activeCombatAbilities = [];
 
-    gameState.activeCombatAbilities = []; // Limpiar la lista
+        // 2. Iteramos sobre TODAS las técnicas aprendidas por el jugador.
+        for (const techId in player.learnedTechniques) {
+            const playerTech = player.learnedTechniques[techId];
+            const techInfo = techniqueData[techId];
 
-    for (const techId in player.learnedTechniques) {
-        const playerTech = player.learnedTechniques[techId];
-        const techInfo = techniqueData[techId]; // techId es la clave correcta (ej. 'sword_t1')
-
-        // Filtro de seguridad: Si la técnica no existe o no es de combate, la ignoramos.
-        if (!techInfo || techInfo.type !== "active_ability") {
-            continue; 
+            if (!techInfo || playerTech.level === 0) {
+                continue; // Saltar si la técnica no existe o no tiene nivel.
+            }
+            
+            // 3. Aplicamos los efectos según el tipo de técnica.
+            switch (techInfo.type) {
+                case 'passive_stat':
+                    // Aplicamos el efecto por cada nivel que tenga la técnica.
+                    const effectValue = techInfo.effect.value * playerTech.level;
+                    const statToBoost = techInfo.effect.statToBoost;
+                    
+                    if (player.hasOwnProperty(statToBoost)) {
+                        player[statToBoost] += effectValue;
+                    } else {
+                        // Para stats que no son base, como 'damageReduction'
+                        player[statToBoost] = (player[statToBoost] || 0) + effectValue;
+                    }
+                    break;
+                    
+                case 'active_ability':
+                    // Si es una habilidad activa, la añadimos a la lista para el combate.
+                    gameState.activeCombatAbilities.push({
+                        id: techInfo.abilityId,
+                        name: techInfo.name,
+                        sourceTechniqueId: techId
+                    });
+                    break;
+                
+                // Puedes añadir más casos para otros tipos de técnicas si es necesario.
+            }
         }
 
-        // Solo añadimos habilidades activas y que tengan al menos nivel 1
-        if (playerTech.level > 0) {
-            // === LA CORRECCIÓN CLAVE ESTÁ AQUÍ ===
-            // Guardamos directamente la clave de la técnica (techId) que es lo único que necesitamos.
-            gameState.activeCombatAbilities.push({
-                id: techInfo.abilityId,        // El ID de la acción (lo que se pasa a battleAction)
-                name: techInfo.name,           // El nombre para mostrar en el botón
-                sourceTechniqueId: techId      // La clave para buscar en techniqueData. ¡Esta es la pieza clave!
-            });
-        }
+        // 4. Asegurarse de que HP/Mana no excedan el nuevo máximo.
+        player.hp = Math.min(player.hp, player.maxHp);
+        player.mana = Math.min(player.mana, player.maxMana);
+        
+        // 5. Finalmente, actualizamos la UI con los valores correctos y recalculados.
+        // Ya no es necesario llamar a updateUI() desde aquí, la función que llama a recalculate se encargará.
     }
-    updateUI();
-}
 
       function startBattle(mapEntity) {
         updateStatsPanelVisibility();
@@ -13291,62 +13314,13 @@
       function stopTechniqueRefinement() {}
 
       function applyTechniqueEffect(techId, newLevel) {
-        const techInfo = techniqueData[techId];
-        const player = gameState.player;
-        if (!techInfo) return;
-
-        const effect = techInfo.effect;
-        switch (techInfo.type) {
-          case "passive_cultivation":
-            if (player.hasOwnProperty(effect.statToBoost)) {
-              // Asumimos que el efecto es por nivel, así que solo añadimos el valor del nuevo nivel
-              player[effect.statToBoost] += effect.value;
-            }
-            break;
-          case "passive_stat":
-            if (effect.statToBoost === "passiveHpRegen") {
-              player.passiveHpRegen =
-                (player.passiveHpRegen || 0) + effect.value;
-            }else if (effect.statToBoost === 'damageReduction') {
-                // Sumamos el valor del efecto al stat del jugador.
-                // Usamos `|| 0` como salvaguarda por si el stat no estuviera inicializado.
-                player.damageReduction = (player.damageReduction || 0) + effect.value;
-            }
-             else if (
-              effect.statToBoost === "statusImmunity" &&
-              effect.value === true
-            ) {
-              player.isImmuneToStatus = true;
-            } else if (effect.statToBoost === "deathSaveChance") {
-              player.deathSaveChance =
-                (player.deathSaveChance || 0) + effect.value;
-            } else if (player.hasOwnProperty(effect.statToBoost)) {
-              player[effect.statToBoost] += effect.value;
-            }
-          case "active_ability":
-            // Cuando una habilidad activa sube de nivel, solo necesitamos refrescar los stats
-            // por si acaso, y la UI de batalla se actualizará la próxima vez que empiece un combate.
-            recalculatePlayerStats();
-            break;
-          case "active_refinement_effect":
-            if (techId === "qi_to_hp_conversion_1") {
-              if (newLevel >= 1) {
-                player.canUseQiConversion = true;
-                // ---- LA CORRECCIÓN ESTÁ AQUÍ ----
-                // La siguiente línea causaba el error y ha sido eliminada:
-                // updateToggleQiConversionButtonVisibility();
-
-                // En su lugar, la visibilidad del botón se maneja correctamente
-                // por la función renderQuickSlotBar(), que se llama cuando
-                // se actualiza la UI general.
-              }
-            }
-            break;
-            recalculatePlayerStats();
-            updateUI();
-        }
-        // No es necesario llamar a updateUI() aquí, ya que se llamará después
-        // de que el cultivo se detenga o en el siguiente tick.
+        // La lógica de aplicar efectos específicos se ha movido a `recalculatePlayerStats`.
+        // Esta función ahora solo necesita asegurarse de que, después de que una técnica
+        // suba de nivel, todas las estadísticas del jugador se actualicen correctamente
+        // para reflejar el cambio.
+        
+        recalculatePlayerStats(); // Esto recalculará todo basado en los niveles actuales.
+        updateUI(); // Actualiza la interfaz para mostrar los cambios.
       }
 
       function closeTechniqueModal() {
