@@ -10963,7 +10963,7 @@
     player.maxMana = player.baseMaxMana;
     player.attack = player.baseAttack;
     player.defense = player.baseDefense;
-
+    player.damageReduction = 0;    
     player.hp = Math.min(player.hp, player.maxHp);
     player.mana = Math.min(player.mana, player.maxMana);
 
@@ -12946,6 +12946,8 @@
 
       // --- APLICAR DAÑO RESTANTE ---
       if (incomingDamage > 0) {
+          const reductionMultiplier = 1 - (player.damageReduction || 0);
+          incomingDamage *= reductionMultiplier;
           player.hp -= incomingDamage;
           logBattle(`Recibes ${Math.floor(incomingDamage)} de daño de ${sourceName}.`);
           showFloatingText(playerSprite, `-${Math.floor(incomingDamage)}`, 'damage');
@@ -13266,7 +13268,12 @@
             if (effect.statToBoost === "passiveHpRegen") {
               player.passiveHpRegen =
                 (player.passiveHpRegen || 0) + effect.value;
-            } else if (
+            }else if (effect.statToBoost === 'damageReduction') {
+                // Sumamos el valor del efecto al stat del jugador.
+                // Usamos `|| 0` como salvaguarda por si el stat no estuviera inicializado.
+                player.damageReduction = (player.damageReduction || 0) + effect.value;
+            }
+             else if (
               effect.statToBoost === "statusImmunity" &&
               effect.value === true
             ) {
