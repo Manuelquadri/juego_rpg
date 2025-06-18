@@ -2792,6 +2792,9 @@
       const G_BLOCKING_ENTITY_TYPES = [
         "shop",
         "secta_entrada_principal",
+        "secta_entrada_principal_2",
+        "secta_entrada_principal_3",
+        "secta_entrada_principal_4",
         "npc_secta_guia",
         "npc_secta_admin",
         "npc_anciana_su",
@@ -4985,6 +4988,39 @@
           fixedLocation: { x: 15, y: 15 }, // O las coordenadas correctas para tu secta
           discovered: true,
         },
+        secta_entrada_principal_2: {
+          symbol: "",
+          name: "Salón Principal de la Secta",
+          
+          interaction: "access_sect_hall",
+          // fixedX: 12, // Si tenías esto antes
+          // fixedY: 15, // Si tenías esto antes
+          // ASEGÚRATE DE TENER ESTO EN SU LUGAR:
+          fixedLocation: { x: 16, y: 15 }, // O las coordenadas correctas para tu secta
+          discovered: true,
+        },
+        secta_entrada_principal_3: {
+          symbol: "",
+          name: "Salón Principal de la Secta",
+          
+          interaction: "access_sect_hall",
+          // fixedX: 12, // Si tenías esto antes
+          // fixedY: 15, // Si tenías esto antes
+          // ASEGÚRATE DE TENER ESTO EN SU LUGAR:
+          fixedLocation: { x: 15, y: 14 }, // O las coordenadas correctas para tu secta
+          discovered: true,
+        },
+        secta_entrada_principal_4: {
+          symbol: "",
+          name: "Salón Principal de la Secta",
+          
+          interaction: "access_sect_hall",
+          // fixedX: 12, // Si tenías esto antes
+          // fixedY: 15, // Si tenías esto antes
+          // ASEGÚRATE DE TENER ESTO EN SU LUGAR:
+          fixedLocation: { x: 16, y: 14 }, // O las coordenadas correctas para tu secta
+          discovered: true,
+        },
 
         // --- ELEMENTOS DECORATIVOS ---
         deco_pino: {
@@ -5314,7 +5350,7 @@
           spriteUrl: "img/teleport_plat.png",
           interaction: "activate_teleporter",
           teleporterId: "tp_sect_hub",
-          fixedLocation: { x: 15, y: 11 },
+          fixedLocation: { x: 15, y: 10 },
           discovered: true,
         },
         tp_forest_shrine: {
@@ -8092,6 +8128,9 @@
         let idsParaProcesar = [
           "shop",
           "secta_entrada_principal",
+          "secta_entrada_principal_2",
+          "secta_entrada_principal_3",
+          "secta_entrada_principal_4",
           "npc_secta_guia",
           "npc_secta_admin",
           "tp_sect_hub",
@@ -9091,7 +9130,7 @@
                 if (entity.originalEntityTypeId === "secta_entrada_principal") {
                   entityContainer.style.backgroundSize = "120%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 1.2) * currentTileSize
                   }px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
                   // 1. Aumentamos el ancho del contenedor para que quepa el sprite
@@ -9108,7 +9147,7 @@
                 } else if (entity.originalEntityTypeId === "shop") {
                   entityContainer.style.backgroundSize = "120%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.2) * currentTileSize
+                    (entity.y - 0.2) * currentTileSize
                   }px`;
                   entityContainer.style.height = `${currentTileSize * 2}px`;
                   entityContainer.style.width = `${currentTileSize * 2}px`;
@@ -9136,28 +9175,28 @@
                  else if (entity.originalEntityTypeId === "boss_dem") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 0.2) * currentTileSize
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
                 } else if (entity.originalEntityTypeId === "tp_sect_hub") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 1) * currentTileSize
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
                 } else if (entity.originalEntityTypeId === "tp_forest_shrine") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 1) * currentTileSize
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
                 } else if (entity.originalEntityTypeId === "tp_desert_oasis") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 1) * currentTileSize
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
@@ -9182,14 +9221,14 @@
                 } else if (entity.originalEntityTypeId === "tp_swamp_ruin") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 1) * currentTileSize
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
                 }else if (entity.originalEntityTypeId === "tp_desfiladero") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
-                    (entity.y - 1.5) * currentTileSize
+                    (entity.y - 1) * currentTileSize
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
