@@ -3436,7 +3436,7 @@
           recompensa: {
             pcs: 1000,
             exp: 5000,
-            items: { "Manual de Técnica de Diácono": 1 },
+            items: { "Rollo: Técnica de Absorción de Qi Celestial": 1 },
           },
           npcInicio: "guia_lin",
           requisitoRango: "Diácono", // Se podría hacer que esta se active después de la mision_diac_3
@@ -3847,7 +3847,7 @@
             "Aumenta la cantidad de Qi ganado por segundo al cultivar en 0.5.",
           type: "passive_cultivation",
           effect: { statToBoost: "qiPerSecondBase", value: 0.5 },
-          maxLevel: 100,
+          maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 60,
             levelTimeMultiplier: 1.5,
@@ -3858,6 +3858,20 @@
             levelRequirement: 1,
           },
           icon: "📜",
+        },
+
+        qi_absorption_celestial_1: {
+          id: "qi_absorption_celestial_1",
+          name: "Técnica de Absorción de Qi Celestial",
+          description: "Una técnica de cultivo superior que alinea tu espíritu con los cielos, aumentando drásticamente la cantidad de Qi ganado por segundo al cultivar (+2.0 Qi/s).",
+          type: "passive_cultivation",
+          effect: { statToBoost: "qiPerSecondBase", value: 2.0 },
+          maxLevel: 10, // Se puede mejorar para aumentar aún más el beneficio
+          cultivationSettings: {
+            baseTimeToLevelUp: 300, // Requiere más tiempo para subir de nivel que las básicas
+            levelTimeMultiplier: 1.8,
+          },
+          icon: "🌌",
         },
 
         // =================================================================
@@ -6451,6 +6465,11 @@
               quantity: [500, 700],
               chance: 1.0,
             },
+            {
+            itemName: "Rollo: Técnica de Absorción de Qi Celestial",
+              quantity: [1, 1],
+              chance: 0.3 // 30% de probabilidad de drop
+            },
           ],
           fixedLocation: { x: 240, y: 40 }, // Ubicación en el Desfiladero
         },
@@ -7061,6 +7080,11 @@
           description:
             "La prueba de que has superado al Maestro anterior. Irradia una autoridad inmensa. Item de Misión.",
           canUse: () => false,
+        },
+        "Rollo: Técnica de Absorción de Qi Celestial": {
+          description: "Enseña 'Técnica de Absorción de Qi Celestial'.",
+          effect: (ps) => learnTechniqueFromRoll(ps, "qi_absorption_celestial_1"),
+          canUse: () => true,
         },
         /// ========================   ROLLOS DE TÉCNICAS    ============================
 
