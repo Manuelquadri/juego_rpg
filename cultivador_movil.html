@@ -2634,6 +2634,12 @@
           y: 30,
           isHub: false,
         },
+        tp_desfiladero: {
+          name: "Ruina Hundida de la Ciénaga",
+          x: 175, // <-- Coordenadas en la ciénaga
+          y: 30,
+          isHub: false,
+        },
         // Puedes añadir más teletransportadores aquí en el futuro
       };
       const G_TERRAIN_TYPES = {
@@ -4086,7 +4092,7 @@
             type: "active_ability",
             abilityId: "sword_t3",
             effect: {
-                baseDamageMultiplier: 1.2,
+                baseDamageMultiplier: 1.5,
                 baseHits: 3, // <-- Nuevo: Golpes base
                 hitsIncreasePerLevel: 0.5 // <-- Nuevo: Medio golpe por nivel (se redondeará)
             },
@@ -5338,6 +5344,15 @@
           interaction: "activate_teleporter",
           teleporterId: "tp_swamp_ruin",
           fixedLocation: { x: 75, y: 30 },
+          discovered: false,
+        },
+        tp_desfiladero: {
+          symbol: "🌀",
+          name: "Matriz Ruinas 1",
+          spriteUrl: "img/teleport_plat.png",
+          interaction: "activate_teleporter",
+          teleporterId: "tp_desfiladero",
+          fixedLocation: { x: 175, y: 30 },
           discovered: false,
         },
 
@@ -8083,6 +8098,7 @@
           "tp_forest_shrine",
           "tp_desert_oasis",
           "tp_swamp_ruin",
+          "tp_desfiladero",
           "npc_maestro_jian",
           "npc_anciana_su",
 
@@ -9143,8 +9159,8 @@
                   entityContainer.style.top = `${
                     (entity.y - 1.5) * currentTileSize
                   }px`;
-                  entityContainer.style.width = `${currentTileSize * 5}px`;
-                  entityContainer.style.height = `${currentTileSize * 5}px`;
+                  entityContainer.style.width = `${currentTileSize * 3}px`;
+                  entityContainer.style.height = `${currentTileSize * 3}px`;
                 } else if (
                   entity.originalEntityTypeId === "osa_mayor_esmeralda"
                 ) {
@@ -9170,7 +9186,15 @@
                   }px`;
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
-                } else {
+                }else if (entity.originalEntityTypeId === "tp_desfiladero") {
+                  entityContainer.style.backgroundSize = "100%";
+                  entityContainer.style.top = `${
+                    (entity.y - 1.5) * currentTileSize
+                  }px`;
+                  entityContainer.style.width = `${currentTileSize * 3}px`;
+                  entityContainer.style.height = `${currentTileSize * 3}px`;
+                }
+                 else {
                   entityContainer.style.backgroundSize = "80%";
                 }
 
