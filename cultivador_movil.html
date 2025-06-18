@@ -2636,7 +2636,7 @@
         },
         tp_desfiladero: {
           name: "Desfiladero",
-          x: 175, // <-- Coordenadas en la ciénaga
+          x: 175, // 
           y: 30,
           isHub: false,
         },
@@ -3412,7 +3412,7 @@
         mision_diac_3: {
           titulo: "Investigar al Renegado",
           descripcion:
-            "Hemos recibido informes de que el diácono renegado, Jin, se esconde al final del Desfiladero. Investiga la zona y prepárate para lo peor.",
+            "Hemos recibido informes de que el diácono renegado, Jin, se esconde al final del Desfiladero. Investiga la zona (alrededores de x:220-260 e y:30-40y prepárate para lo peor.",
           objetivo: {
             tipo: "llegar_a_punto",
             x: 240,
@@ -3429,10 +3429,12 @@
           descripcion:
             "Es hora de acabar con la amenaza del Diácono Renegado Jin. Derrótalo y restaura el honor de la secta.",
           objetivo: {
-            tipo: "derrotar_npc_especifico",
-            npcId: "diacono_renegado_jin",
+            tipo: "derrotar_enemigo",
+            enemigoTipo: "diacono_renegado_jin",
+            cantidad:1,
             npcEntrega: "guia_lin",
           },
+          
           recompensa: {
             pcs: 1000,
             exp: 5000,
