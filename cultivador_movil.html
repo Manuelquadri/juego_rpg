@@ -2052,7 +2052,15 @@
               x2: 110,
               y2: 27,
               type: "MOUNTAIN_SUP",
-              name: "Limite mapa este",
+              name: "Limite mapa este con desfiladero",
+            }, 
+            {//Limite con Valle del Dragón
+              x1: 145,
+              y1: 0,
+              x2: 145,
+              y2: 600,
+              type: "MOUNTAIN_SUP",
+              name: "Limite mapa este con desfiladero",
             }, // Sin spawnSettings = no spawns
             {
               x1: 92,
@@ -2060,7 +2068,7 @@
               x2: 110,
               y2: 600,
               type: "MOUNTAIN_SUP",
-              name: "Limite mapa este",
+              name: "Limite mapa este con desfiladero",
             }, // Sin spawnSettings = no spawns
             {
               x1: 91,
@@ -2135,7 +2143,15 @@
               x2: 91,
               y2: 27,
               type: "MOUNTAIN_DER",
-              name: "Límite este",
+              name: "Límite este con desfiladero",
+            }, // Sin spawnSettings = no spawns
+            {
+              x1: 144,
+              y1: 10,
+              x2: 144,
+              y2: 600,
+              type: "MOUNTAIN_DER",
+              name: "Límite este con Valle del Dragón",
             }, // Sin spawnSettings = no spawns
             {
               x1: 91,
@@ -2152,6 +2168,14 @@
               y2: 39,
               type: "MOUNTAIN_IZQ",
               name: "límite oeste pradera",
+            }, // Sin spawnSettings = no spawns
+            {
+              x1: 146,
+              y1: 10,
+              x2: 146,
+              y2: 600,
+              type: "MOUNTAIN_IZQ",
+              name: "límite este con Valle del Dragón",
             }, // Sin spawnSettings = no spawns
             // ...FIN DE LOS LIMITES
 
@@ -2411,7 +2435,7 @@
             {
               x1: 111,
               y1: 10,
-              x2: 250,
+              x2: 143,
               y2: 50,
               type: "GRASSLAND", // Usaremos un terreno rocoso y hostil
               name: "Desfiladero de los Lamentos",
@@ -2445,9 +2469,9 @@
 
             // Zona para Misiones de Anciano
             {
-              x1: 300,
+              x1: 147,
               y1: 10,
-              x2: 360,
+              x2: 225,
               y2: 70,
               type: "SWAMP", // Un terreno antiguo y corrupto
               name: "Valle del Dragón Caído",
@@ -2461,12 +2485,17 @@
                 targetEntities: [
                   {
                     entityTypeId: "draco_hueso_antiguo",
-                    count: 12,
+                    count: 50,
                     currentCount: 0,
                   },
                   {
                     entityTypeId: "espectro_tifonico",
-                    count: 8,
+                    count: 80,
+                    currentCount: 0,
+                  },
+                  {
+                    entityTypeId: "draco_hueso_antiguo_boss",
+                    count: 1,
                     currentCount: 0,
                   },
                 ],
@@ -2600,8 +2629,11 @@
         "cultivador_secta_rival",
         "diacono_renegado_jin",
         "cultivador_renegado",
-
-
+        "draco_hueso_antiguo",
+        "espectro_tifonico",
+        "demonio_de_la_fisura",
+        "guardian_celestial_caido",
+        "draco_hueso_antiguo_boss",
       ];
       const G_MAX_MAP_ENTITIES = 30;
       const G_RESPAWN_THRESHOLD = 15;
@@ -2636,7 +2668,7 @@
         },
         tp_desfiladero: {
           name: "Desfiladero",
-          x: 175, // 
+          x: 135, // 
           y: 30,
           isHub: false,
         },
@@ -5409,7 +5441,7 @@
           spriteUrl: "img/teleport_plat.png",
           interaction: "activate_teleporter",
           teleporterId: "tp_desfiladero",
-          fixedLocation: { x: 175, y: 30 },
+          fixedLocation: { x: 125, y: 30 },
           discovered: false,
         },
 
@@ -5434,6 +5466,26 @@
           targetY: 46, // Coordenada Y de destino (aparece al lado de la entrada)
           discovered: true,
         },
+        transition_valley_entrance: {
+          symbol: "🌀",
+          name: "Entrada al valle del Dragón",
+          spriteUrl: "img/entrada_valle_dragon.png", // Crea o usa una imagen para el portal
+          interaction: "transition",
+          fixedLocation: { x: 143, y: 20 }, // Ubicación en el mundo principal
+          targetX: 147, // Coordenada X de destino (dentro de la zona de ruinas)
+          targetY: 20, // Coordenada Y de destino
+          discovered: true,
+        },
+        transition_ruins_exit: {
+          symbol: "🌀",
+          name: "Salida del valle del Dragón",
+          spriteUrl: "img/entrada_valle_dragon.png",
+          interaction: "transition",
+          fixedLocation: { x: 147, y: 20 }, // Ubicación DENTRO de las ruinas
+          targetX: 143, // Coordenada X de destino (de vuelta al mundo principal)
+          targetY: 20, // Coordenada Y de destino (aparece al lado de la entrada)
+          discovered: true,
+        },
 
         //ENEMIGOS
         monster: {
@@ -5441,7 +5493,7 @@
           name: "Demonio Menor",
           spriteUrl: "img/demonio_menor.png",
           level: 2,
-          hp: 60,
+          hp: 90,
           attack: 30,
           defense: 2,
           exp: 25,
@@ -5471,12 +5523,12 @@
           symbol: "🐺",
           name: "Lobo del Bosque",
           spriteUrl: "img/lobo_bosque.png",
-          hp: 70,
+          hp: 170,
           level: 2,
           attack: 40,
           defense: 3,
           exp: 20,
-          maxHp: 70,
+          maxHp: 170,
           lootTable: [
             { itemName: "Colmillo de Lobo", quantity: [1, 1], chance: 0.4 },
             {
@@ -5491,12 +5543,12 @@
         monster_bosque_arana: {
           symbol: "🕷️",
           name: "Araña Tejesombras",
-          hp: 50,
+          hp: 250,
           level: 1,
           attack: 45,
           defense: 5,
           exp: 18,
-          maxHp: 50,
+          maxHp: 250,
           lootTable: [
             { itemName: "Seda de Araña", quantity: [1, 3], chance: 0.7 },
             { itemName: "Veneno Débil", quantity: [1, 1], chance: 0.2 },
@@ -5508,12 +5560,12 @@
           symbol: "🦂",
           name: "Escorpión de las Dunas",
           spriteUrl: "img/escorpion.png",
-          hp: 90,
+          hp: 390,
           level: 5,
           attack: 30,
           defense: 8,
           exp: 35,
-          maxHp: 90,
+          maxHp: 390,
           specialChance: 0.35,
           specialAttackMultiplier: 1.8,
           abilities: [
@@ -5533,7 +5585,7 @@
           symbol: "🧱",
           name: "Golem de Tormenta de Arena",
           spriteUrl: "img/golem_arena.png",
-          hp: 200,
+          hp: 400,
           level: 9,
           attack: 35,
           defense: 15,
@@ -5558,12 +5610,12 @@
           symbol: "🐍",
           name: "Serpiente de Ciénaga",
           spriteUrl: "img/serpiente.png",
-          hp: 60,
+          hp: 360,
           level: 3,
           attack: 28,
           defense: 2,
           exp: 22,
-          maxHp: 60,
+          maxHp: 360,
           specialChance: 0.35,
           specialAttackMultiplier: 1.8,
           abilities: [
@@ -5731,7 +5783,7 @@
           name: "Bandido del Desfiladero",
           spriteUrl: "img/mercenario.png",
           typeOverride: "monster",
-          hp: 180,
+          hp: 280,
           level: 9,
           attack: 45,
           defense: 10,
@@ -6077,8 +6129,8 @@
           name: "Osa Mayor Esmeralda",
           spriteUrl: "img/osa_mayor.png", // Necesitarías un sprite para este
           level: 12,
-          hp: 450,
-          maxHp: 450,
+          hp: 1450,
+          maxHp: 1450,
           attack: 40,
           defense: 25,
           exp: 150,
@@ -6143,8 +6195,8 @@
           name: "Basilisco de Ciénaga",
           spriteUrl: "img/basilisco.png", // Necesitarías un sprite para este
           level: 14,
-          hp: 380,
-          maxHp: 380,
+          hp: 1380,
+          maxHp: 1380,
           attack: 65,
           defense: 18,
           exp: 180,
@@ -6294,8 +6346,8 @@
           name: "Mercenario Acorazado",
           spriteUrl: "img/mercenario.png", // Necesitarías un sprite para este
           level: 13,
-          hp: 500,
-          maxHp: 500,
+          hp: 1500,
+          maxHp: 1500,
           attack: 55,
           defense: 35,
           exp: 160,
@@ -6330,8 +6382,8 @@
           name: "Guardián de Terracota",
           spriteUrl: "img/guardian_terracota.png", // Necesitarías un sprite para este
           level: 19,
-          hp: 750,
-          maxHp: 750,
+          hp: 1000,
+          maxHp: 1000,
           attack: 70,
           defense: 50,
           exp: 350,
@@ -6361,8 +6413,8 @@
           name: "Ilusionista Sombrío",
           spriteUrl: "img/ilusionista.png", // Necesitarías un sprite para este
           level: 18,
-          hp: 480,
-          maxHp: 480,
+          hp: 800,
+          maxHp: 800,
           attack: 85, // Golpea duro si te pilla sin defensas
           defense: 20,
           exp: 320,
@@ -6469,7 +6521,7 @@
               chance: 1.0, // 
             },
           ],
-          fixedLocation: { x: 240, y: 40 }, // Ubicación en el Desfiladero
+          fixedLocation: { x: 130, y: 15 }, // Ubicación en el Desfiladero
         },
 
         // -- Nivel Anciano (Nivel 35-45) --
@@ -6495,7 +6547,34 @@
             },
             {
               itemName: "Piedras Espirituales",
-              quantity: [100, 150],
+              quantity: [700, 800],
+              chance: 1.0,
+            },
+          ],
+        },
+        draco_hueso_antiguo_boss: {
+          symbol: "🐉",
+          name: "Draco de Hueso Antiguo (BOSS)",
+          spriteUrl: "img/draco_hueso_boss.png",
+          level: 38,
+          hp: 2000,
+          maxHp: 2000,
+          attack: 280,
+          defense: 120,
+          exp: 12000,
+          abilities: [
+            { abilityId: "intimidating_roar", chance: 0.6 },
+            { abilityId: "mana_curse", chance: 0.3 },
+          ],
+          lootTable: [
+            {
+              itemName: "Escama de Dragón Espectral",
+              quantity: [1, 2],
+              chance: 0.4,
+            },
+            {
+              itemName: "Piedras Espirituales",
+              quantity: [1000, 5000],
               chance: 1.0,
             },
           ],
@@ -6518,7 +6597,7 @@
             { itemName: "Corazón de Tifón", quantity: [1, 1], chance: 0.25 },
             {
               itemName: "Piedras Espirituales",
-              quantity: [120, 180],
+              quantity: [800, 900],
               chance: 1.0,
             },
           ],
@@ -8169,6 +8248,9 @@
           "secta_entrada_principal_4",
           "npc_secta_guia",
           "npc_secta_admin",
+          "transition_ruins_entrance",
+          "transition_ruins_exit",
+          "transition_valley_entrance",
           "tp_sect_hub",
           "tp_forest_shrine",
           "tp_desert_oasis",
@@ -8180,7 +8262,7 @@
           //ENEMIGOS
           "jabali_colmilludo_alfa",
           "boss_ancient_golem",
-          "transition_ruins_entrance",
+          
           "transition_ruins_exit",
           "jabali_alfa_1",
           "jabali_alfa_2",
