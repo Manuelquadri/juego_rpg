@@ -1192,7 +1192,7 @@
       /* Estilos específicos */
       .damage-popup.damage {
         color: #ff4d4d;
-        font-size: 1.8em;
+        font-size: 1.2em;
       }
       .damage-popup.heal {
         color: #66ff66;
@@ -3968,7 +3968,7 @@
           maxLevel: 10,
           cultivationSettings: { baseTimeToLevelUp: 100, levelTimeMultiplier: 1.8 },
       },
-        fire_t1: {
+      fire_t1: {
           id: "fire_t1",
           name: "Chispa Ígnea",
           icon: "🔥",
@@ -3978,7 +3978,9 @@
           abilityId: "fire_t1",
           effect: {
             baseDamageMultiplier: 0.8,
+            multiplierIncreasePerLevel: 0.1, // <-- MODIFICACIÓN AÑADIDA
             burnDamagePerTurn: 5,
+            burnDamageIncreasePerLevel: 1, // <-- MODIFICACIÓN AÑADIDA
             burnDuration: 2,
           },
           manaCost: 15,
@@ -3996,7 +3998,12 @@
             "Un rápido chispazo de relámpago que puede aturdir brevemente al enemigo.",
           type: "active_ability",
           abilityId: "lightning_t1",
-          effect: { baseDamageMultiplier: 0.9, stunChance: 0.2 },
+          effect: { 
+            baseDamageMultiplier: 0.9,
+            multiplierIncreasePerLevel: 0.1, // <-- MODIFICACIÓN AÑADIDA
+            stunChance: 0.2,
+            stunChanceIncreasePerLevel: 0.03, // <-- MODIFICACIÓN AÑADIDA
+          },
           manaCost: 18,
           maxLevel: 10,
           cultivationSettings: {
@@ -4063,18 +4070,19 @@
           name: "Matriz de Grilletes de Qi",
           icon: "🔗",
           description:
-            "Una formación que intenta enraizar al enemigo, impidiendo su movimiento y causando daño leve. Consume maná cada turno y puede romperse si el enemigo ataca con fuerza.",
+            "Una formación que intenta enraizar al enemigo. Consume maná cada turno y puede romperse si el enemigo ataca con fuerza.",
           type: "active_ability",
           abilityId: "formation_t2",
           effect: {
             rootDuration: 2,
             damagePerTurn: 10,
+            damagePerTurnIncreasePerLevel: 2, // <-- MODIFICACIÓN AÑADIDA
             rootChance: 0.7,
-            // --- NUEVAS PROPIEDADES ---
-            shacklesHP: 100, // "Vida" base de los grilletes
-            manaUpkeep: 5, // Maná que consume por turno para mantenerla
+            shacklesHP: 100, 
+            shacklesHPIncreasePerLevel: 20, // <-- MODIFICACIÓN AÑADIDA
+            manaUpkeep: 5,
           },
-          manaCost: 30, // Coste inicial para lanzarla
+          manaCost: 30,
           cooldown: 3,
           maxLevel: 10,
           cultivationSettings: {
@@ -4100,7 +4108,7 @@
           maxLevel: 10,
           cultivationSettings: { baseTimeToLevelUp: 220, levelTimeMultiplier: 1.9 },
       },
-        fire_t2: {
+      fire_t2: {
           id: "fire_t2",
           name: "Aliento de Dragón Menor",
           icon: "🐲",
@@ -4110,7 +4118,9 @@
           abilityId: "fire_t2",
           effect: {
             baseDamageMultiplier: 1.0,
+            multiplierIncreasePerLevel: 0.2, // <-- MODIFICACIÓN AÑADIDA
             burnDamagePerTurn: 15,
+            burnDamageIncreasePerLevel: 2, // <-- MODIFICACIÓN AÑADIDA
             burnDuration: 3,
           },
           manaCost: 35,
@@ -4129,9 +4139,11 @@
           type: "active_ability",
           abilityId: "lightning_t2",
           effect: { 
-              baseDamageMultiplier: 1.4, 
-              defenseReduction: 10, // Cuánto reduce la defensa
-              duration: 2           // Por cuántos turnos
+              baseDamageMultiplier: 1.4,
+              multiplierIncreasePerLevel: 0.15, // <-- MODIFICACIÓN AÑADIDA
+              defenseReduction: 10,
+              defenseReductionIncreasePerLevel: 1, // <-- MODIFICACIÓN AÑADIDA
+              duration: 2
           },
           manaCost: 28,
           cooldown: 2,
@@ -4269,13 +4281,18 @@
             id: "fire_t4",
             name: "Sol Abrasador",
             icon: "☀️",
-            description: "Creas un sol en miniatura que explota, causando daño masivo que escala con el nivel.",
+            description: "Creas un sol en miniatura que explota, causando daño masivo y dejando una quemadura intensa que escala con el nivel.", // Descripción actualizada
             type: "active_ability",
             abilityId: "fire_t4",
             effect: { 
                 baseDamageMultiplier: 2.5,
-                multiplierIncreasePerLevel: 0.3, // <-- Nuevo
-                aoe: true 
+                multiplierIncreasePerLevel: 0.3, 
+                aoe: true,
+                // --- INICIO DE LA MODIFICACIÓN ---
+                burnDamagePerTurn: 30,       // Daño de quemadura base.
+                burnDuration: 3,           // Duración de la quemadura en turnos.
+                burnIncreasePerLevel: 5    // El daño de la quemadura aumenta en 5 por cada nivel.
+                // --- FIN DE LA MODIFICACIÓN ---
             },
             manaCost: 80,
             cooldown: 4,
@@ -4324,7 +4341,8 @@
           abilityId: "movement_t4",
           effect: { 
               baseDamageMultiplier: 1.8, 
-              dodgeNextAttack: true // El efecto es simple: atacar y preparar una esquiva.
+              multiplierIncreasePerLevel: 0.2, // <-- MODIFICACIÓN AÑADIDA
+              dodgeNextAttack: true
           },
           manaCost: 65,
           cooldown: 1,
@@ -4345,8 +4363,10 @@
           abilityId: "sword_t5",
           effect: {
             baseDamageMultiplier: 4.0,
+            multiplierIncreasePerLevel: 0.5, // <-- MODIFICACIÓN AÑADIDA
             trueDamage: true,
             criticalChance: 0.3,
+            criticalChanceIncreasePerLevel: 0.02 // <-- MODIFICACIÓN AÑADIDA (2% más por nivel)
           },
           manaCost: 120,
           cooldown: 6,
@@ -4374,27 +4394,27 @@
             levelTimeMultiplier: 1.5,
           },
         },
-        fire_t4: {
-            id: "fire_t4",
-            name: "Sol Abrasador",
-            icon: "☀️",
-            description: "Creas un sol en miniatura que explota, causando daño masivo y dejando una quemadura intensa que escala con el nivel.", // Descripción actualizada
-            type: "active_ability",
-            abilityId: "fire_t4",
-            effect: { 
-                baseDamageMultiplier: 2.5,
-                multiplierIncreasePerLevel: 0.3, 
-                aoe: true,
-                // --- INICIO DE LA MODIFICACIÓN ---
-                burnDamagePerTurn: 30,       // Daño de quemadura base.
-                burnDuration: 3,           // Duración de la quemadura en turnos.
-                burnIncreasePerLevel: 5    // El daño de la quemadura aumenta en 5 por cada nivel.
-                // --- FIN DE LA MODIFICACIÓN ---
-            },
-            manaCost: 80,
-            cooldown: 4,
-            maxLevel: 10,
-            cultivationSettings: { baseTimeToLevelUp: 550, levelTimeMultiplier: 1.6 },
+        fire_t5: {
+          id: "fire_t5",
+          name: "Llama del Fénix Renaciente",
+          icon: "🔥",
+          description:
+            "Invocas el fuego sagrado del fénix que causa daño masivo y puede resucitarte al morir.",
+          type: "active_ability",
+          abilityId: "fire_t5",
+          effect: { 
+            baseDamageMultiplier: 3.5, 
+            aoe: true, 
+            reviveChance: 0.25,
+            reviveChanceIncreasePerLevel: 0.025 // <-- MODIFICACIÓN AÑADIDA (2.5% más por nivel)
+          },
+          manaCost: 150,
+          cooldown: 6,
+          maxLevel: 10,
+          cultivationSettings: {
+            baseTimeToLevelUp: 850,
+            levelTimeMultiplier: 1.5,
+          },
         },
         lightning_t5: {
           id: "lightning_t5",
@@ -4406,8 +4426,10 @@
           abilityId: "lightning_t5",
           effect: {
             baseDamageMultiplier: 3.0,
+            multiplierIncreasePerLevel: 0.4, // <-- MODIFICACIÓN AÑADIDA
             aoe: true,
             paralyzeChance: 0.6,
+            paralyzeChanceIncreasePerLevel: 0.04, // <-- MODIFICACIÓN AÑADIDA
             duration: 2,
           },
           manaCost: 140,
@@ -4469,8 +4491,10 @@
           abilityId: "sword_t6",
           effect: {
             baseDamageMultiplier: 6.0,
+            multiplierIncreasePerLevel: 0.5, // <-- MODIFICACIÓN AÑADIDA
             ignoreAllEffects: true,
             executeThreshold: 0.2,
+            executeThresholdIncreasePerLevel: 0.01 // <-- MODIFICACIÓN AÑADIDA (1% más de umbral por nivel)
           },
           manaCost: 200,
           cooldown: 6,
@@ -11741,71 +11765,63 @@
                     break;
                 }
               case "sword_t5": // Corte que Divide Cielos y Tierra
-              damageDealt = Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel * 0.5)));
-              enemy.hp -= damageDealt;
-              logMessage = `¡${techDetails.name} corta la realidad misma, infligiendo ${damageDealt} de daño absoluto!`;
-              showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-              break;
+                const sword5DmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                damageDealt = Math.floor(player.attack * sword5DmgMultiplier);
+                enemy.hp -= damageDealt;
+                logMessage = `¡${techDetails.name} corta la realidad misma, infligiendo ${damageDealt} de daño absoluto!`;
+
+                const critChance = techDetails.effect.criticalChance + (playerTechLevel - 1) * (techDetails.effect.criticalChanceIncreasePerLevel || 0);
+                if (Math.random() < critChance) {
+                    const critDamage = Math.floor(damageDealt * 0.5); // 50% extra de daño crítico
+                    enemy.hp -= critDamage;
+                    logMessage += ` ¡Fue un golpe crítico, causando ${critDamage} de daño extra!`;
+                    damageDealt += critDamage;
+                }
+
+                showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
+                break;
               case "sword_t6": // Espada del Emperador Celestial
+                    const executeThreshold = techDetails.effect.executeThreshold + (playerTechLevel - 1) * (techDetails.effect.executeThresholdIncreasePerLevel || 0);
                     logMessage = `¡${techDetails.name} desata un poder absoluto!`;
-                    if (enemy.hp / enemy.maxHp <= (techDetails.effect.executeThreshold || 0.2)) {
+                    if (enemy.hp / enemy.maxHp <= executeThreshold) {
                         damageDealt = enemy.hp;
                         enemy.hp = 0;
                         logMessage += " ¡El enemigo es ejecutado por decreto celestial!";
                         showFloatingText(enemySprite, '¡EJECUTADO!', 'damage');
                     } else {
-                        damageDealt = Math.floor(player.attack * techDetails.effect.baseDamageMultiplier);
+                        const sword6DmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                        damageDealt = Math.floor(player.attack * sword6DmgMultiplier);
                         enemy.hp -= damageDealt;
                         logMessage += ` Causa ${damageDealt} de daño que ignora toda protección.`;
                         showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                     }
-                break;
+                    break;
               
               case "fire_t1"://Chispa Ígnea
-                damageDealt = Math.max(
-                  1,
-                  Math.floor(
-                    player.attack *
-                      (techDetails.effect.baseDamageMultiplier +
-                        (playerTechLevel - 1) * 0.1)
-                  ) - (enemy.defense || 0)
-                );
+                const fireDamageMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                damageDealt = Math.max(1, Math.floor(player.attack * fireDamageMultiplier) - (enemy.defense || 0));
                 enemy.hp -= damageDealt;
-                enemy.burningTurns = Math.max(
-                  enemy.burningTurns,
-                  techDetails.effect.burnDuration
-                );
-                enemy.burnDamage = Math.max(
-                  enemy.burnDamage,
-                  techDetails.effect.burnDamagePerTurn + playerTechLevel
-                );
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño y quema al enemigo!`;
+
+                const burnDamage = techDetails.effect.burnDamagePerTurn + (playerTechLevel - 1) * (techDetails.effect.burnDamageIncreasePerLevel || 0);
+                enemy.burningTurns = Math.max(enemy.burningTurns, techDetails.effect.burnDuration);
+                enemy.burnDamage = Math.max(enemy.burnDamage, burnDamage);
+                
+                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} de daño y quema al enemigo!`;
                 break;
+
               case "fire_t2"://Aliento de Dragón Menor
-                damageDealt = Math.max(
-                  1,
-                  Math.floor(
-                    player.attack *
-                      (techDetails.effect.baseDamageMultiplier +
-                        (playerTechLevel - 1) * 0.2)
-                  ) - (enemy.defense || 0)
-                );
+                const fire2DmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                damageDealt = Math.max(1, Math.floor(player.attack * fire2DmgMultiplier) - (enemy.defense || 0));
                 enemy.hp -= damageDealt;
-                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} daño!`;
-                if (action === "fire_t2") {
-                  enemy.burningTurns = Math.max(
-                    enemy.burningTurns,
-                    techDetails.effect.burnDuration
-                  );
-                  enemy.burnDamage = Math.max(
-                    enemy.burnDamage,
-                    techDetails.effect.burnDamagePerTurn + playerTechLevel * 2
-                  );
-                  logMessage += ` e inflige una quemadura intensa.`;
-                }
+                
+                const burn2Damage = techDetails.effect.burnDamagePerTurn + (playerTechLevel - 1) * (techDetails.effect.burnDamageIncreasePerLevel || 0);
+                enemy.burningTurns = Math.max(enemy.burningTurns, techDetails.effect.burnDuration);
+                enemy.burnDamage = Math.max(enemy.burnDamage, burn2Damage);
+
+                logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) causa ${damageDealt} de daño e inflige una quemadura intensa!`;
                 break;
               
-                case "fire_t4": { // Sol Abrasador
+              case "fire_t4": { // Sol Abrasador
                     const currentMultiplier = effect.baseDamageMultiplier + (playerTechLevel - 1) * effect.multiplierIncreasePerLevel;
                     const damageDealt = Math.max(1, Math.floor(player.attack * currentMultiplier) - enemy.defense);
                     enemy.hp -= damageDealt;
@@ -11830,28 +11846,36 @@
               case "fire_t5": // Llama del Fénix Renaciente
                         damageDealt = Math.max(1, Math.floor(player.attack * techDetails.effect.baseDamageMultiplier) - enemy.defense);
                         enemy.hp -= damageDealt;
-                        player.canRevive = true;
+                        const reviveChance = techDetails.effect.reviveChance + (playerTechLevel - 1) * (techDetails.effect.reviveChanceIncreasePerLevel || 0);
+                        if (Math.random() < reviveChance) {
+                            player.canRevive = true;
+                        }
                         logMessage = `¡${techDetails.name} incinera al enemigo con ${damageDealt} de daño y te imbuye con la esencia del Fénix!`;
                         showFloatingText(playerSprite, 'Fénix Interior', 'ability');
                         showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
-                break;  
+                        break; 
               
 
-              case "lightning_t1": // Dedo de Relámpago (TIER 1)
-                  damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.1)) - enemy.defense);
+              case "lightning_t1": // Dedo de Relámpago
+                  const lightningDmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                  damageDealt = Math.max(1, Math.floor(player.attack * lightningDmgMultiplier) - enemy.defense);
                   enemy.hp -= damageDealt;
+
+                  const stunChance = techDetails.effect.stunChance + (playerTechLevel - 1) * (techDetails.effect.stunChanceIncreasePerLevel || 0);
                   logMessage = `¡${techDetails.name} (Nv.${playerTechLevel}) golpea con ${damageDealt} de daño!`;
-                  const stunChanceT1 = techDetails.effect.stunChance + (playerTechLevel * 0.03);
-                  if (Math.random() < stunChanceT1) {
+                  
+                  if (Math.random() < stunChance) {
                       enemy.stunnedTurns = Math.max(enemy.stunnedTurns, 1);
                       logMessage += " ¡El enemigo queda aturdido!";
                       showFloatingText(enemySprite, '¡Aturdido!', 'debuff');
                   }
                   showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                   break;
-              case "lightning_t2": // Látigo de Trueno (TIER 2 - Creada)
-                damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.15)) - enemy.defense);
-                const defenseReduction = techDetails.effect.defenseReduction + playerTechLevel;
+              case "lightning_t2": // Látigo de Trueno
+                const lightning2DmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                damageDealt = Math.max(1, Math.floor(player.attack * lightning2DmgMultiplier) - enemy.defense);
+                
+                const defenseReduction = techDetails.effect.defenseReduction + (playerTechLevel - 1) * (techDetails.effect.defenseReductionIncreasePerLevel || 0);
                 const duration = techDetails.effect.duration;
                 
                 enemy.hp -= damageDealt;
@@ -11884,12 +11908,14 @@
                     showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                     break;
                 }          
-              case "lightning_t5": // Tribulación de los Nueve Cielos (TIER 5)
-                damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.4)) - enemy.defense);
+              case "lightning_t5": // Tribulación de los Nueve Cielos
+                const lightning5DmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                damageDealt = Math.max(1, Math.floor(player.attack * lightning5DmgMultiplier) - enemy.defense);
                 enemy.hp -= damageDealt;
                 logMessage = `¡Invocas la ${techDetails.name}, causando ${damageDealt} de daño celestial!`;
-                const paralyzeChanceT5 = techDetails.effect.paralyzeChance + (playerTechLevel * 0.04);
-                if (Math.random() < paralyzeChanceT5) {
+
+                const paralyzeChance = techDetails.effect.paralyzeChance + (playerTechLevel - 1) * (techDetails.effect.paralyzeChanceIncreasePerLevel || 0);
+                if (Math.random() < paralyzeChance) {
                     enemy.stunnedTurns = Math.max(enemy.stunnedTurns, techDetails.effect.duration || 2);
                     logMessage += ` ¡El poder de la tribulación lo deja paralizado por ${enemy.stunnedTurns} turnos!`;
                     showFloatingText(enemySprite, '¡Paralizado!', 'debuff');
@@ -11957,8 +11983,9 @@
                     showFloatingText(enemySprite, `-${damageDealt}`, 'damage');
                     break;
                 }              
-              case "movement_t4": // Danza del Viento Espectral (TIER 4 - Creada)
-                    damageDealt = Math.max(1, Math.floor(player.attack * (techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * 0.2)) - enemy.defense);
+              case "movement_t4": // Danza del Viento Espectral
+                    const move4DmgMultiplier = techDetails.effect.baseDamageMultiplier + (playerTechLevel - 1) * (techDetails.effect.multiplierIncreasePerLevel || 0);
+                    damageDealt = Math.max(1, Math.floor(player.attack * move4DmgMultiplier) - enemy.defense);
                     enemy.hp -= damageDealt;
                     player.dodgeNextAttack = true;
                     logMessage = `¡Ejecutas la ${techDetails.name}! Causas ${damageDealt} de daño y te preparas para esquivar.`;
@@ -12012,49 +12039,26 @@
                   break;
               case "formation_t2":
                 const rootTechDetails = techniqueData["formation_t2"];
-                const rootTechLevel =
-                  player.learnedTechniques["formation_t2"]?.level || 1;
-                const rootChance =
-                  (rootTechDetails.effect.rootChance || 0.7) +
-                  (rootTechLevel - 1) * 0.03;
+                const rootTechLevel = player.learnedTechniques["formation_t2"]?.level || 1;
+                const rootChance = (rootTechDetails.effect.rootChance || 0.7) + (rootTechLevel - 1) * 0.03;
 
                 if (Math.random() < rootChance) {
-                  // Éxito al lanzar
                   const rootDuration = rootTechDetails.effect.rootDuration;
-                  const rootDmgPerTurn =
-                    rootTechDetails.effect.damagePerTurn +
-                    (rootTechLevel - 1) * 2;
+                  const rootDmgPerTurn = rootTechDetails.effect.damagePerTurn + (rootTechLevel - 1) * (rootTechDetails.effect.damagePerTurnIncreasePerLevel || 0);
+                  const shacklesHealth = rootTechDetails.effect.shacklesHP + (rootTechLevel - 1) * (rootTechDetails.effect.shacklesHPIncreasePerLevel || 0);
 
-                  // --- LÓGICA MEJORADA ---
-                  const shacklesHealth =
-                    rootTechDetails.effect.shacklesHP +
-                    (rootTechLevel - 1) * 20; // La vida de los grilletes escala
-
-                  // Aplicamos el efecto al enemigo
                   enemy.rootedTurns = rootDuration;
                   enemy.rootDamage = rootDmgPerTurn;
 
-                  // Activamos el estado de mantenimiento en el JUGADOR
                   player.activeChanneledAbility.id = "formation_t2";
                   player.activeChanneledAbility.hp = shacklesHealth;
-                  // --- FIN DE LÓGICA MEJORADA ---
-
+                  
                   logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) atrapa al enemigo con grilletes de ${shacklesHealth} de resistencia!`;
-                  showFloatingText(
-                    document.getElementById("enemySprite"),
-                    "¡Atrapado!",
-                    "debuff"
-                  );
+                  showFloatingText(enemySprite, "¡Atrapado!", "debuff");
                 } else {
-                  // Fallo al lanzar
                   logMessage = `¡${rootTechDetails.name} (Nv.${rootTechLevel}) falla y el enemigo esquiva los grilletes!`;
-                  showFloatingText(
-                    document.getElementById("enemySprite"),
-                    "¡Falló!",
-                    "ability"
-                  );
+                  showFloatingText(enemySprite, "¡Falló!", "ability");
                 }
-
                 logBattle(logMessage);
                 break;
               case "formation_t3": { // Matriz de Supresión Espiritual
