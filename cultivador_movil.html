@@ -3919,7 +3919,12 @@
             "Un corte de espada rápido y eficiente. Un pilar del combate básico.",
           type: "active_ability",
           abilityId: "sword_t1",
-          effect: { baseDamageMultiplier: 1.2 },
+          // --- INICIO DE LA MODIFICACIÓN ---
+          effect: { 
+            baseDamageMultiplier: 1.2,
+            multiplierIncreasePerLevel: 0.2 // Aumenta el multiplicador en 0.2 por cada nivel.
+          },
+          // --- FIN DE LA MODIFICACIÓN ---
           manaCost: 10,
           maxLevel: 10,
           cultivationSettings: {
@@ -3934,7 +3939,9 @@
           description:
             "Fortalece pasivamente tu cuerpo, aumentando tu Vida Máxima base.",
           type: "passive_stat",
-          effect: { statToBoost: "baseMaxHp", value: 25 },
+          effect: { 
+            statToBoost: "baseMaxHp", 
+            value: 25 },
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 120,
@@ -11641,9 +11648,11 @@
                 const swordManaCost = swordTechDetails.manaCost || 10;
                 if (player.mana >= swordManaCost) {
                   player.mana -= swordManaCost;
+                  // Calculamos el multiplicador de daño de forma genérica, leyendo los valores de la definición.
                   const damageMultiplier =
                     swordTechDetails.effect.baseDamageMultiplier +
-                    (playerTechLevel - 1) * 0.2;
+                    (playerTechLevel - 1) * (swordTechDetails.effect.multiplierIncreasePerLevel || 0);
+
                   const swordDamage = Math.max(
                     1,
                     Math.floor(player.attack * damageMultiplier) -
@@ -11660,7 +11669,7 @@
                   );
                   showFloatingText(
                     document.getElementById("enemySprite"),
-                    `-${swordDamage}`,
+                    `${swordTechDetails.name} causa -${swordDamage}`,
                     "damage"
                   );
                 } else {
