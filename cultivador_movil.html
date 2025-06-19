@@ -13887,89 +13887,110 @@
 
       // --- CARGA DE PARTIDA ---
 
+      // Reemplaza tu función 'loadGameFromFile(event)' existente con esta versión mejorada.
+
       function loadGameFromFile(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+        const file = event.target.files[0];
+        if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            if (gameState.player.isCultivating) stopCultivation();
-            if (gameState.battle.active) endBattle(false);
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                if (gameState.player.isCultivating) stopCultivation();
+                if (gameState.battle.active) endBattle(false);
 
-            const loadedGameState = JSON.parse(e.target.result);
+                const loadedGameState = JSON.parse(e.target.result);
 
-            if (!loadedGameState.player || !loadedGameState.map || !loadedGameState.inventory) {
-                throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
-            }
-
-            // --- INICIO DE LA CORRECCIÓN DE COMPATIBILIDAD ---
-
-            // 1. Cargamos el estado del jugador del archivo en una variable temporal
-            const loadedPlayer = loadedGameState.player;
-
-            // 2. Saneamos y aseguramos que todas las propiedades modernas existan
-            
-            // Si falta abilityCooldowns en el save, lo creamos como un objeto vacío.
-            if (!loadedPlayer.abilityCooldowns) {
-                console.warn("Archivo de guardado antiguo detectado. Inicializando 'abilityCooldowns'.");
-                loadedPlayer.abilityCooldowns = {};
-            }
-            
-            // ¡NUEVA CORRECCIÓN! Si falta equippedTechniques, lo creamos como un array de 5 nulos.
-            if (!loadedPlayer.equippedTechniques) {
-                console.warn("Archivo de guardado antiguo detectado. Inicializando 'equippedTechniques'.");
-                loadedPlayer.equippedTechniques = [null, null, null, null, null];
-            }
-
-            // Saneamos las técnicas aprendidas para eliminar las que ya no existen en el juego
-            const techniquesToSanitize = loadedPlayer.learnedTechniques || {};
-            const sanitizedTechniques = {}; 
-            for (const techId in techniquesToSanitize) {
-                if (techniqueData[techId]) {
-                    sanitizedTechniques[techId] = techniquesToSanitize[techId];
-                } else {
-                    console.warn(`Técnica obsoleta '${techId}' eliminada del guardado.`);
+                if (!loadedGameState.player || !loadedGameState.map || !loadedGameState.inventory) {
+                    throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
                 }
+
+                // --- INICIO DE LA LÓGICA DE COMPATIBILIDAD MEJORADA ---
+
+                const loadedPlayer = loadedGameState.player;
+
+                // 1. Saneamiento Básico de propiedades del jugador
+                if (!loadedPlayer.abilityCooldowns) loadedPlayer.abilityCooldowns = {};
+                if (!loadedPlayer.equippedTechniques) loadedPlayer.equippedTechniques = [null, null, null, null, null];
+
+                // 2. Saneamiento profundo de las TÉCNICAS APRENDIDAS
+                const techniquesToSanitize = loadedPlayer.learnedTechniques || {};
+                const sanitizedTechniques = {}; 
+
+                for (const techId in techniquesToSanitize) {
+                    // Si la técnica ya no existe en la versión actual del juego, la ignoramos.
+                    if (techniqueData[techId]) {
+                        const savedTechData = techniquesToSanitize[techId];
+                        const masterTechData = techniqueData[techId];
+
+                        // Creamos una nueva copia saneada de la técnica del jugador.
+                        const sanitizedPlayerTech = { ...savedTechData };
+                        
+                        // Aseguramos que las propiedades básicas de cultivo existan
+                        if (typeof sanitizedPlayerTech.level === 'undefined') sanitizedPlayerTech.level = 0;
+                        if (typeof sanitizedPlayerTech.currentCultivationProgress === 'undefined') sanitizedPlayerTech.currentCultivationProgress = 0;
+                        if (typeof sanitizedPlayerTech.cultivationTimeToNextLevel === 'undefined') {
+                            sanitizedPlayerTech.cultivationTimeToNextLevel = masterTechData.cultivationSettings?.baseTimeToLevelUp || Infinity;
+                        }
+
+                        // ¡Este es el paso clave! Comparamos con la definición maestra.
+                        // Si en el futuro añades más propiedades a 'effect', esta lógica las cubrirá.
+                        if (masterTechData.effect) {
+                             // Si el objeto de efecto no existe en el guardado, lo creamos.
+                            if (!sanitizedPlayerTech.effect) {
+                                sanitizedPlayerTech.effect = {};
+                            }
+                            // Recorremos las propiedades del efecto maestro...
+                            for (const effectProp in masterTechData.effect) {
+                                // ...y si una propiedad no existe en el guardado, la añadimos.
+                                if (typeof sanitizedPlayerTech.effect[effectProp] === 'undefined') {
+                                    sanitizedPlayerTech.effect[effectProp] = masterTechData.effect[effectProp];
+                                    console.warn(`Partida antigua: Añadida propiedad faltante '${effectProp}' a la técnica '${techId}'.`);
+                                }
+                            }
+                        }
+                        sanitizedTechniques[techId] = sanitizedPlayerTech;
+                    } else {
+                        console.warn(`Técnica obsoleta '${techId}' eliminada del guardado.`);
+                    }
+                }
+                loadedPlayer.learnedTechniques = sanitizedTechniques;
+
+                // 3. Asignamos los datos saneados al estado del juego
+                gameState.player = loadedPlayer;
+                gameState.inventory = JSON.parse(JSON.stringify(loadedGameState.inventory));
+                gameState.map.entities = loadedGameState.map.entities ? JSON.parse(JSON.stringify(loadedGameState.map.entities)) : [];
+                
+                // --- FIN DE LA LÓGICA DE COMPATIBILIDAD ---
+
+                // Resetear estados transitorios
+                gameState.player.isCultivating = false;
+                if (gameState.cultivationInterval) {
+                    clearInterval(gameState.cultivationInterval);
+                    gameState.cultivationInterval = null;
+                }
+
+                // Reconstruir el juego con los datos actualizados
+                generateMap(true);
+                recalculatePlayerStats(); // Es crucial recalcular stats DESPUÉS de sanear los datos
+                renderQuickSlotBar();
+                updatePlayerPosition("loadGameFromFile_end");
+
+                showModal("Partida Cargada", "¡Partida restaurada con éxito! (Se aplicaron actualizaciones de compatibilidad)");
+
+            } catch (error) {
+                showModal("Error al Cargar", `Hubo un problema: ${error.message}`);
+                console.error("Error loading game:", error);
+            } finally {
+                event.target.value = null; // Permite cargar el mismo archivo de nuevo
             }
-            loadedPlayer.learnedTechniques = sanitizedTechniques;
-
-            // 3. Asignamos el objeto del jugador, ahora completamente saneado, a nuestro gameState
-            gameState.player = loadedPlayer;
-
-            // --- FIN DE LA CORRECCIÓN DE COMPATIBILIDAD ---
-
-            gameState.inventory = JSON.parse(JSON.stringify(loadedGameState.inventory));
-            gameState.map.entities = loadedGameState.map.entities ? JSON.parse(JSON.stringify(loadedGameState.map.entities)) : [];
-
-            // Resetear estados transitorios
-            gameState.player.isCultivating = false;
-            if (gameState.cultivationInterval) {
-                clearInterval(gameState.cultivationInterval);
-                gameState.cultivationInterval = null;
-            }
-
-            // Reconstruir el juego
-            generateMap(true);
-            // Ya no necesitas llamar a recalculatePlayerStats aquí
-            renderQuickSlotBar();
-            updatePlayerPosition("loadGameFromFile_end");
-
-            showModal("Partida Cargada", "¡Partida restaurada con éxito! (Compatibilidad aplicada)");
-
-        } catch (error) {
-            showModal("Error al Cargar", `Hubo un problema: ${error.message}`);
-            console.error("Error loading game:", error);
-        } finally {
+        };
+        reader.onerror = () => {
+            showModal("Error de Lectura", "No se pudo leer el archivo de guardado.");
             event.target.value = null;
-        }
-    };
-    reader.onerror = () => {
-        showModal("Error de Lectura", "No se pudo leer el archivo de guardado.");
-        event.target.value = null;
-    };
-    reader.readAsText(file);
-}
+        };
+        reader.readAsText(file);
+    }
 
       function renderQuickSlotBar() {
         const bar = document.getElementById("quickSlotBar");
