@@ -2460,6 +2460,12 @@
                     count: 10,
                     currentCount: 0,
                   },
+                  {
+                    entityTypeId: "bandido_desfiladero",
+                    count: 20,
+                    currentCount: 0,
+                  },
+                  
                 ],
                 respawnTimer: 0,
                 respawnCooldown: 600,
@@ -5569,6 +5575,7 @@
             },
             { itemName: "Carne Fresca", quantity: [1, 2], chance: 0.6 },
             { itemName: "Piedras Espirituales", quantity: [1, 2], chance: 1 },
+            { itemName: "Cristales de Qi", quantity: [1, 3], chance: 0.3 },
           ],
         },
         monster_bosque_arana: {
@@ -5584,6 +5591,11 @@
             { itemName: "Seda de Araña", quantity: [1, 3], chance: 0.7 },
             { itemName: "Veneno Débil", quantity: [1, 1], chance: 0.2 },
             { itemName: "Piedras Espirituales", quantity: [1, 2], chance: 1 },
+            {
+              itemName: "Raíz de Fuego Terrenal",
+              quantity: [1, 1],
+              chance: 0.3,
+            },
           ],
         },
 
@@ -5592,9 +5604,9 @@
           name: "Escorpión de las Dunas",
           spriteUrl: "img/escorpion.png",
           hp: 390,
-          level: 5,
+          level: 9,
           attack: 30,
-          defense: 8,
+          defense: 10,
           exp: 35,
           maxHp: 390,
           specialChance: 0.35,
@@ -5609,7 +5621,7 @@
             { itemName: "Cristales de Qi", quantity: [1, 3], chance: 0.3 },
             { itemName: "Aguijón de Escorpión", quantity: [1, 1], chance: 0.5 },
             { itemName: "Quitina Resistente", quantity: [1, 1], chance: 0.3 },
-            { itemName: "Piedras Espirituales", quantity: [2, 4], chance: 1 },
+            { itemName: "Piedras Espirituales", quantity: [4, 8], chance: 1 },
           ],
         },
         monster_desierto_golem_arena: {
@@ -5617,11 +5629,11 @@
           name: "Golem de Tormenta de Arena",
           spriteUrl: "img/golem_arena.png",
           hp: 400,
-          level: 9,
+          level: 12,
           attack: 35,
           defense: 15,
           exp: 80,
-          maxHp: 200,
+          maxHp: 400,
           specialChance: 0.35,
           specialAttackMultiplier: 1.8,
           abilities: [
@@ -5631,7 +5643,7 @@
             },
           ],
           lootTable: [
-            { itemName: "Cristales de Qi", quantity: [1, 3], chance: 0.3 },
+            { itemName: "Cristales de Qi", quantity: [2, 3], chance: 0.3 },
             { itemName: "Núcleo de Arena", quantity: [1, 1], chance: 0.6 },
             { itemName: "Fragmento Desértico", quantity: [1, 2], chance: 0.4 },
             { itemName: "Piedras Espirituales", quantity: [4, 8], chance: 1 },
@@ -5642,10 +5654,10 @@
           name: "Serpiente de Ciénaga",
           spriteUrl: "img/serpiente.png",
           hp: 360,
-          level: 3,
-          attack: 28,
-          defense: 2,
-          exp: 22,
+          level: 15,
+          attack: 50,
+          defense: 6,
+          exp: 100,
           maxHp: 360,
           specialChance: 0.35,
           specialAttackMultiplier: 1.8,
@@ -5657,13 +5669,9 @@
           ],
           lootTable: [
             { itemName: "Escama de Serpiente", quantity: [1, 2], chance: 0.5 },
-            {
-              itemName: "Raíz de Fuego Terrenal",
-              quantity: [1, 1],
-              chance: 0.3,
-            },
+            
             { itemName: "Veneno de Ciénaga", quantity: [1, 1], chance: 0.3 },
-            { itemName: "Piedras Espirituales", quantity: [2, 4], chance: 1 },
+            { itemName: "Piedras Espirituales", quantity: [4, 7], chance: 1 },
           ],
         },
         cultivator_rival_low: {
@@ -5691,7 +5699,7 @@
           level: 9,
           attack: 60,
           defense: 4,
-          exp: 35,
+          exp: 100,
           maxHp: 200,
           abilities: [
             { abilityId: "armor_break", chance: 0.3 },
@@ -5717,53 +5725,20 @@
           hp: 400,
           level: 15,
           attack: 80,
-          defense: 10,
+          defense: 20,
           exp: 250,
           maxHp: 400,
           specialChance: 0.25,
           specialAttackMultiplier: 1.7,
           healChance: 0.1,
           lootTable: [
-            { itemName: "Piedras Espirituales", quantity: [1, 10], chance: 1 },
-            { itemName: "Cristales de Qi", quantity: [1, 3], chance: 0.3 },
-            { itemName: "Venenos Mortales", quantity: [1, 3], chance: 0.05 },
+            { itemName: "Piedras Espirituales", quantity: [5, 10], chance: 1 },
+            { itemName: "Cristales de Qi", quantity: [3, 10], chance: 0.3 },
+           
             { itemName: "Fragmentos de Jade", quantity: [1, 2], chance: 0.02 },
             { itemName: "Esencia Oscura", quantity: [1, 1], chance: 0.05 },
-            {
-              itemName: "Rollo: Dardo Venenoso",
-              quantity: [1, 1],
-              chance: 0.05,
-            },
-            {
-              itemName: "Rollo: Piel de Piedra",
-              quantity: [1, 1],
-              chance: 0.05,
-            },
-            {
-              itemName: "Rollo: Voluntad de Hierro",
-              quantity: [1, 1],
-              chance: 0.015,
-            },
-            {
-              itemName: "Rollo: Flecha Celestial",
-              quantity: [1, 1],
-              chance: 0.05,
-            },
-            {
-              itemName: "Rollo: Abrazo de la Naturaleza",
-              quantity: [1, 1],
-              chance: 0.01,
-            },
-            {
-              itemName: "Rollo: Rugido de Dragón",
-              quantity: [1, 1],
-              chance: 0.01,
-            },
-            {
-              itemName: "Rollo: Clon Fantasma",
-              quantity: [1, 1],
-              chance: 0.01,
-            },
+           
+          
           ],
         },
 
@@ -5814,12 +5789,12 @@
           name: "Bandido del Desfiladero",
           spriteUrl: "img/mercenario.png",
           typeOverride: "monster",
-          hp: 280,
-          level: 9,
-          attack: 45,
-          defense: 10,
-          exp: 60,
-          maxHp: 180,
+          hp: 600,
+          level: 19,
+          attack: 100,
+          defense: 80,
+          exp: 600,
+          maxHp: 600,
           healChance: 0.15,
           lootTable: [
             {
@@ -5827,9 +5802,9 @@
               quantity: [10, 30],
               chance: 0.5,
             },
-            { itemName: "Daga Oxidada", quantity: [1, 1], chance: 0.2 },
+           
           ],
-          fixedLocation: { x: 25, y: 40 },
+          
         },
 
         esqueleto_podrido: {
@@ -5839,10 +5814,10 @@
           typeOverride: "monster",
           hp: 500,
           maxHp: 500,
-          level: 15,
-          attack: 60,
+          level: 20,
+          attack: 80,
           defense: 30,
-          exp: 60,
+          exp: 120,
           abilities: [
             { abilityId: "mana_curse", chance: 0.35 }, // Dificulta a los jugadores que usan maná
             { abilityId: "basic_heal", chance: 0.2 }, // Prolonga el combate curándose
@@ -6159,10 +6134,10 @@
           symbol: "🐻",
           name: "Osa Mayor Esmeralda",
           spriteUrl: "img/osa_mayor.png", // Necesitarías un sprite para este
-          level: 12,
+          level: 18,
           hp: 1450,
           maxHp: 1450,
-          attack: 40,
+          attack: 90,
           defense: 25,
           exp: 150,
           abilities: [
@@ -6193,10 +6168,10 @@
           symbol: "🌳",
           name: "Treant Anciano",
           spriteUrl: "img/treant.png", // Necesitarías un sprite para este
-          level: 15,
+          level: 18,
           hp: 600,
           maxHp: 600,
-          attack: 50,
+          attack: 80,
           defense: 30,
           exp: 220,
           abilities: [
@@ -6225,12 +6200,12 @@
           symbol: "🦎",
           name: "Basilisco de Ciénaga",
           spriteUrl: "img/basilisco.png", // Necesitarías un sprite para este
-          level: 14,
+          level: 19,
           hp: 1380,
           maxHp: 1380,
           attack: 65,
-          defense: 18,
-          exp: 180,
+          defense: 80,
+          exp: 300,
           abilities: [
             { abilityId: "concussive_blow", chance: 0.25 }, // Simula una mirada petrificante con el stun
             { abilityId: "poison_sting", chance: 0.4 }, // Su mordida es venenosa
@@ -6254,7 +6229,7 @@
           level: 17,
           hp: 550,
           maxHp: 550,
-          attack: 80,
+          attack: 180,
           defense: 15, // Baja defensa física, pero peligroso
           exp: 250,
           abilities: [
@@ -6279,7 +6254,7 @@
           symbol: "🧞",
           name: "Djinn de las Arenas",
           spriteUrl: "img/djinn.png", // Necesitarías un sprite para este
-          level: 18,
+          level: 19,
           hp: 650,
           maxHp: 650,
           attack: 100,
@@ -6309,12 +6284,12 @@
           symbol: "🐛",
           name: "Gusano de las Dunas Colosal",
           spriteUrl: "img/gusano.png", // Necesitarías un sprite para este
-          level: 20,
+          level: 21,
           hp: 1000,
           maxHp: 1000,
           attack: 160,
-          defense: 40,
-          exp: 400,
+          defense: 60,
+          exp: 500,
           abilities: [
             { abilityId: "thorns_aura", chance: 0.3 }, // Su piel quitinosa daña a los atacantes
             { abilityId: "armor_break", chance: 0.2 }, // Su mordida aplastante rompe defensas
@@ -6341,12 +6316,12 @@
           symbol: "😡",
           name: "Cultivador Renegado",
           spriteUrl: "img/cultivador_hostil.png", // Un sprite de cultivador más avanzado
-          level: 16,
+          level: 25,
           hp: 500,
           maxHp: 500,
           attack: 75,
-          defense: 22,
-          exp: 240,
+          defense: 50,
+          exp: 1000,
           abilities: [
             { abilityId: "armor_piercing_strike", chance: 0.25 }, // Sabe dónde golpear
             { abilityId: "basic_heal", chance: 0.15 }, // Usa píldoras para curarse
@@ -6371,17 +6346,17 @@
           ],
         },
 
-        // 8. Mercenario Acorazado (Defensa y Stun)
+        // 8. Mercenario Acorazado (Defensa y Stun)//valle del dragon
         mercenario_acorazado: {
           symbol: "🛡️",
           name: "Mercenario Acorazado",
           spriteUrl: "img/mercenario.png", // Necesitarías un sprite para este
-          level: 13,
+          level: 27,
           hp: 1500,
           maxHp: 1500,
-          attack: 55,
-          defense: 35,
-          exp: 160,
+          attack: 150,
+          defense: 70,
+          exp: 1600,
           abilities: [
             { abilityId: "stone_skin_1", chance: 0.4 }, // Siempre mantiene su defensa alta
             { abilityId: "concussive_blow", chance: 0.2 }, // Golpe de escudo
@@ -6578,7 +6553,7 @@
             },
             {
               itemName: "Piedras Espirituales",
-              quantity: [700, 800],
+              quantity: [500, 600],
               chance: 1.0,
             },
           ],
@@ -6905,7 +6880,7 @@
           level: 10,
           attack: 45,
           defense: 20,
-          exp: 300,
+          exp: 1000,
           maxHp: 500,
           isBoss: true,
           specialChance: 0.35,
@@ -6916,7 +6891,7 @@
           lootTable: [
             {
               itemName: "Piedras Espirituales",
-              quantity: [15, 30],
+              quantity: [20, 100],
               chance: 1.0,
             },
             {
@@ -6924,17 +6899,9 @@
               quantity: [1, 1],
               chance: 0.8,
             },
-            {
-              itemName: "Rollo: Palma Destructora de Montañas",
-              quantity: [1, 1],
-              chance: 0.25,
-            },
+       
 
-            {
-              itemName: "Rollo: Barrera Mística",
-              quantity: [1, 1],
-              chance: 0.25,
-            },
+        
           ],
           nextBossId: "boss_ancient_golem",
           fixedLocation: { x: 9, y: 36 },
