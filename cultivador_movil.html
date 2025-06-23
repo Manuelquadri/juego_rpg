@@ -2678,6 +2678,12 @@
           y: 30,
           isHub: false,
         },
+        tp_dragon_valley: {
+        name: "Corazón del Valle del Dragón",
+        x: 150, // Coordenada segura DENTRO del valle
+        y: 15,  // Puedes ajustar esto a donde quieras que aparezca el jugador
+        isHub: false,
+    },
         // Puedes añadir más teletransportadores aquí en el futuro
       };
       const G_TERRAIN_TYPES = {
@@ -5521,13 +5527,22 @@
         },
         tp_desfiladero: {
           symbol: "🌀",
-          name: "Matriz Ruinas 1",
+          name: "Matriz desfiladero",
           spriteUrl: "img/teleport_plat.png",
           interaction: "activate_teleporter",
           teleporterId: "tp_desfiladero",
           fixedLocation: { x: 125, y: 30 },
           discovered: false,
         },
+        tp_dragon_valley: {
+          symbol: "🌀",
+          name: "Matriz del Valle del Dragón",
+          spriteUrl: "img/teleport_plat.png",
+          interaction: "activate_teleporter",  // La interacción clave
+          teleporterId: "tp_dragon_valley",    // ¡DEBE coincidir con el ID de TELEPORTER_DATA!
+          fixedLocation: { x: 150, y: 15 },    // La ubicación física DENTRO del valle
+          discovered: true, // Para que sea visible en cuanto entres a la zona
+      },
 
         // === NUEVAS ENTIDADES DE TRANSICIÓN ===
         transition_ruins_entrance: {
@@ -8236,6 +8251,7 @@
           "tp_desert_oasis",
           "tp_swamp_ruin",
           "tp_desfiladero",
+          "tp_dragon_valley",
           "npc_maestro_jian",
           "npc_anciana_su",
           "transition_valley_exit",
@@ -9335,6 +9351,13 @@
                   entityContainer.style.width = `${currentTileSize * 3}px`;
                   entityContainer.style.height = `${currentTileSize * 3}px`;
                 }else if (entity.originalEntityTypeId === "tp_desfiladero") {
+                  entityContainer.style.backgroundSize = "100%";
+                  entityContainer.style.top = `${
+                    (entity.y - 1) * currentTileSize
+                  }px`;
+                  entityContainer.style.width = `${currentTileSize * 3}px`;
+                  entityContainer.style.height = `${currentTileSize * 3}px`;
+                }else if (entity.originalEntityTypeId === "tp_dragon_valley") {
                   entityContainer.style.backgroundSize = "100%";
                   entityContainer.style.top = `${
                     (entity.y - 1) * currentTileSize
