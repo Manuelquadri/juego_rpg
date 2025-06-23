@@ -3450,11 +3450,11 @@
         mision_diac_3: {
           titulo: "Investigar al Renegado",
           descripcion:
-            "Hemos recibido informes de que el diácono renegado, Jin, se esconde al final del Desfiladero. Investiga la zona (alrededores de x:220-260 e y:30-40y prepárate para lo peor.",
+            "Hemos recibido informes de que el diácono renegado, Jin, se esconde al final del Desfiladero. Investiga la zona (alrededores de x:85 y:15  prepárate para lo peor.",
           objetivo: {
             tipo: "llegar_a_punto",
-            x: 240,
-            y: 38,
+            x: 85,
+            y: 15,
             nombreArea: "Guarida de Jin",
             npcEntrega: "guia_lin",
           }, // Objetivo de exploración
@@ -3463,23 +3463,20 @@
           requisitoRango: "Diácono",
         },
         mision_diac_4: {
-          titulo: "La Traición de Jin",
-          descripcion:
-            "Es hora de acabar con la amenaza del Diácono Renegado Jin. Derrótalo y restaura el honor de la secta.",
-          objetivo: {
-            tipo: "derrotar_enemigo",
-            enemigoTipo: "diacono_renegado_jin",
-            cantidad:1,
-            npcEntrega: "guia_lin",
-          },
-          
-          recompensa: {
-            pcs: 1000,
-            exp: 5000,
-            items: { "Rollo: Técnica de Absorción de Qi Celestial": 1 },
-          },
-          npcInicio: "guia_lin",
-          requisitoRango: "Diácono", // Se podría hacer que esta se active después de la mision_diac_3
+            titulo: "La Traición de Jin",
+            descripcion: "Es hora de acabar con la amenaza del Diácono Renegado Jin. Derrótalo y restaura el honor de la secta.",
+            objetivo: {
+                tipo: "derrotar_npc_especifico", // <-- TIPO CORRECTO
+                npcId: "diacono_renegado_jin",   // <-- PROPIEDAD CORRECTA
+                npcEntrega: "guia_lin"
+            },
+            recompensa: {
+                pcs: 1000,
+                exp: 5000,
+                items: { "Rollo: Técnica de Absorción de Qi Celestial": 1 }
+            },
+            npcInicio: "guia_lin",
+            requisitoRango: "Diácono", 
         },
 
         // === MISIONES: ANCIANO ===
@@ -8241,12 +8238,12 @@
           "tp_desfiladero",
           "npc_maestro_jian",
           "npc_anciana_su",
-
+          "transition_valley_exit",
           //ENEMIGOS
           "jabali_colmilludo_alfa",
           "boss_ancient_golem",
           
-          "transition_ruins_exit",
+          "diacono_renegado_jin",
           "jabali_alfa_1",
           "jabali_alfa_2",
           "jabali_alfa_3",
@@ -8282,7 +8279,18 @@
             }
           }
         }
-
+        player.secta.misionesActivas.forEach((misionActiva) => {
+        const misionData = MISIONES_DATA[misionActiva.id];
+        // Buscamos misiones cuyo objetivo sea derrotar a un NPC específico
+        if (misionData?.objetivo?.tipo === "derrotar_npc_especifico" && misionData.objetivo.npcId) {
+            const npcId = misionData.objetivo.npcId;
+            // Si este NPC tiene una ubicación fija y aún no está en nuestra lista para procesar, lo añadimos.
+            if (entityTypes[npcId]?.fixedLocation && !idsParaProcesar.includes(npcId)) {
+                console.log(`[EnsureFixed] Añadiendo al NPC de misión '${npcId}' a la lista de aparición.`);
+                idsParaProcesar.push(npcId);
+            }
+        }
+    });
         // Lógica para rivales de desafío de secta (actuales)
         player.secta.misionesActivas.forEach((misionActiva) => {
           const misionData = MISIONES_DATA[misionActiva.id];
