@@ -1895,11 +1895,11 @@
             currentBossToSpawn: "boss_dem",
             defeatedFixedEntities: {},
             storyFlags: {
-              metAncianaSu: false,
-              knowsAboutCalamity: false,
-              knowsAboutSoberano: false,
-              knowsFullTruth: false,
-            },
+              metAncianaSu: false,          // Hito 1: Conocer a la archivista.
+              knowsAboutCalamity: false,    // Hito 2: Aprender sobre el desastre pasado.
+              knowsAboutSoberano: false,    // Hito 3: El Maestro revela el secreto del Soberano.
+              knowsFullTruth: false,        // Hito 4: El Santuario revela la verdad completa.
+          },
           },
           secta: {
             nombre: "Secta del Viento Azure",
@@ -7759,32 +7759,29 @@
         const flags = player.worldState.storyFlags;
 
         switch (npcId) {
-          case "anciana_su":
+        case "anciana_su":
             if (!flags.metAncianaSu) {
-              return "Joven discípulo... tu flujo de Qi es... peculiar. Me recuerda a las viejas leyendas. Sigue entrenando, estaré observando.";
+                return "Joven discípulo... tu flujo de Qi es... peculiar. Me recuerda a las viejas leyendas. Sigue entrenando, estaré observando.";
             }
-            if (flags.knowsAboutCalamity) {
-              return "La Gran Calamidad fue una herida profunda para nuestra secta. Siento que sus ecos aún resuenan. Ten cuidado en tus misiones.";
+            if (flags.knowsAboutCalamity && !flags.knowsAboutSoberano) {
+                return "La Gran Calamidad fue una herida profunda para nuestra secta. Siento que sus ecos aún resuenan. Ten cuidado en tus misiones.";
+            }
+            if (flags.knowsAboutSoberano) {
+                return "Así que el Maestro te ha contado... El peso sobre tus hombros es grande. Busca la verdad completa, el Santuario del Eco en el Valle del Dragón Caído podría tener respuestas.";
             }
             return "El conocimiento del pasado es la llave del futuro. Si tienes preguntas, los archivos siempre están abiertos.";
 
-          case "maestro_jian":
+        case "maestro_jian":
             if (flags.knowsFullTruth) {
-              return `La carga que llevas es inmensa. Toda la secta confía en ti. No dudes de tu camino.`;
+                return `La carga que llevas es inmensa. Toda la secta confía en ti. No dudes de tu camino. El destino del mundo está en tus manos.`;
             }
             if (flags.knowsAboutSoberano) {
-              return `Ahora que conoces parte del secreto, debes entender la gravedad de la situación. El sello se debilita. Cada victoria tuya nos da más tiempo.`;
-            }
-            if (
-              player.secta.rango === "Discípulo Interno" ||
-              player.secta.rango === "Discípulo Principal"
-            ) {
-              return "Sigue así, joven. Tu progreso es la esperanza de nuestra secta.";
+                return `Ahora que conoces parte del secreto, debes entender la gravedad de la situación. El sello se debilita. Cada victoria tuya nos da más tiempo.`;
             }
             return "El camino del cultivador es largo y arduo. Que el Viento Azure guíe tus pasos.";
-        }
-        return "..."; // Diálogo por defecto
-      }
+    }
+    return "..."; // Diálogo por defecto
+}
       function showZoneNotification(zoneName) {
       
         const notificationElement =
@@ -9830,36 +9827,27 @@
               }
               break;
             case "talk_story_npc":
-              if (entity.npcId) {
-                const dialogue = getStoryNpcDialogue(entity.npcId);
-                showModal(`Hablando con ${entity.name}`, dialogue);
-              }
-              return;
-            case "interact_shrine":
-              if (entity.type === "story_shrine") {
-                const player = gameState.player;
-                if (
-                  player.worldState.storyFlags.knowsAboutSoberano &&
-                  !player.worldState.storyFlags.knowsFullTruth
-                ) {
-                  player.worldState.storyFlags.knowsFullTruth = true;
-                  showModal(
-                    "Un Eco del Pasado",
-                    "Al tocar el santuario, una voz antigua resuena en tu mente...<br><br><em>'El Soberano Silente... fue nuestro mayor héroe, Longwei. Su poder amenazó con consumir todo, y lo sellamos. Pero el sello no es eterno... La resonancia en tu alma... el Arte del Corazón Celeste... no es para sellar, sino para purificar. Esa es tu verdadera prueba.'</em><br><br><strong>La verdad completa te ha sido revelada.</strong>"
-                  );
-                } else if (player.worldState.storyFlags.knowsFullTruth) {
-                  showModal(
-                    "Santuario del Eco",
-                    "El santuario permanece en silencio, su propósito cumplido. El camino ahora es tuyo."
-                  );
-                } else {
-                  showModal(
-                    "Santuario del Eco",
-                    "Sientes una energía antigua y melancólica, pero no puedes descifrar su significado... todavía."
-                  );
+            if (entity.npcId) {
+                    const dialogue = getStoryNpcDialogue(entity.npcId);
+                    showModal(`Hablando con ${entity.name}`, dialogue);
                 }
-              }
               return;
+              case "interact_shrine": // <-- NUEVO CASO
+                if (entity.type === 'story_shrine') {
+                    const player = gameState.player;
+                    const flags = player.worldState.storyFlags;
+                    if (flags.knowsAboutSoberano && !flags.knowsFullTruth) {
+                        flags.knowsFullTruth = true;
+                        showModal("Un Eco del Pasado",
+                            "Al tocar el santuario, una voz antigua resuena en tu mente...<br><br><em>'El Soberano Silente... fue nuestro mayor héroe, Longwei. Su poder amenazó con consumir todo, y lo sellamos. Pero el sello no es eterno... La resonancia en tu alma... el Arte del Corazón Celeste... no es para sellar, sino para purificar. Esa es tu verdadera prueba.'</em><br><br><strong>La verdad completa te ha sido revelada.</strong>"
+                        );
+                    } else if (flags.knowsFullTruth) {
+                        showModal("Santuario del Eco", "El santuario permanece en silencio, su propósito cumplido. El camino ahora es tuyo.");
+                    } else {
+                        showModal("Santuario del Eco", "Sientes una energía antigua y melancólica, pero no puedes descifrar su significado... todavía.");
+                    }
+                }
+                return;
             case "talk_secta_npc":
               if (entity.npcId) {
                 interactWithSectNPC(entity.npcId);
@@ -12474,46 +12462,36 @@
         // --- DISPARADORES DE HISTORIA POST-MISIÓN ---
         const flags = player.worldState.storyFlags;
 
-        // Hito de Anciana Su (Acto I)
+        // Hito 1: La Anciana Su se fija en ti
         if (misionId === "mision_desafio_interno_1" && !flags.metAncianaSu) {
-          flags.metAncianaSu = true;
-          setTimeout(() => {
-            showModal(
-              "Una Invitación Inesperada",
-              "Poco después de tu ascenso, recibes una nota de la Anciana Su, la archivista de la secta. Te pide que la visites.<br><br><em>'Tu control sobre el Qi... es especial. Visítame en los archivos cuando puedas. Hay cosas que deberías saber sobre el pasado de nuestra secta.'</em>"
-            );
-          }, 2000);
+            flags.metAncianaSu = true;
+            setTimeout(() => {
+                showModal("Una Invitación Inesperada", 
+                "Poco después de tu ascenso, recibes una nota de la Anciana Su, la archivista de la secta. Te pide que la visites.<br><br><em>'Tu control sobre el Qi... es especial. Visítame en los archivos cuando puedas. Hay cosas que deberías saber sobre el pasado de nuestra secta.'</em>");
+            }, 2000);
         }
 
-        // Hito del Maestro Jian (Acto II)
-        if (
-          misionId === "mision_desafio_diacono_1" &&
-          !flags.knowsAboutSoberano
-        ) {
-          flags.knowsAboutSoberano = true;
-          setTimeout(() => {
-            showModal(
-              "La Convocatoria del Maestro",
-              "Tu ascenso a Diácono no ha pasado desapercibido. El Maestro de Secta Jian te convoca a sus aposentos privados.<br><br><em>'Joven Diácono, debo confiarte un terrible secreto. La Gran Calamidad que hirió a nuestra secta no fue un accidente. Fue obra de nuestro más grande patriarca, corrompido por un poder prohibido. Lo sellamos, pero ese sello... se está rompiendo.'</em><br><br><strong>Has aprendido sobre el Soberano Sellado.</strong>"
-            );
-          }, 2000);
+        // Hito 2: El Maestro Jian te revela el secreto
+        if (misionId === "mision_desafio_diacono_1" && !flags.knowsAboutSoberano) {
+            flags.knowsAboutSoberano = true;
+            setTimeout(() => {
+                showModal("La Convocatoria del Maestro", 
+                "Tu ascenso a Diácono no ha pasado desapercibido. El Maestro de Secta Jian te convoca a sus aposentos privados.<br><br><em>'Joven Diácono, debo confiarte un terrible secreto. La Gran Calamidad que hirió a nuestra secta no fue un accidente. Fue obra de nuestro más grande patriarca, corrompido por un poder prohibido. Lo sellamos, pero ese sello... se está rompiendo.'</em><br><br><strong>Has aprendido sobre el Soberano Sellado.</strong>");
+            }, 2000);
         }
 
         // Hito del Santuario (Acto III) - El jugador lo descubre por sí mismo, pero lo activamos aquí.
+       // Hito 3: Se revela la ubicación del Santuario
         if (misionId === "mision_desafio_anciano_1") {
-          const santuario = gameState.map.entities.find(
-            (e) => e.type === "story_shrine"
-          );
-          if (santuario) {
-            santuario.discovered = true;
-            renderMap(); // Actualiza el mapa para mostrar el santuario
-            setTimeout(() => {
-              showModal(
-                "Un Susurro en el Viento",
-                "Al derrotar al Anciano Guardián, sientes una extraña llamada desde el Valle del Dragón Caído. Un lugar de poder oculto te está esperando. El Maestro Jian asiente, como si supiera que este momento llegaría."
-              );
-            }, 2000);
-          }
+            const santuario = gameState.map.entities.find(e => e.type === 'story_shrine');
+            if (santuario) {
+                santuario.discovered = true;
+                renderMap(); // Actualiza el mapa para mostrar el santuario
+                setTimeout(() => {
+                    showModal("Un Susurro en el Viento",
+                    "Al derrotar al Anciano Guardián, sientes una extraña llamada desde el Valle del Dragón Caído. Un lugar de poder oculto te está esperando. El Maestro Jian asiente, como si supiera que este momento llegaría.");
+                }, 2000);
+            }
         }
         return true;
       }
@@ -12980,7 +12958,7 @@
         endEnemyTurn();
     }
 
-      // REEMPLAZA TU endEnemyTurn con esta versión más limpia
+  
       function endEnemyTurn() {
           const player = gameState.player;
           
