@@ -3009,7 +3009,7 @@
               "mision_prin_4",
               // Misiones de Rango Diácono
               "mision_diac_1",
-              "mision_diac_3",
+              
               "mision_diac_4",
 
               // Misiones de Rango Anciano
@@ -3454,19 +3454,21 @@
           requisitoRango: "Diácono",
         },
         mision_diac_3: {
-          titulo: "Investigar al Renegado",
-          descripcion:
-            "Hemos recibido informes de que el diácono renegado, Jin, se esconde al final del Desfiladero. Investiga la zona (alrededores de x:85 y:15  prepárate para lo peor.",
-          objetivo: {
-            tipo: "llegar_a_punto",
-            x: 85,
-            y: 15,
-            nombreArea: "Guarida de Jin",
-            npcEntrega: "guia_lin",
-          }, // Objetivo de exploración
-          recompensa: { pcs: 200, exp: 1000 },
-          npcInicio: "guia_lin",
-          requisitoRango: "Diácono",
+            titulo: "Elimina los Bandidos",
+            descripcion: "Hay un grupo de bandidos atacando gente de la secta en lo profundo de la ciénaga, desaste de ellos.",
+            objetivo: {
+                tipo: "eliminar_enemigo", // <-- TIPO CORRECTO
+                npcId: "bandido_desfiladero",   // <-- PROPIEDAD CORRECTA
+                cantidad: 10,
+                npcEntrega: "guia_lin"
+            },
+            recompensa: {
+                pcs: 1000,
+                exp: 5000,
+                items: { "Rollo: Técnica de Absorción de Qi Celestial": 1 }
+            },
+            npcInicio: "guia_lin",
+            requisitoRango: "Diácono", 
         },
         mision_diac_4: {
             titulo: "La Traición de Jin",
@@ -5846,28 +5848,7 @@
             },
           ],
         },
-        bandido_desfiladero: {
-          symbol: "😠",
-          name: "Bandido del Desfiladero",
-          spriteUrl: "img/mercenario.png",
-          typeOverride: "monster",
-          hp: 600,
-          level: 19,
-          attack: 100,
-          defense: 80,
-          exp: 600,
-          maxHp: 600,
-          healChance: 0.15,
-          lootTable: [
-            {
-              itemName: "Piedras Espirituales",
-              quantity: [10, 30],
-              chance: 0.5,
-            },
-           
-          ],
-          
-        },
+        
 
         esqueleto_podrido: {
           symbol: "💀",
@@ -6196,7 +6177,7 @@
           symbol: "🐻",
           name: "Osa Mayor Esmeralda",
           spriteUrl: "img/osa_mayor.png", // Necesitarías un sprite para este
-          level: 18,
+          level: 12,
           hp: 1450,
           maxHp: 1450,
           attack: 90,
@@ -6230,7 +6211,7 @@
           symbol: "🌳",
           name: "Treant Anciano",
           spriteUrl: "img/treant.png", // Necesitarías un sprite para este
-          level: 18,
+          level: 12,
           hp: 600,
           maxHp: 600,
           attack: 80,
@@ -6262,7 +6243,7 @@
           symbol: "🦎",
           name: "Basilisco de Ciénaga",
           spriteUrl: "img/basilisco.png", // Necesitarías un sprite para este
-          level: 19,
+          level: 12,
           hp: 1380,
           maxHp: 1380,
           attack: 65,
@@ -6282,13 +6263,39 @@
             },
           ],
         },
-
+        bandido_desfiladero: {
+          symbol: "😠",
+          name: "Bandido del Desfiladero",
+          spriteUrl: "img/mercenario.png",
+          typeOverride: "monster",
+          hp: 600,
+          level: 14,
+          attack: 100,
+          defense: 80,
+          exp: 600,
+          maxHp: 600,
+          healChance: 0.15,
+          abilities: [
+            { abilityId: "stone_skin_1", chance: 0.4 }, // Siempre mantiene su defensa alta
+            { abilityId: "concussive_blow", chance: 0.2 }, // Golpe de escudo
+            { abilityId: "armor_piercing_strike", chance: 0.6 },
+          ],
+          lootTable: [
+            {
+              itemName: "Piedras Espirituales",
+              quantity: [10, 30],
+              chance: 0.5,
+            },
+           
+          ],
+          
+        },
         // 4. Espectro del Pantano (Drena Vida y Debilita)
         espectro_pantano: {
           symbol: "👻",
           name: "Espectro del Pantano",
           spriteUrl: "img/espectro.png", // Necesitarías un sprite para este
-          level: 17,
+          level: 11,
           hp: 550,
           maxHp: 550,
           attack: 180,
@@ -6316,7 +6323,7 @@
           symbol: "🧞",
           name: "Djinn de las Arenas",
           spriteUrl: "img/djinn.png", // Necesitarías un sprite para este
-          level: 19,
+          level: 12,
           hp: 650,
           maxHp: 650,
           attack: 100,
@@ -6346,7 +6353,7 @@
           symbol: "🐛",
           name: "Gusano de las Dunas Colosal",
           spriteUrl: "img/gusano.png", // Necesitarías un sprite para este
-          level: 21,
+          level: 13,
           hp: 1000,
           maxHp: 1000,
           attack: 160,
@@ -6373,7 +6380,7 @@
           symbol: "😡",
           name: "Cultivador Renegado",
           spriteUrl: "img/cultivador_hostil.png", // Un sprite de cultivador más avanzado
-          level: 25,
+          level: 14,
           hp: 500,
           maxHp: 500,
           attack: 75,
@@ -6408,7 +6415,7 @@
           symbol: "🛡️",
           name: "Mercenario Acorazado",
           spriteUrl: "img/mercenario.png", // Necesitarías un sprite para este
-          level: 27,
+          level: 18,
           hp: 1500,
           maxHp: 1500,
           attack: 150,
@@ -6444,7 +6451,7 @@
           symbol: "🗿",
           name: "Guardián de Terracota",
           spriteUrl: "img/guardian_terracota.png", // Necesitarías un sprite para este
-          level: 19,
+          level: 10,
           hp: 1000,
           maxHp: 1000,
           attack: 70,
@@ -6475,7 +6482,7 @@
           symbol: "👤",
           name: "Ilusionista Sombrío",
           spriteUrl: "img/ilusionista.png", // Necesitarías un sprite para este
-          level: 28,
+          level: 20,
           hp: 800,
           maxHp: 800,
           attack: 85, // Golpea duro si te pilla sin defensas
@@ -6496,12 +6503,12 @@
         },
         // === NUEVOS ENEMIGOS Y JEFES DE ALTO NIVEL ===
 
-        // -- Nivel Diácono (Nivel 20-30) --
+        // -- Nivel Diácono (Nivel 15-18) --
         cultivador_secta_rival: {
           symbol: "⚔️",
           name: "Cultivador de la Secta de la Llama Negra",
           spriteUrl: "img/rival_1.png",
-          level: 22,
+          level: 15,
           hp: 800,
           maxHp: 800,
           attack: 170,
@@ -6533,7 +6540,7 @@
           symbol: "🦇",
           name: "Murciélago de Cristal Sangriento",
           spriteUrl: "img/murcielago_sangre.png",
-          level: 25,
+          level: 16,
           hp: 800,
           maxHp: 800,
           attack: 190,
@@ -6558,7 +6565,7 @@
           name: "Diácono Renegado Jin (Jefe)",
           spriteUrl: "img/rival_3.png",
           typeOverride: "monster",
-          level: 30,
+          level: 17,
           hp: 2500,
           maxHp: 2500,
           attack: 180,
@@ -6591,7 +6598,7 @@
           symbol: "🐉",
           name: "Draco de Hueso Antiguo",
           spriteUrl: "img/draco_hueso.png",
-          level: 38,
+          level: 18,
           hp: 1500,
           maxHp: 1500,
           attack: 350,
@@ -6600,6 +6607,7 @@
           abilities: [
             { abilityId: "intimidating_roar", chance: 0.3 },
             { abilityId: "mana_curse", chance: 0.2 },
+            { abilityId: 'fire_breath', chance: 0.3 },
           ],
           lootTable: [
             {
@@ -6618,7 +6626,7 @@
           symbol: "🐉",
           name: "Draco de Hueso Antiguo (BOSS)",
           spriteUrl: "img/draco_hueso_boss.png",
-          level: 38,
+          level: 19,
           hp: 2000,
           maxHp: 2000,
           attack: 380,
@@ -6627,6 +6635,7 @@
           abilities: [
             { abilityId: "intimidating_roar", chance: 0.8 },
             { abilityId: "mana_curse", chance: 0.5 },
+            { abilityId: 'fire_breath', chance: 0.3 }
           ],
           lootTable: [
             {
@@ -6645,7 +6654,7 @@
           symbol: "🌪️",
           name: "Espectro Tifónico",
           spriteUrl: "img/espectro_tifon.png",
-          level: 40,
+          level: 18,
           hp: 1200,
           maxHp: 1200,
           attack: 700,
@@ -6669,10 +6678,10 @@
           name: "Emperador Lich del Valle (Jefe)",
           spriteUrl: "img/lich_emperador.png",
           typeOverride: "monster",
-          level: 48,
+          level: 19,
           hp: 5000,
           maxHp: 5000,
-          attack: 350,
+          attack: 900,
           defense: 120,
           exp: 5000,
           isBoss: true,
