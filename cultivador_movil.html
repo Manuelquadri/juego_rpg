@@ -12959,6 +12959,7 @@
                 player.activeChanneledAbility.hp = 0;
             }
         }
+         // 2. Desgaste de Buffs y Debuffs del jugador (un turno menos de duración)
         // Desgaste del bono de defensa temporal de "Paso Veloz"
         if (player.tempDefenseBoostTurns > 0) {
             player.tempDefenseBoostTurns--;
@@ -12966,6 +12967,41 @@
                 player.defense -= player.tempDefenseBoostAmount; // Restaura la defensa
                 logBattle(`El bono de agilidad de ${techniqueData["movement_t1"].name} se desvanece.`);
                 player.tempDefenseBoostAmount = 0;
+            }
+        }
+            // Inmunidad de Santuario Dorado Protector
+        if (player.intangibleTurns > 0) {
+            player.intangibleTurns--;
+            if (player.intangibleTurns === 0) {
+                logBattle("La protección del Santuario Dorado se desvanece.");
+                showFloatingText(playerSprite, 'Vulnerable', 'debuff');
+            }
+        }
+
+        // Duración del Escudo de Qi
+        if (player.magicShieldTurns > 0) {
+            player.magicShieldTurns--;
+            if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
+                logBattle("La energía de tu escudo de Qi se disipa.");
+                player.magicShieldValue = 0; // El escudo se agota por tiempo
+            }
+        }
+
+        // Duración de la Matriz de Reversión
+        if (player.damageToHealingTurns > 0) {
+            player.damageToHealingTurns--;
+            if (player.damageToHealingTurns === 0) {
+                logBattle("La Matriz de Reversión del Cosmos vuelve a su estado normal.");
+            }
+        }
+
+        // Desgaste de debuffs aplicados AL JUGADOR
+        if (player.defenseReductionTurns > 0) {
+            player.defenseReductionTurns--;
+            if (player.defenseReductionTurns === 0) {
+                player.defense += player.defenseReductionAmount; // Restaura la defensa
+                logBattle("Tu defensa vuelve a la normalidad.");
+                player.defenseReductionAmount = 0;
             }
         }
 
@@ -13007,38 +13043,7 @@
       const playerSprite = document.querySelector('.character-sprite');
       let incomingDamage = damageAmount; 
       
-    // Inmunidad de Santuario Dorado Protector
-    if (player.intangibleTurns > 0) {
-        player.intangibleTurns--;
-        if (player.intangibleTurns === 0) {
-            logBattle("La protección del Santuario Dorado se desvanece.");
-            showFloatingText(playerSprite, 'Vulnerable', 'debuff');
-        }
-    }
-     // Duración del Escudo de Qi
-     if (player.magicShieldTurns > 0) {
-        player.magicShieldTurns--;
-        if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
-            logBattle("La energía de tu escudo de Qi se disipa.");
-            player.magicShieldValue = 0; // El escudo se agota por tiempo
-        }
-    }
-       // Duración de la Matriz de Reversión
-       if (player.damageToHealingTurns > 0) {
-        player.damageToHealingTurns--;
-        if (player.damageToHealingTurns === 0) {
-            logBattle("La Matriz de Reversión del Cosmos vuelve a su estado normal.");
-        }
-    }
-      // Desgaste de debuffs aplicados AL JUGADOR
-      if (player.defenseReductionTurns > 0) {
-        player.defenseReductionTurns--;
-        if (player.defenseReductionTurns === 0) {
-            player.defense += player.defenseReductionAmount; // Restaura la defensa
-            logBattle("Tu defensa vuelve a la normalidad.");
-            player.defenseReductionAmount = 0;
-        }
-    }
+    
       // 2. CONVERSIÓN DE DAÑO A CURACIÓN (por Matriz de Reversión)
       if (player.damageToHealingTurns > 0) {
             const healingAmount = Math.floor(incomingDamage * 1.2); // Convierte a 120% de curación
