@@ -11484,6 +11484,7 @@
     }
 
     function battleAction(action) {
+      
         if (!gameState.battle.playerTurn || !gameState.battle.active) return;
         
         const player = gameState.player;
@@ -11492,6 +11493,43 @@
         const enemySprite = document.getElementById('enemySprite');
         let actionTaken = true;
 
+        
+              // Inmunidad de Santuario Dorado Protector
+          if (player.intangibleTurns > 0) {
+            player.intangibleTurns--;
+            console.log(`[battleAction] intangibleTurns DESPUÉS de reducir: ${player.intangibleTurns}`);
+            if (player.intangibleTurns === 0) {
+                logBattle("La protección del Santuario Dorado se desvanece.");
+                showFloatingText(playerSprite, 'Vulnerable', 'debuff');
+            }
+          }
+
+          // Duración del Escudo de Qi
+          if (player.magicShieldTurns > 0) {
+              player.magicShieldTurns--;
+              if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
+                  logBattle("La energía de tu escudo de Qi se disipa.");
+                  player.magicShieldValue = 0; // El escudo se agota por tiempo
+              }
+          }
+
+          // Duración de la Matriz de Reversión
+          if (player.damageToHealingTurns > 0) {
+              player.damageToHealingTurns--;
+              if (player.damageToHealingTurns === 0) {
+                  logBattle("La Matriz de Reversión del Cosmos vuelve a su estado normal.");
+              }
+          }
+
+          // Desgaste de debuffs aplicados AL JUGADOR
+          if (player.defenseReductionTurns > 0) {
+              player.defenseReductionTurns--;
+              if (player.defenseReductionTurns === 0) {
+                  player.defense += player.defenseReductionAmount; // Restaura la defensa
+                  logBattle("Tu defensa vuelve a la normalidad.");
+                  player.defenseReductionAmount = 0;
+              }
+          }
         // Reducir enfriamientos al inicio del turno del jugador
         for (const abilityId in player.abilityCooldowns) {
             if (player.abilityCooldowns[abilityId] > 0) {
@@ -12838,6 +12876,7 @@
             }
 
             if (chosenAbility) {
+             
                 showFloatingText(enemySprite, chosenAbility.name, 'ability');
                 const effect = chosenAbility.effect;
                 let damage = 0;
@@ -12931,6 +12970,7 @@
                         break;
                 }
             } else {
+               
                 // Ataque básico si no se usa habilidad
                 const damage = Math.max(0, enemy.attack - player.defense);
                 applyDamageToPlayer(damage, `${enemy.name}`);
@@ -12940,110 +12980,69 @@
         endEnemyTurn();
     }
 
+      // REEMPLAZA TU endEnemyTurn con esta versión más limpia
       function endEnemyTurn() {
-        const player = gameState.player;
-        
-        // --- LÓGICA DE MANTENIMIENTO (UPKEEP) ---
-        // Se ejecuta al final del turno del enemigo, antes de devolver el control al jugador.
-        if (player.activeChanneledAbility.id === 'formation_t2') {
-            const upkeepCost = techniqueData['formation_t2'].effect.manaUpkeep;
-            if (player.mana >= upkeepCost) {
-                player.mana -= upkeepCost;
-                logBattle(`Mantener los Grilletes de Qi consume ${upkeepCost} maná.`);
-            } else {
-                logBattle(`¡Maná insuficiente para mantener los grilletes! Se disipan.`);
-                // Romper el efecto si no hay maná
-                gameState.battle.enemy.rootedTurns = 0;
-                gameState.battle.enemy.rootDamage = 0;
-                player.activeChanneledAbility.id = null;
-                player.activeChanneledAbility.hp = 0;
-            }
-        }
-         // 2. Desgaste de Buffs y Debuffs del jugador (un turno menos de duración)
-        // Desgaste del bono de defensa temporal de "Paso Veloz"
-        if (player.tempDefenseBoostTurns > 0) {
-            player.tempDefenseBoostTurns--;
-            if (player.tempDefenseBoostTurns === 0) {
-                player.defense -= player.tempDefenseBoostAmount; // Restaura la defensa
-                logBattle(`El bono de agilidad de ${techniqueData["movement_t1"].name} se desvanece.`);
-                player.tempDefenseBoostAmount = 0;
-            }
-        }
-            // Inmunidad de Santuario Dorado Protector
-        if (player.intangibleTurns > 0) {
-            player.intangibleTurns--;
-            if (player.intangibleTurns === 0) {
-                logBattle("La protección del Santuario Dorado se desvanece.");
-                showFloatingText(playerSprite, 'Vulnerable', 'debuff');
-            }
-        }
+          const player = gameState.player;
+          
+          // --- LÓGICA DE MANTENIMIENTO (UPKEEP) ---
+          // Se ejecuta al final del turno del enemigo, antes de devolver el control al jugador.
+          if (player.activeChanneledAbility.id === 'formation_t2') {
+              const upkeepCost = techniqueData['formation_t2'].effect.manaUpkeep;
+              if (player.mana >= upkeepCost) {
+                  player.mana -= upkeepCost;
+                  logBattle(`Mantener los Grilletes de Qi consume ${upkeepCost} maná.`);
+              } else {
+                  logBattle(`¡Maná insuficiente para mantener los grilletes! Se disipan.`);
+                  gameState.battle.enemy.rootedTurns = 0;
+                  gameState.battle.enemy.rootDamage = 0;
+                  player.activeChanneledAbility.id = null;
+                  player.activeChanneledAbility.hp = 0;
+              }
+          }
+          
+          // --- LÓGICA DE DERROTA ---
+          // Comprobamos si el jugador fue derrotado por el ataque del enemigo.
+          if (player.hp <= 0) {
+            player.hp = 0;
+            updateBattleUI(); // Actualiza la UI para mostrar HP 0
 
-        // Duración del Escudo de Qi
-        if (player.magicShieldTurns > 0) {
-            player.magicShieldTurns--;
-            if (player.magicShieldTurns === 0 && player.magicShieldValue > 0) {
-                logBattle("La energía de tu escudo de Qi se disipa.");
-                player.magicShieldValue = 0; // El escudo se agota por tiempo
-            }
-        }
+            // Lógica de derrota centralizada
+            setTimeout(() => {
+              const expLoss = Math.floor(gameState.player.exp * 0.1);
+              gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
+              gameState.player.mana = Math.floor(gameState.player.maxMana * 0.1);
+              gameState.player.exp = Math.max(0, gameState.player.exp - expLoss);
 
-        // Duración de la Matriz de Reversión
-        if (player.damageToHealingTurns > 0) {
-            player.damageToHealingTurns--;
-            if (player.damageToHealingTurns === 0) {
-                logBattle("La Matriz de Reversión del Cosmos vuelve a su estado normal.");
-            }
-        }
+              const safeCoords = findSafeRespawnLocation(G_SAFE_RESPAWN_X, G_SAFE_RESPAWN_Y);
+              gameState.player.x = safeCoords.x;
+              gameState.player.y = safeCoords.y;
 
-        // Desgaste de debuffs aplicados AL JUGADOR
-        if (player.defenseReductionTurns > 0) {
-            player.defenseReductionTurns--;
-            if (player.defenseReductionTurns === 0) {
-                player.defense += player.defenseReductionAmount; // Restaura la defensa
-                logBattle("Tu defensa vuelve a la normalidad.");
-                player.defenseReductionAmount = 0;
-            }
-        }
-
-        if (player.hp <= 0) {
-          player.hp = 0;
-          logBattle("Has sucumbido a tus heridas antes de poder actuar.");
-          updateBattleUI(); // Actualiza la UI para mostrar HP 0
-
-          // Lógica de derrota centralizada
-          setTimeout(() => {
-            const expLoss = Math.floor(gameState.player.exp * 0.1);
-            gameState.player.hp = Math.floor(gameState.player.maxHp * 0.1);
-            gameState.player.mana = Math.floor(gameState.player.maxMana * 0.1);
-            gameState.player.exp = Math.max(0, gameState.player.exp - expLoss);
-
-            const safeCoords = findSafeRespawnLocation(
-              G_SAFE_RESPAWN_X,
-              G_SAFE_RESPAWN_Y
-            );
-            gameState.player.x = safeCoords.x;
-            gameState.player.y = safeCoords.y;
-
-            updatePlayerPosition("player_defeat_respawn");
-            endBattle(false);
-            showModal("Derrota", `Caíste en combate. Pierdes ${expLoss} EXP.`);
-          }, 2000);
-          return; // Detener la función aquí, el jugador no puede actuar.
-        }
-        
-        // Devolvemos el control al jugador
-        gameState.battle.playerTurn = true;
-        
-        updateBattleUI();
-        populateBattleActionButtons();
-    }
+              updatePlayerPosition("player_defeat_respawn");
+              endBattle(false);
+              showModal("Derrota", `Caíste en combate. Pierdes ${expLoss} EXP.`);
+            }, 2000);
+            return; // Detener la función aquí.
+          }
+          
+          // Devolvemos el control al jugador
+          gameState.battle.playerTurn = true;
+          
+          updateBattleUI();
+          populateBattleActionButtons();
+      }
 
     function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
       const player = gameState.player;
       const playerSprite = document.querySelector('.character-sprite');
       let incomingDamage = damageAmount; 
       
-    
+    // 1. INMUNIDAD TOTAL (por Santuario Dorado, etc.)
+    if (player.intangibleTurns > 0) {
+        
+        logBattle(`¡Tu Santuario Dorado anula completamente el ataque de ${sourceName}!`);
+        showFloatingText(playerSprite, '¡Inmune!', 'ability');
+        return 0; // No se recibe daño
+    }
       // 2. CONVERSIÓN DE DAÑO A CURACIÓN (por Matriz de Reversión)
       if (player.damageToHealingTurns > 0) {
             const healingAmount = Math.floor(incomingDamage * 1.2); // Convierte a 120% de curación
