@@ -3858,93 +3858,93 @@
             description: "Una espada básica pero fiable. (+5 Ataque)",
           },
           //nivel 0
-          { itemName: "Rollo: Absorción de Qi Menor", price: 15, stock: 10 },
-
+          { itemName: "Rollo: Absorción de Qi Menor", price: 15, stock: 1 },
+          { itemName: "Rollo: Inscripción Rúnica", price: 150, stock: 1 },
           { itemName: "Rollo: Conversión de Qi", price: 25, stock: 10 },
           //nivel mortal
-          { itemName: "Rollo: Tajo del Viento Veloz", price: 150, stock: 3 },
-          { itemName: "Rollo: Físico de Buey de Piedra", price: 200, stock: 2 },
-          { itemName: "Rollo: Matriz de Escudo de Qi", price: 180, stock: 3 },
-          { itemName: "Rollo: Chispa Ígnea", price: 170, stock: 3 },
-          { itemName: "Rollo: Dedo de Relámpago", price: 220, stock: 2 },
+          { itemName: "Rollo: Tajo del Viento Veloz", price: 150, stock: 1 },
+          { itemName: "Rollo: Físico de Buey de Piedra", price: 200, stock: 1 },
+          { itemName: "Rollo: Matriz de Escudo de Qi", price: 180, stock: 1 },
+          { itemName: "Rollo: Chispa Ígnea", price: 170, stock: 1 },
+          { itemName: "Rollo: Dedo de Relámpago", price: 220, stock: 1 },
           //nivel terrenal
 
           {
             itemName: "Rollo: Estocada Perfora-Armadura",
             price: 300,
-            stock: 3,
+            stock: 1,
           },
-          { itemName: "Rollo: Piel de Acero Fundido", price: 300, stock: 5 },
+          { itemName: "Rollo: Piel de Acero Fundido", price: 300, stock: 1 },
           {
             itemName: "Rollo: Matriz de Grilletes de Qi",
             price: 300,
-            stock: 5,
+            stock: 1,
           },
           { itemName: "Rollo: Paso Etéreo", price: 300, stock: 5 },
-          { itemName: "Rollo: Aliento de Dragón Menor", price: 300, stock: 5 },
+          { itemName: "Rollo: Aliento de Dragón Menor", price: 300, stock: 1 },
           //nivel celestial
           {
             itemName: "Rollo: Danza de Espada Ciclónica",
             price: 600,
-            stock: 3,
+            stock: 1,
           },
           {
             itemName: "Rollo: Corazón de Voluntad Indomable",
             price: 600,
-            stock: 3,
+            stock: 1,
           },
           {
             itemName: "Rollo: Matriz de Supresión Espiritual",
             price: 600,
-            stock: 3,
+            stock: 1,
           },
-          { itemName: "Rollo: Jaula de Rayos", price: 600, stock: 3 },
-          { itemName: "Rollo: Parpadeo de Sombra", price: 600, stock: 3 },
+          { itemName: "Rollo: Jaula de Rayos", price: 600, stock: 1 },
+          { itemName: "Rollo: Parpadeo de Sombra", price: 600, stock: 1 },
           //Nivel soberano
           {
             itemName: "Rollo: Intenteción de Espada del Tirano",
             price: 1200,
-            stock: 3,
+            stock: 1,
           },
-          { itemName: "Rollo: Cuerpo Dorado Inmortal", price: 1200, stock: 2 },
-          { itemName: "Rollo: Sol Abrasador", price: 1200, stock: 3 },
+          { itemName: "Rollo: Cuerpo Dorado Inmortal", price: 1200, stock: 1 },
+          { itemName: "Rollo: Sol Abrasador", price: 1200, stock: 1 },
           {
             itemName: "Rollo: Llamada del Juicio del Trueno",
             price: 1200,
-            stock: 2,
+            stock: 1,
           },
           {
             itemName: "Rollo: Santuario Dorado Protector",
             price: 1200,
-            stock: 2,
+            stock: 1,
           },
           //nivel trascendente
           {
             itemName: "Rollo: Corte que Divide Cielos y Tierra",
             price: 2400,
-            stock: 2,
+            stock: 1,
           },
           {
             itemName: "Rollo: Constitución de Dragón Ancestral",
             price: 2400,
-            stock: 3,
+            stock: 1,
           },
           {
             itemName: "Rollo: Llama del Fénix Renaciente",
             price: 2400,
-            stock: 3,
+            stock: 1,
           },
           {
             itemName: "Rollo: Tribulación de los Nueve Cielos",
             price: 2400,
-            stock: 3,
+            stock: 1,
           },
           {
             itemName: "Rollo: Matriz de Reversión del Cosmos",
             price: 2400,
-            stock: 3,
+            stock: 1,
           },
-          { itemName: "Rollo: Paso del Vacío Infinito", price: 2400, stock: 3 },
+          { itemName: "Rollo: Paso del Vacío Infinito", price: 2400, stock: 1 },
         ],
       };
 
@@ -7375,6 +7375,11 @@
         /// ========================   ROLLOS DE TÉCNICAS    ============================
 
         // -- Rollos Grado 1 --
+        "Rollo: Inscripción Rúnica": {
+            description: "Un manual antiguo que enseña el arte de trazar formaciones rúnicas en el suelo. Te permite aprender la habilidad 'Inscripción Rúnica'.",
+            effect: (ps) => learnTechniqueFromRoll(ps, "formation_scribing_1"),
+            canUse: () => true, // Se puede usar desde el inventario
+        },
         "Rollo: Tajo del Viento Veloz": {
           description: "Enseña 'Tajo del Viento Veloz'.",
           effect: (ps) => learnTechniqueFromRoll(ps, "sword_t1"),
@@ -12850,15 +12855,19 @@
         if (misionDataOriginal.recompensa.nuevoRango) {
           const newRankName = misionDataOriginal.recompensa.nuevoRango;
           player.secta.rango = newRankName;
+          let rankUpMessage = `¡Felicidades! Ascendiste a ${player.secta.rango}.`;
+        let specialRewardText = "";
 
-          setTimeout(
-            () =>
-              showModal(
-                "¡Ascenso en la Secta!",
-                `¡Felicidades! Ascendiste a ${player.secta.rango}.`
-              ),
-            2500
-          );
+          // Recompensa específica para el rango de Anciano
+          if (newRankName === "Anciano") {
+              const scrollItem = "Rollo: Inscripción Rúnica";
+              gameState.inventory[scrollItem] = (gameState.inventory[scrollItem] || 0) + 1;
+              specialRewardText = `<br><br><strong>¡Has obtenido un manual antiguo!</strong><br>Revisa tu inventario para aprender el <em>"${scrollItem}"</em>.`;
+          }
+
+          setTimeout(() => {
+                showModal("¡Ascenso en la Secta!", rankUpMessage + specialRewardText);
+            }, 2500);
 
           applyRankBenefits(player.secta.rango);
 
