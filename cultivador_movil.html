@@ -4429,23 +4429,24 @@
           },
         },
         body_t5: {
-          id: "body_t5",
-          requiredRank: "Gran Anciano",
-          name: "Constitución de Dragón Ancestral",
-          icon: "🐉",
-          description:
-            "Tu cuerpo alcanza la perfección dracónica, ganando inmunidad a efectos de estado y regeneración poderosa.",
-          type: "passive_stat",
-          effect: {
-            statToBoost: "statusImmunity",
-            value: true,
-            passiveHpRegen: 2.0,
-          },
-          maxLevel: 10,
-          cultivationSettings: {
-            baseTimeToLevelUp: 900,
-            levelTimeMultiplier: 1.5,
-          },
+            id: "body_t5",
+            requiredRank: "Gran Anciano",
+            name: "Constitución de Dragón Ancestral",
+            icon: "🐉",
+            description: "Tu cuerpo alcanza la perfección dracónica, aumentando tu resistencia a efectos de estado y regenerando vida poderosamente.",
+            type: "passive_stat",
+            effect: {
+                // === NUEVO SISTEMA DE RESISTENCIA ===
+                statusResistChanceBase: 0.10,      // 10% de resistencia base al nivel 1
+                statusResistChancePerLevel: 0.04,  // +4% de resistencia por cada nivel adicional
+                // ===================================
+                passiveHpRegen: 2.0,
+            },
+            maxLevel: 10,
+            cultivationSettings: {
+                baseTimeToLevelUp: 900,
+                levelTimeMultiplier: 1.5,
+            },
         },
         fire_t5: {
           id: "fire_t5",
@@ -8868,24 +8869,27 @@
 
       // Función para llamar en el bucle principal del juego o con setInterval
       function gameTickUpdater() {
-        // --- INICIO DE LA CORRECCIÓN ---
+      
         // Definimos la variable 'player' para que apunte al estado del jugador.
         const player = gameState.player; 
-        // --- FIN DE LA CORRECCIÓN ---
+        
 
         const now = Date.now();
         const deltaTime = (now - gameState.lastGameTimeUpdate) / 1000;
         gameState.gameTime += deltaTime;
         gameState.lastGameTimeUpdate = now;
 
-        // Ahora, esta lógica de regeneración funcionará porque 'player' está definido.
-        if (player.passiveHpRegen > 0 && player.hp < player.maxHp) {
+        if (player.passiveHpRegen > 0 && player.hp < player.maxHp && !gameState.battle.active && !player.isCultivating) {
+          const regenAmount = player.passiveHpRegen * deltaTime;
           player.hp = Math.min(
             player.maxHp,
-            player.hp + player.passiveHpRegen * deltaTime
+            player.hp + regenAmount
           );
-          updateUI(); // Actualizar la UI para ver la regeneración
+          // Actualizamos solo las barras para no spamear la UI completa
+          updateUI();
         }
+
+    
 
         gameState.map.terrainZones.forEach((zone) => {
           if (zone.spawnSettings) {
@@ -11196,8 +11200,11 @@
         player.maxMana = player.baseMaxMana;
         player.attack = player.baseAttack;
         player.defense = player.baseDefense;
+        // === REINICIO DE STATS PASIVOS 
         player.damageReduction = 0; // Reiniciamos la reducción de daño
         player.passiveHpRegen = 0;   // Reiniciamos la regeneración pasiva
+        player.statusResistChance = 0;
+         // ===============================================
         // Reseteamos las estadísticas de cultivo a sus valores por defecto antes de aplicar los bonos.
         player.qiPerSecondBase = 1;     // Valor base de Qi por segundo.
         player.expPerSecondBase = 0.5;   // Valor base de EXP por segundo.
@@ -11217,18 +11224,31 @@
             
             // 3. Aplicamos los efectos según el tipo de técnica.
             switch (techInfo.type) {
-                case 'passive_stat':
-                    // Aplicamos el efecto por cada nivel que tenga la técnica.
-                    const effectValue = techInfo.effect.value * playerTech.level;
-                    const statToBoost = techInfo.effect.statToBoost;
-                    
-                    if (player.hasOwnProperty(statToBoost)) {
-                        player[statToBoost] += effectValue;
-                    } else {
-                        // Para stats que no son base, como 'damageReduction'
-                        player[statToBoost] = (player[statToBoost] || 0) + effectValue;
+              case 'passive_stat':
+                if (techInfo.effect) {
+                    if (techInfo.effect.statToBoost && techInfo.effect.value) {
+                         const effectValue = techInfo.effect.value * playerTech.level;
+                         const statToBoost = techInfo.effect.statToBoost;
+                         if (player.hasOwnProperty(statToBoost)) {
+                            player[statToBoost] += effectValue;
+                         } else {
+                            player[statToBoost] = (player[statToBoost] || 0) + effectValue;
+                         }
                     }
-                    break;
+                    
+                    // === NUEVA LÓGICA PARA CALCULAR LA RESISTENCIA ===
+                    if (techInfo.effect.statusResistChanceBase) {
+                        const baseChance = techInfo.effect.statusResistChanceBase;
+                        const perLevelChance = techInfo.effect.statusResistChancePerLevel || 0;
+                        player.statusResistChance += baseChance + (perLevelChance * (playerTech.level - 1));
+                    }
+                    // ===============================================
+
+                    if (techInfo.effect.passiveHpRegen) {
+                        player.passiveHpRegen += techInfo.effect.passiveHpRegen * playerTech.level;
+                    }
+                }
+                break;
                 case 'passive_cultivation':
                     // Multiplicamos el valor del efecto por el nivel de la técnica.
                     const cultivationBonus = techInfo.effect.value * playerTech.level;
@@ -11250,7 +11270,8 @@
                 // Puedes añadir más casos para otros tipos de técnicas si es necesario.
             }
         }
-
+          // Aseguramos que la probabilidad no supere un límite (ej. 90%)
+        player.statusResistChance = Math.min(0.9, player.statusResistChance);
         // 4. Asegurarse de que HP/Mana no excedan el nuevo máximo.
         player.hp = Math.min(player.hp, player.maxHp);
         player.mana = Math.min(player.mana, player.maxMana);
@@ -12977,6 +12998,13 @@
                         break;
 
                     case 'stun_chance':
+                      // === INICIO DE LA LÓGICA DE RESISTENCIA ===
+                        if (didStun && player.statusResistChance > 0 && Math.random() < player.statusResistChance) {
+                            logBattle(`¡${enemy.name} intenta aturdirte, pero tu Constitución de Dragón te protege!`);
+                            showFloatingText(playerSprite, '¡Resistido!', 'ability');
+                            logBattle(chosenAbility.logMessage(enemy.name, finalDamage, false)); // Log de no-aturdimiento
+                        } 
+                        // === FIN DE LA LÓGICA DE RESISTENCIA ===
                         damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
                         finalDamage = applyDamageToPlayer(damage, chosenAbility.name);
                         const didStun = Math.random() < (effect.stunChance || 0);
@@ -12988,6 +13016,18 @@
                         break;
 
                     case 'dot_resource':
+                      // === INICIO DE LA LÓGICA DE RESISTENCIA ===
+                        if (player.statusResistChance > 0 && Math.random() < player.statusResistChance) {
+                            logBattle(`¡Tu Constitución de Dragón te permite resistir el efecto de ${chosenAbility.name}!`);
+                            showFloatingText(playerSprite, '¡Resistido!', 'ability');
+                            
+                            if (effect.baseDamageMultiplier) {
+                                const damage = Math.floor(enemy.attack * effect.baseDamageMultiplier);
+                                applyDamageToPlayer(damage, chosenAbility.name);
+                            }
+                            break; // El efecto se resiste, pero el daño (si lo hay) se aplica.
+                        }
+                        // === FIN DE LA LÓGICA DE RESISTENCIA ===
                         if (effect.dot.resource === 'mana' && player.manaDrainTurns === 0) {
                             player.manaDrainTurns = effect.dot.duration;
                             player.manaDrainAmount = effect.dot.drainPerTurn;
