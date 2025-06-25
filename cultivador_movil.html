@@ -329,6 +329,20 @@
           box-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
         }
       }
+      @keyframes pulse-mission-marker {
+          0% {
+              box-shadow: 0 0 5px rgba(255, 223, 0, 0.4), inset 0 0 5px rgba(255, 223, 0, 0.3);
+              opacity: 0.7;
+          }
+          50% {
+              box-shadow: 0 0 20px rgba(255, 223, 0, 0.8), inset 0 0 10px rgba(255, 223, 0, 0.5);
+              opacity: 1;
+          }
+          100% {
+              box-shadow: 0 0 5px rgba(255, 223, 0, 0.4), inset 0 0 5px rgba(255, 223, 0, 0.3);
+              opacity: 0.7;
+          }
+      }
 
       /* --- Botones de Control Superpuestos (Móvil) --- */
       #mobileMenuBtn {
@@ -3315,9 +3329,9 @@
           objetivo: {
             objetivo: {
               tipo: "eliminar_enemigo",
-              enemigoTipo: "golem_de_piedra",
+              enemigoTipo: "boss_ancient_golem",
               cantidad: 1,
-              nombreDisplay: "golem_de_piedra",
+              nombreDisplay: "Geo",
               npcEntrega: "guia_lin",
             },
           },
@@ -8967,7 +8981,30 @@
           // 2. ACTUALIZAMOS la posición del jugador en el gameState
           gameState.player.x = newX;
           gameState.player.y = newY;
-
+          // === TRIGGER DE MISIÓN DE LLEGAR A PUNTO ===
+          const misionesActivas = [...gameState.player.secta.misionesActivas]; // Copia para evitar problemas al modificar
+          misionesActivas.forEach(misionActiva => {
+              const misionData = MISIONES_DATA[misionActiva.id];
+              if (misionData?.objetivo?.tipo === 'llegar_a_punto') {
+                  const objetivo = misionData.objetivo;
+                  // Comprobamos si las coordenadas del jugador coinciden con el objetivo
+                  if (gameState.player.x === objetivo.x && gameState.player.y === objetivo.y) {
+                      // Comprobamos si la misión no ha sido ya completada en este ciclo
+                      if (misionActiva.progreso !== 1) {
+                          misionActiva.progreso = 1; // Marcamos el objetivo como cumplido
+                          logBattle(`Has llegado a ${objetivo.nombreArea || 'la ubicación designada'}.`); // Usamos logBattle para que se vea en el resumen
+                          
+                          const npcEntregaNombre = SECTA_DATA.npcs[objetivo.npcEntrega]?.nombre || "el NPC correspondiente";
+                          
+                          showModal("Objetivo Alcanzado", 
+                              `Has llegado a: <strong>${objetivo.nombreArea}</strong>.<br><br>Ahora debes reportar tu hallazgo a <strong>${npcEntregaNombre}</strong> en la secta para completar la misión.`);
+                          
+                          // Al llegar, el marcador visual ya no es necesario, así que repintamos el mapa
+                          renderMap(); 
+                      }
+                  }
+              }
+          });
           // 3. Obtenemos la nueva zona AHORA que el jugador se ha movido
           const newZone = getPlayerCurrentZone();
           const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
@@ -9223,6 +9260,32 @@
               }
 
               mapElement.appendChild(terrainTile);
+              // === INICIO DEL CÓDIGO NUEVO: MARCADOR DE MISIÓN ===
+              gameState.player.secta.misionesActivas.forEach(misionActiva => {
+                  const misionData = MISIONES_DATA[misionActiva.id];
+                  if (misionData?.objetivo?.tipo === 'llegar_a_punto' && misionActiva.progreso !== 1) {
+                      const objetivo = misionData.objetivo;
+                      // Si la casilla actual (x, y) es la del objetivo de la misión
+                      if (x === objetivo.x && y === objetivo.y) {
+                          const missionMarker = document.createElement('div');
+                          missionMarker.style.position = 'absolute';
+                          missionMarker.style.left = `${x * currentTileSize}px`;
+                          missionMarker.style.top = `${y * currentTileSize}px`;
+                          missionMarker.style.width = `${currentTileSize}px`;
+                          missionMarker.style.height = `${currentTileSize}px`;
+                          missionMarker.style.pointerEvents = 'none'; // Para que no interfiera con clics
+                          missionMarker.style.zIndex = '2'; // Justo encima del terreno
+                          missionMarker.style.animation = 'pulse-mission-marker 2s infinite';
+                          
+                          // Usamos un borde brillante para marcar la casilla
+                          missionMarker.style.border = '3px solid rgba(255, 223, 0, 0.7)';
+                          missionMarker.style.boxSizing = 'border-box';
+                          missionMarker.style.borderRadius = '4px';
+
+                          mapElement.appendChild(missionMarker);
+                      }
+                  }
+              });
             }
           }
         }
