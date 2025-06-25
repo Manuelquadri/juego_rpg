@@ -302,7 +302,19 @@
         box-shadow: 0 0 10px rgba(102, 102, 255, 0.7);
         animation: pulse-conversion 2s infinite;
       }
+      .rune-marker {
+          background-color: rgba(255, 100, 255, 0.2);
+          border: 2px solid #ff00ff;
+          border-radius: 50%;
+          box-shadow: 0 0 15px #ff00ff, inset 0 0 10px #ff00ff;
+          animation: pulse-rune 2.5s infinite ease-in-out;
+      }
 
+      @keyframes pulse-rune {
+          0% { transform: scale(0.8); opacity: 0.7; }
+          50% { transform: scale(1.0); opacity: 1; }
+          100% { transform: scale(0.8); opacity: 0.7; }
+      }
       @keyframes pulse-conversion {
         0% {
           transform: scale(1);
@@ -603,6 +615,34 @@
        * 5. MODALES Y ELEMENTOS DE UI
        ****************************************/
       /* === NUEVO: ESTILOS PARA EL VELO OSCURECEDOR === */
+      /* Estilos para la cuadrícula del tutorial de formaciones */
+      #formation-pattern-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          grid-template-rows: repeat(5, 1fr);
+          width: 150px; /* Tamaño de la cuadrícula de ejemplo */
+          height: 150px;
+          margin: 15px auto;
+          border: 2px solid #555;
+          background-color: rgba(0,0,0,0.2);
+      }
+
+      .grid-cell {
+          border: 1px solid #444;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.2em;
+      }
+
+      .grid-cell.rune {
+          color: #ff00ff; /* Color de la runa de ejemplo */
+          font-weight: bold;
+      }
+
+      .grid-cell.enemy {
+          color: #ff4d4d; /* Color del enemigo de ejemplo */
+      }
       .game-overlay {
         position: fixed;
         top: 0;
@@ -1762,6 +1802,35 @@
           </div>
           <button onclick="closeManageTechniquesModal()" style="display: block; margin: 20px auto 0;">Cerrar</button>
       </div>
+  </div>
+  <!-- Modal para el Tutorial de Formaciones -->
+  <div class="modal" id="formationTutorialModal">
+    <div class="modal-content" style="max-width: 550px; text-align: left;">
+        <h3 id="formationTutorialTitle" style="text-align: center;">El Arte de las Matrices Rúnicas</h3>
+        <p id="formationTutorialText" style="margin-top: 15px; line-height: 1.6;">
+            Este antiguo mural detalla el arte perdido de las formaciones de combate. Al inscribir runas en un patrón preciso alrededor de un enemigo, puedes canalizar el Qi del entorno para crear efectos devastadores antes de que comience la batalla.
+        </p>
+        <hr style="margin: 15px 0;">
+        
+        <h4>Cómo Inscribir una Formación:</h4>
+        <ol style="margin-left: 20px;">
+            <li>Aprende y equipa la técnica <strong>"Inscripción Rúnica"</strong>.</li>
+            <li>Asegúrate de tener <strong>"Tinta Rúnica"</strong> en tu inventario.</li>
+            <li>Párate en una casilla <strong>adyacente</strong> a un enemigo.</li>
+            <li>Usa la habilidad "Inscripción Rúnica" para trazar una runa en tu posición actual.</li>
+            <li>Repite el proceso en diferentes casillas para formar un patrón.</li>
+        </ol>
+
+        <h4 style="margin-top: 20px;">Ejemplo: El Hexagrama Devastador</h4>
+        <p style="font-size: 0.9em; opacity: 0.8;">Este patrón debilita las defensas del objetivo.</p>
+        
+        <!-- Contenedor de la cuadrícula del patrón -->
+        <div id="formation-pattern-grid" style="margin-top: 10px;">
+            <!-- La cuadrícula se generará con JavaScript -->
+        </div>
+
+        <button onclick="closeFormationTutorial()" style="display: block; margin: 20px auto 0;">Entendido</button>
+    </div>
   </div>
     <!-- Modal para Técnicas -->
     <div class="modal" id="techniqueModal">
@@ -3769,6 +3838,14 @@
       const shopData = {
         name: "Pabellón de Tesoros del Dragón Oculto",
         inventory: [
+        { 
+              itemName: "Tinta Rúnica",
+              type: "material", 
+              category: "material",
+              price: 15, 
+              stock: 50, 
+              description: "Tinta imbuida de Qi, necesaria para trazar formaciones rúnicas en el suelo."
+          },
           { itemName: "Hierbas Medicinales", price: 1, stock: 100 },
           { itemName: "Cristales de Qi", price: 1, stock: 100 },
           {
@@ -3876,6 +3953,17 @@
         // =================================================================
         // == GRADO 1 (Rango: Discípulo Externo)
         // =================================================================
+        formation_scribing_1: {
+          id: "formation_scribing_1",
+          name: "Inscripción Rúnica",
+          icon: "✍️",
+          description: "Te permite inscribir una runa en el suelo. Las runas forman matrices de poder alrededor de los enemigos. Requiere 'Tinta Rúnica'.",
+          type: "active_ability",
+          abilityId: "plant_rune", // ID de acción especial
+          manaCost: 5, // Cuesta un poco de maná usarla
+          maxLevel: 1, // No necesita ser mejorada
+          cultivationSettings: { baseTimeToLevelUp: 1, levelTimeMultiplier: 1 },
+      },
         qi_to_hp_conversion_1: {
           id: "qi_to_hp_conversion_1",
           name: "Técnica de Conversión de Qi",
@@ -5124,6 +5212,44 @@
         },
       };
 
+      const FORMATION_PATTERNS = {
+      shattering_hexagram: {
+          name: "Hexagrama Devastador",
+          description: "Un patrón ofensivo que quiebra las defensas del enemigo al inicio del combate.",
+          // El patrón es una matriz 5x5. 0=vacío, 1=runa, 2=centro (enemigo)
+          pattern: [
+              [0, 1, 0, 1, 0],
+              [0, 0, 0, 0, 0],
+              [1, 0, 2, 0, 1],
+              [0, 0, 0, 0, 0],
+              [0, 1, 0, 1, 0]
+          ],
+          effect: {
+              type: 'enemy_debuff',
+              stat: 'defense',
+              amount: 50, // Reduce la defensa en 50 puntos
+              duration: 'permanent' // Dura toda la batalla
+          }
+      },
+      verdant_life_circle: {
+          name: "Círculo de Vida Frondoso",
+          description: "Un círculo de energía vital que te cura al inicio de cada uno de tus turnos en combate.",
+          pattern: [
+              [0, 1, 1, 1, 0],
+              [1, 0, 0, 0, 1],
+              [1, 0, 2, 0, 1],
+              [1, 0, 0, 0, 1],
+              [0, 1, 1, 1, 0]
+          ],
+          effect: {
+              type: 'player_buff',
+              stat: 'hpRegenPerTurn',
+              amount: 20 // Regenera 20 HP por turno en batalla
+          }
+      },
+      // ¡Puedes añadir más patrones aquí en el futuro!
+  };
+
       const entityTypes = {
         //FIJOS
         shop: {
@@ -5136,6 +5262,14 @@
           // fixedY: 13, // O esto
           fixedLocation: { x: 12, y: 13 }, // O esto (preferiblemente esto)
           discovered: true, // ¡IMPORTANTE para que se muestre desde el inicio!
+        },
+        tutorial_formation_mural: {
+            symbol: "🎨",
+            name: "Mural de Formaciones Antiguas",
+            spriteUrl: "img/mural_formaciones.png", // ¡Necesitarás crear esta imagen! (Ver nota abajo)
+            interaction: "read_formation_tutorial", // Una nueva interacción específica
+            fixedLocation: { x: 19, y: 14 }, // Cerca de la Anciana Su en la "biblioteca"
+            discovered: true, // Para que sea visible desde el principio
         },
 
         secta_entrada_principal: {
@@ -7035,6 +7169,10 @@
       };
       //------------------------   ITEMS ---------------------------------------------------
       const itemData = {
+        "Tinta Rúnica": {
+            description: "Tinta especial para inscribir runas de poder. No se puede usar directamente.",
+            canUse: () => false, // No es un consumible normal
+        },
         "Hierbas Medicinales": {
           description: "Restaura un 30 de HP.",
           effect: (ps) => {
@@ -8259,6 +8397,7 @@
 
         let idsParaProcesar = [
           "shop",
+          "tutorial_formation_mural",
           "secta_entrada_principal",
           "secta_entrada_principal_2",
           "secta_entrada_principal_3",
@@ -9506,9 +9645,99 @@
             }
           }
         });
+        gameState.map.entities.forEach(entity => {
+          if (entity.formationRunes) {
+              Object.keys(entity.formationRunes).forEach(runeKey => {
+                  const [x, y] = runeKey.split(',').map(Number);
+                  
+                  // Solo dibujar si está en la vista actual
+                  if (x >= viewWorldXStart && x < viewWorldXEnd && y >= viewWorldYStart && y < viewWorldYEnd) {
+                      const runeMarker = document.createElement('div');
+                      runeMarker.className = 'tile rune-marker';
+                      runeMarker.style.left = `${x * currentTileSize}px`;
+                      runeMarker.style.top = `${y * currentTileSize}px`;
+                      runeMarker.style.width = `${currentTileSize * 0.6}px`; // Más pequeñas que la casilla
+                      runeMarker.style.height = `${currentTileSize * 0.6}px`;
+                      runeMarker.style.margin = `${currentTileSize * 0.2}px`; // Centrar el marcador
+                      runeMarker.style.zIndex = '4'; // Encima del terreno, debajo de las entidades
+                      runeMarker.style.pointerEvents = 'none';
+
+                      mapElement.appendChild(runeMarker);
+                  }
+              });
+          }
+      });
 
         updatePlayerVisualSize();
       }
+    
+      function checkAndApplyFormation(enemyEntity) {
+        if (!enemyEntity.formationRunes || Object.keys(enemyEntity.formationRunes).length === 0) {
+            return; // No hay runas para este enemigo
+        }
+
+        let patternFound = null;
+
+        // Iterar sobre cada patrón definido en nuestra base de datos
+        for (const patternKey in FORMATION_PATTERNS) {
+            const formation = FORMATION_PATTERNS[patternKey];
+            const pattern = formation.pattern;
+            let isMatch = true;
+            
+            // Iterar sobre la matriz 5x5 del patrón
+            for (let r = 0; r < pattern.length; r++) {
+                for (let c = 0; c < pattern[r].length; c++) {
+                    // Si la celda del patrón requiere una runa (valor 1)
+                    if (pattern[r][c] === 1) {
+                        // Calculamos la coordenada absoluta en el mapa
+                        const dx = c - 2; // Offset desde el centro (columna 2)
+                        const dy = r - 2; // Offset desde el centro (fila 2)
+                        const absoluteX = enemyEntity.x + dx;
+                        const absoluteY = enemyEntity.y + dy;
+                        
+                        // Comprobamos si el enemigo tiene una runa en esa coordenada
+                        const runeKey = `${absoluteX},${absoluteY}`;
+                        if (!enemyEntity.formationRunes[runeKey]) {
+                            isMatch = false; // Si falta una sola runa, no es un match
+                            break;
+                        }
+                    }
+                }
+                if (!isMatch) break;
+            }
+
+            if (isMatch) {
+                patternFound = formation;
+                break; // Encontramos un patrón, dejamos de buscar
+            }
+        }
+
+        if (patternFound) {
+            logBattle(`¡La formación "${patternFound.name}" resplandece con poder!`);
+            showFloatingText(document.getElementById('enemySprite'), `¡${patternFound.name}!`, 'ability');
+
+            const effect = patternFound.effect;
+            switch(effect.type) {
+                case 'enemy_debuff':
+                    if (effect.stat === 'defense') {
+                        // Aplicamos la reducción directamente a las stats de batalla del enemigo
+                        gameState.battle.enemy.defense -= effect.amount;
+                        if(gameState.battle.enemy.defense < 0) gameState.battle.enemy.defense = 0;
+                        logBattle(`La defensa de ${gameState.battle.enemy.name} se reduce en ${effect.amount}.`);
+                    }
+                    break;
+                case 'player_buff':
+                    if (effect.stat === 'hpRegenPerTurn') {
+                        // Añadimos una nueva propiedad al jugador para la regeneración en combate
+                        gameState.player.hpRegenPerTurn = (gameState.player.hpRegenPerTurn || 0) + effect.amount;
+                        logBattle(`Sientes una energía vital que te curará ${effect.amount} HP por turno.`);
+                    }
+                    break;
+            }
+            // Limpiamos las runas después de usarlas
+            enemyEntity.formationRunes = {};
+        }
+    }
 
       function updatePlayerSpriteVisual() {
         // Asegúrate que el nombre sea este
@@ -9900,7 +10129,10 @@
                     showModal(`Hablando con ${entity.name}`, dialogue);
                 }
               return;
-              case "interact_shrine": // <-- NUEVO CASO
+            case "read_formation_tutorial":
+              openFormationTutorial();
+              return;
+            case "interact_shrine": // <-- NUEVO CASO
                 if (entity.type === 'story_shrine') {
                     const player = gameState.player;
                     const flags = player.worldState.storyFlags;
@@ -10416,6 +10648,44 @@
           );
         }
       }
+
+      function openFormationTutorial() {
+        const modal = document.getElementById('formationTutorialModal');
+        const gridContainer = document.getElementById('formation-pattern-grid');
+        gridContainer.innerHTML = ''; // Limpiar la cuadrícula
+
+        // Usamos el patrón de ejemplo "Hexagrama Devastador"
+        const examplePattern = FORMATION_PATTERNS.shattering_hexagram.pattern;
+
+        for (let r = 0; r < examplePattern.length; r++) {
+            for (let c = 0; c < examplePattern[r].length; c++) {
+                const cellValue = examplePattern[r][c];
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'grid-cell';
+
+                if (cellValue === 1) {
+                    cellDiv.classList.add('rune');
+                    cellDiv.textContent = '●'; // Símbolo para la runa
+                } else if (cellValue === 2) {
+                    cellDiv.classList.add('enemy');
+                    cellDiv.textContent = 'X'; // Símbolo para el enemigo
+                }
+                gridContainer.appendChild(cellDiv);
+            }
+        }
+        
+        modal.style.display = 'flex';
+        hideTouchControls();
+        updateStatsPanelVisibility();
+    }
+
+    function closeFormationTutorial() {
+        const modal = document.getElementById('formationTutorialModal');
+        modal.style.display = 'none';
+        showTouchControls();
+        updateStatsPanelVisibility();
+    }
+
 
       function entregarRecursoSecta(itemName, cantidad, pcsGanados) {
         if ((gameState.inventory[itemName] || 0) < cantidad) {
@@ -11329,6 +11599,12 @@
             silencedTurns: 0,
             sealedTurns: 0,
         };
+        checkAndApplyFormation(mapEntity);
+        // ================================================
+
+        gameState.battle.playerTurn = true;
+        document.getElementById("battleScreen").style.display = "flex";
+        
         
         if (!gameState.battle.enemy.maxHp) {
             gameState.battle.enemy.maxHp = gameState.battle.enemy.hp;
@@ -11556,6 +11832,54 @@
         }
     }
 
+    function plantRune() {
+        const player = gameState.player;
+        const inkItem = "Tinta Rúnica";
+
+        if ((gameState.inventory[inkItem] || 0) < 1) {
+            showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
+            return;
+        }
+
+        const offsets = [ { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 } ];
+        let targetEnemy = null;
+
+        // Buscar un enemigo adyacente
+        for (const offset of offsets) {
+            const entity = gameState.map.entities.find(e => e.x === player.x + offset.dx && e.y === player.y + offset.dy);
+            if (entity && G_COMBAT_ENTITY_TYPES.includes(entity.type)) {
+                targetEnemy = entity;
+                break;
+            }
+        }
+
+        if (!targetEnemy) {
+            showModal("Ubicación Incorrecta", "Debes estar junto a un enemigo para inscribir una runa a su alrededor.");
+            return;
+        }
+
+        // Inicializar el objeto de runas si no existe
+        if (!targetEnemy.formationRunes) {
+            targetEnemy.formationRunes = {};
+        }
+
+        const runeKey = `${player.x},${player.y}`;
+        if (targetEnemy.formationRunes[runeKey]) {
+            showModal("Runa Existente", "Ya has inscrito una runa en esta posición.");
+            return;
+        }
+
+        // Gastar tinta, maná y plantar la runa
+        gameState.inventory[inkItem]--;
+        player.mana -= techniqueData.formation_scribing_1.manaCost;
+        targetEnemy.formationRunes[runeKey] = 1;
+
+        showModal("Runa Inscrita", "Has canalizado tu Qi y trazado una runa en el suelo. El aire crepita con energía contenida.");
+        
+        updateUI();
+        renderMap(); // Volver a dibujar el mapa para mostrar la nueva runa
+    }
+
     function battleAction(action) {
       
         if (!gameState.battle.playerTurn || !gameState.battle.active) return;
@@ -11566,7 +11890,13 @@
         const enemySprite = document.getElementById('enemySprite');
         let actionTaken = true;
 
-        
+         // Regeneración de vida por formaciones
+          if (player.hpRegenPerTurn > 0 && player.hp < player.maxHp) {
+              const healAmount = player.hpRegenPerTurn;
+              player.hp = Math.min(player.maxHp, player.hp + healAmount);
+              logBattle(`La formación rúnica te cura ${healAmount} HP.`);
+              showFloatingText(playerSprite, `+${healAmount}`, 'heal');
+          }
               // Inmunidad de Santuario Dorado Protector
           if (player.intangibleTurns > 0) {
             player.intangibleTurns--;
@@ -11666,6 +11996,10 @@
                 // Lo que sigue es un ejemplo de cómo debe quedar el caso de 'sword_t1'.
 
                 switch (action) {
+                  case "plant_rune":
+                    plantRune();
+                    actionTaken = false; // Importante: Plantar una runa NO consume el turno de combate.
+                    return;
                   case "sword_t1"://Tajo del Viento Veloz
                     const swordTechDetails = techniqueData["sword_t1"];
                     const swordManaCost = swordTechDetails.manaCost || 10;
