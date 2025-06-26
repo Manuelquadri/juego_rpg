@@ -12862,6 +12862,12 @@
               }
             }
             break;
+          case "llegar_a_punto":
+            // Si el progreso es 1, significa que el jugador ya visitó el lugar.
+            if (misionActiva.progreso === 1) {
+                objetivosCumplidos = true;
+            }
+            break;
           default:
             showModal("Error de Misión", "Tipo de objetivo no reconocido.");
             return false;
