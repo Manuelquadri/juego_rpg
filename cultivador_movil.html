@@ -11865,53 +11865,60 @@
         }
     }
 
-    function plantRune() {
-        const player = gameState.player;
-        const inkItem = "Tinta Rúnica";
+    // REEMPLAZA TU FUNCIÓN plantRune() EXISTENTE CON ESTA VERSIÓN CORREGIDA
 
-        if ((gameState.inventory[inkItem] || 0) < 1) {
-            showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
-            return;
-        }
+function plantRune() {
+    const player = gameState.player;
+    const inkItem = "Tinta Rúnica";
+    const RUNE_RANGE = 2; // El jugador DEBE estar exactamente a 2 casillas de distancia.
 
-        const offsets = [ { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 } ];
-        let targetEnemy = null;
+    if ((gameState.inventory[inkItem] || 0) < 1) {
+        showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
+        return;
+    }
+    
+    // 1. Encontrar el enemigo más cercano dentro de un radio de búsqueda (ej. 3 casillas)
+    let closestEnemy = null;
+    let minDistance = Infinity;
 
-        // Buscar un enemigo adyacente
-        for (const offset of offsets) {
-            const entity = gameState.map.entities.find(e => e.x === player.x + offset.dx && e.y === player.y + offset.dy);
-            if (entity && G_COMBAT_ENTITY_TYPES.includes(entity.type)) {
-                targetEnemy = entity;
-                break;
+    gameState.map.entities.forEach(entity => {
+        if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
+            // Usamos la distancia de Manhattan (más simple y efectiva para cuadrículas)
+            const distance = Math.abs(player.x - entity.x) + Math.abs(player.y - entity.y);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestEnemy = entity;
             }
         }
+    });
 
-        if (!targetEnemy) {
-            showModal("Ubicación Incorrecta", "Debes estar junto a un enemigo para inscribir una runa a su alrededor.");
-            return;
-        }
-
-        // Inicializar el objeto de runas si no existe
-        if (!targetEnemy.formationRunes) {
-            targetEnemy.formationRunes = {};
-        }
-
-        const runeKey = `${player.x},${player.y}`;
-        if (targetEnemy.formationRunes[runeKey]) {
-            showModal("Runa Existente", "Ya has inscrito una runa en esta posición.");
-            return;
-        }
-
-        // Gastar tinta, maná y plantar la runa
-        gameState.inventory[inkItem]--;
-        player.mana -= techniqueData.formation_scribing_1.manaCost;
-        targetEnemy.formationRunes[runeKey] = 1;
-
-        showModal("Runa Inscrita", "Has canalizado tu Qi y trazado una runa en el suelo. El aire crepita con energía contenida.");
-        
-        updateUI();
-        renderMap(); // Volver a dibujar el mapa para mostrar la nueva runa
+    // 2. Validar si el enemigo encontrado está a la distancia correcta
+    if (!closestEnemy || minDistance !== RUNE_RANGE) {
+        showModal("Ubicación Incorrecta", `Debes estar exactamente a ${RUNE_RANGE} casillas de un enemigo para inscribir una runa a su alrededor.`);
+        return;
     }
+
+    // 3. Comprobar si ya existe una runa en la posición actual del jugador
+    if (!closestEnemy.formationRunes) {
+        closestEnemy.formationRunes = {};
+    }
+
+    const runeKey = `${player.x},${player.y}`;
+    if (closestEnemy.formationRunes[runeKey]) {
+        showModal("Runa Existente", "Ya has inscrito una runa en esta posición.");
+        return;
+    }
+
+    // 4. Gastar recursos y plantar la runa, asociándola con el enemigo cercano
+    gameState.inventory[inkItem]--;
+    player.mana -= techniqueData.formation_scribing_1.manaCost;
+    closestEnemy.formationRunes[runeKey] = 1; // La runa se guarda en el objeto del enemigo
+
+    showModal("Runa Inscrita", `Has canalizado tu Qi y trazado una runa en el suelo alrededor de ${closestEnemy.name}.`);
+    
+    updateUI();
+    renderMap(); // Volver a dibujar el mapa para mostrar la nueva runa
+}
 
     function battleAction(action) {
       
