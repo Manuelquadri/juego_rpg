@@ -8070,64 +8070,45 @@
       /// <!-- CAMBIO TAMAÑO MAPA MÓVIL -->
       //TAMAÑO TILE
       function calculateAndSetTileSize() {
-        const mapContainerElement = document.querySelector(".map-container");
-        if (!mapContainerElement) {
-          console.warn(
-            "calculateAndSetTileSize: mapContainerElement no encontrado, usando G_TILE_SIZE por defecto."
-          );
-          currentTileSize = G_TILE_SIZE;
-          return G_TILE_SIZE;
-        }
+        
+        // Usamos las dimensiones de la ventana directamente, que es más fiable en móviles.
+        const availableWidth = window.innerWidth;
+        const availableHeight = window.innerHeight;
+        // ===================================
 
-        if (isMobileView()) {
-          const availableWidth = mapContainerElement.clientWidth;
-          const availableHeight = mapContainerElement.clientHeight;
+        // Las constantes que definiste para la cantidad de tiles deseada.
+        // ¡He actualizado los valores para que coincidan con los que proporcionaste!
+        const TILES_VISIBLE_X_PORTRAIT = 7;
+        const TILES_VISIBLE_Y_PORTRAIT = 5; 
+        const TILES_VISIBLE_X_LANDSCAPE = 9;
+        const TILES_VISIBLE_Y_LANDSCAPE = 7;
 
-          // --- INICIO DE LA LÓGICA DE ORIENTACIÓN ---
+        // Determina si estamos en modo horizontal (landscape) o vertical (portrait)
+        const isLandscape = availableWidth > availableHeight;
 
-          // Determina si estamos en modo horizontal (landscape) o vertical (portrait)
-          const isLandscape = availableWidth > availableHeight;
+        let tileSizeBasedOnWidth;
+        let tileSizeBasedOnHeight;
 
-          // Define cuántos tiles queremos ver en cada orientación.
-          // Estos valores son la clave. ¡Puedes ajustarlos a tu gusto!
-          const TILES_VISIBLE_X_PORTRAIT = 7; // Menos tiles de ancho en vertical
-          const TILES_VISIBLE_Y_PORTRAIT = 5; // Más tiles de alto en vertical
-
-          const TILES_VISIBLE_X_LANDSCAPE = 9; // Más tiles de ancho en horizontal
-          const TILES_VISIBLE_Y_LANDSCAPE = 7; // Menos tiles de alto en horizontal
-
-          let tileSizeBasedOnWidth;
-          let tileSizeBasedOnHeight;
-
-          if (isLandscape) {
-            // Si la pantalla es más ancha que alta
-            console.log("Orientación: Horizontal (Landscape)");
+        if (isLandscape) {
             tileSizeBasedOnWidth = availableWidth / TILES_VISIBLE_X_LANDSCAPE;
             tileSizeBasedOnHeight = availableHeight / TILES_VISIBLE_Y_LANDSCAPE;
-          } else {
-            // Si la pantalla es más alta que ancha
-            console.log("Orientación: Vertical (Portrait)");
+        } else {
             tileSizeBasedOnWidth = availableWidth / TILES_VISIBLE_X_PORTRAIT;
             tileSizeBasedOnHeight = availableHeight / TILES_VISIBLE_Y_PORTRAIT;
-          }
-
-          // --- FIN DE LA LÓGICA DE ORIENTACIÓN ---
-
-          // El tamaño del tile será el menor de los dos cálculos para asegurar que todo quepa
-          currentTileSize = Math.floor(
-            Math.min(tileSizeBasedOnWidth, tileSizeBasedOnHeight)
-          );
-          currentTileSize = Math.max(20, currentTileSize); // Asegurar un tamaño mínimo razonable
-
-          console.log(
-            `Mobile View: Container W: ${availableWidth}, H: ${availableHeight}. Calculated Tile Size: ${currentTileSize}`
-          );
-        } else {
-          currentTileSize = G_TILE_SIZE; // Usar el tamaño fijo para escritorio
-          console.log(`Desktop View: Using G_TILE_SIZE: ${currentTileSize}`);
         }
+
+        // El tamaño del tile será el menor de los dos cálculos para asegurar que todo quepa.
+        currentTileSize = Math.floor(
+            Math.min(tileSizeBasedOnWidth, tileSizeBasedOnHeight)
+        );
+        currentTileSize = Math.max(20, currentTileSize); // Asegurar un tamaño mínimo razonable
+
+        console.log(
+            `Viewport W: ${availableWidth}, H: ${availableHeight}. Orientation: ${isLandscape ? 'Landscape' : 'Portrait'}. Calculated Tile Size: ${currentTileSize}`
+        );
+        
         return currentTileSize;
-      }
+    }
       // <!-- FIN CAMBIO TAMAÑO MAPA MÓVIL -->
 
       function isAnyModalOpen() {
