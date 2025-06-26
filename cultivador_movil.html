@@ -11777,6 +11777,8 @@
 
     // REEMPLAZA tu función plantRune completa con esta versión definitiva
 
+// REEMPLAZA tu función plantRune completa con esta versión definitiva
+
 function plantRune() {
     const player = gameState.player;
     const inkItem = "Tinta Rúnica";
@@ -11793,8 +11795,7 @@ function plantRune() {
         return;
     }
 
-    // 2. Determinar contexto y gastar recursos
-    const runeKey = `${player.x},${player.y}`;
+    // 2. Determinar Contexto (Combate vs. Utilidad)
     let closestEnemy = null;
     let minDistance = Infinity;
     gameState.map.entities.forEach(entity => {
@@ -11809,146 +11810,110 @@ function plantRune() {
     });
     const isCombatRune = closestEnemy && minDistance <= MAX_ENEMY_DETECTION_RANGE;
     
+    // Gastar recursos y colocar la runa en el estado correcto
     gameState.inventory[inkItem]--;
     player.mana -= manaCost;
+    const runeKey = `${player.x},${player.y}`;
 
-    // 3. Colocar la runa y limpiar el estado opuesto para evitar conflictos
     if (isCombatRune) {
         if (!closestEnemy.formationRunes) closestEnemy.formationRunes = {};
         closestEnemy.formationRunes[runeKey] = 1;
-        gameState.utilityRunes = {};
+        gameState.utilityRunes = {}; // Limpia runas de utilidad para evitar conflictos
     } else {
         gameState.utilityRunes[runeKey] = 1;
-        if (closestEnemy) closestEnemy.formationRunes = {};
+        if (closestEnemy) closestEnemy.formationRunes = {}; // Limpia runas de combate si existen
     }
 
-    // 4. Comprobar si se completó algún patrón
+    // 3. Comprobar si se completó algún patrón
     let patternFound = null;
-    let runesForFoundPattern = [];
-
-    for (const patternKey in FORMATION_PATTERNS) {
-        const formation = FORMATION_PATTERNS[patternKey];
-        const pattern = formation.pattern;
-        const isUtilityPattern = formation.effect.type === 'utility_teleport';
-
-        // Saltar patrones que no coincidan con el contexto actual
-        if (isCombatRune === isUtilityPattern) continue;
-
-        let requiredRunes = [];
-        let anchor = isCombatRune ? closestEnemy : { x: player.x, y: player.y };
-        let patternCenter = { x: Math.floor(pattern[0].length / 2), y: Math.floor(pattern.length / 2) };
-
-        // Si es un patrón de utilidad, debemos probar cada runa como el posible centro
-        const placedRunes = isCombatRune ? closestEnemy.formationRunes : gameState.utilityRunes;
-        const placedKeys = Object.keys(placedRunes);
-        
-        let matchFoundThisPattern = false;
-        for (const centralRuneKey of placedKeys) {
-            const [cx, cy] = centralRuneKey.split(',').map(Number);
-            let tempRequired = [];
-            let allMatch = true;
-
-            for (let r = 0; r < pattern.length; r++) {
-                for (let c = 0; c < pattern[r].length; c++) {
-                    if (pattern[r][c] === 1) {
-                        const requiredX = cx + (c - patternCenter.x);
-                        const requiredY = cy + (r - patternCenter.y);
-                        tempRequired.push(`${requiredX},${requiredY}`);
-                    }
-                }
-            }
-
-            if (placedKeys.length === tempRequired.length && tempRequired.every(k => placedKeys.includes(k))) {
-                patternFound = formation;
-                runesForFoundPattern = tempRequired;
-                matchFoundThisPattern = true;
-                break;
-            }
-        }
-        if (matchFoundThisPattern) break;
-    }
-    
-    if (patternFound) {
-        if (isCombatRune) {
-            if (!closestEnemy.pendingFormationEffects) closestEnemy.pendingFormationEffects = [];
-            closestEnemy.pendingFormationEffects.push(patternFound.effect);
-            runesForFoundPattern.forEach(key => delete closestEnemy.formationRunes[key]);
-            showModal("¡Formación de Combate Completa!", `Has completado <strong>"${patternFound.name}"</strong>.`);
-        } else {
-            teleportPlayer(patternFound.effect.destinationId);
-            gameState.utilityRunes = {};
-            showModal("¡Portal Abierto!", `La ${patternFound.name} se activa...`, true);
-            setTimeout(() => closeModal(), 2000);
-        }
-        updateUI();
-        renderMap();
-        renderQuickSlotBar(); 
-        return;
-    }
-
-    // 5. Si no se completó, comprobar si el patrón es IMPOSIBLE
-    let isAnyPatternPossible = false;
     const placedRunes = isCombatRune ? closestEnemy.formationRunes : gameState.utilityRunes;
     const placedKeys = Object.keys(placedRunes);
 
     for (const patternKey in FORMATION_PATTERNS) {
         const formation = FORMATION_PATTERNS[patternKey];
         const isUtilityPattern = formation.effect.type === 'utility_teleport';
-        if (isCombatRune === isUtilityPattern) continue;
         
-        // La lógica clave: ¿Pueden las runas que he puesto ser un "subconjunto" de este patrón?
-        // Intentamos anclar el patrón a cada runa que hemos puesto.
-        let patternCouldFit = false;
-        for (const anchorRuneKey of placedKeys) {
-            const [ax, ay] = anchorRuneKey.split(',').map(Number);
-            for (let pr = 0; pr < formation.pattern.length; pr++) {
-                for (let pc = 0; pc < formation.pattern[pr].length; pc++) {
-                    if (formation.pattern[pr][pc] === 1) {
-                        // Asumimos que `anchorRuneKey` corresponde a la runa del patrón en (pc, pr)
-                        const offsetX = ax - (pc - Math.floor(formation.pattern[0].length / 2));
-                        const offsetY = ay - (pr - Math.floor(formation.pattern.length / 2));
-                        
-                        let allPlacedRunesFit = true;
-                        for (const keyToTest of placedKeys) {
-                            const [tx, ty] = keyToTest.split(',').map(Number);
-                            const relativeX = tx - offsetX + Math.floor(formation.pattern[0].length / 2);
-                            const relativeY = ty - offsetY + Math.floor(formation.pattern.length / 2);
+        // Saltar patrones que no coincidan con el contexto
+        if ((isCombatRune && isUtilityPattern) || (!isCombatRune && !isUtilityPattern)) {
+            continue;
+        }
 
-                            if (relativeX < 0 || relativeX >= formation.pattern[0].length || relativeY < 0 || relativeY >= formation.pattern.length || formation.pattern[relativeY][relativeX] !== 1) {
-                                allPlacedRunesFit = false;
-                                break;
-                            }
-                        }
-                        if (allPlacedRunesFit) {
-                            patternCouldFit = true;
-                            break;
+        const pattern = formation.pattern;
+        let requiredRunesForMatch = [];
+        let isMatch = false;
+
+        if (isCombatRune) {
+            // Lógica para Combate: El centro es FIJO (el enemigo)
+            const patternCenterX = Math.floor(pattern[0].length / 2);
+            const patternCenterY = Math.floor(pattern.length / 2);
+            
+            for (let r = 0; r < pattern.length; r++) {
+                for (let c = 0; c < pattern[r].length; c++) {
+                    if (pattern[r][c] === 1) {
+                        const requiredX = closestEnemy.x + (c - patternCenterX);
+                        const requiredY = closestEnemy.y + (r - patternCenterY);
+                        requiredRunesForMatch.push(`${requiredX},${requiredY}`);
+                    }
+                }
+            }
+            if (placedKeys.length === requiredRunesForMatch.length && requiredRunesForMatch.every(k => placedKeys.includes(k))) {
+                isMatch = true;
+            }
+        } else {
+            // Lógica para Utilidad: El centro es VARIABLE (cualquiera de las runas puestas)
+            for (const centralRuneKey of placedKeys) {
+                const [cx, cy] = centralRuneKey.split(',').map(Number);
+                const patternCenterX = Math.floor(pattern[0].length / 2);
+                const patternCenterY = Math.floor(pattern.length / 2);
+                
+                let tempRequired = [];
+                for (let r = 0; r < pattern.length; r++) {
+                    for (let c = 0; c < pattern[r].length; c++) {
+                        if (pattern[r][c] === 1) {
+                            const requiredX = cx + (c - patternCenterX);
+                            const requiredY = cy + (r - patternCenterY);
+                            tempRequired.push(`${requiredX},${requiredY}`);
                         }
                     }
                 }
-                if (patternCouldFit) break;
+                if (placedKeys.length === tempRequired.length && tempRequired.every(k => placedKeys.includes(k))) {
+                    isMatch = true;
+                    requiredRunesForMatch = tempRequired;
+                    break;
+                }
             }
-            if (patternCouldFit) break;
         }
-        if (patternCouldFit) {
-            isAnyPatternPossible = true;
+
+        if (isMatch) {
+            patternFound = formation;
             break;
         }
     }
 
-    if (isAnyPatternPossible) {
+    // 4. Procesar el resultado
+    if (patternFound) {
+        // ¡Éxito! Aplicar efecto y limpiar runas
+        if (isCombatRune) {
+            if (!closestEnemy.pendingFormationEffects) closestEnemy.pendingFormationEffects = [];
+            closestEnemy.pendingFormationEffects.push(patternFound.effect);
+            closestEnemy.formationRunes = {}; // Limpiar todas las runas del enemigo
+            showModal("¡Formación Completa!", `Has completado la formación de combate: <strong>"${patternFound.name}"</strong>.`);
+        } else {
+            teleportPlayer(patternFound.effect.destinationId);
+            gameState.utilityRunes = {}; // Limpiar las runas de utilidad
+            showModal("¡Portal Abierto!", `La ${patternFound.name} se activa...`, true);
+            setTimeout(() => closeModal(), 2000);
+        }
+    } else {
+        // Aún no se completa un patrón. Aquí podrías re-implementar la lógica de "patrón incorrecto" si lo deseas,
+        // pero por ahora, solo confirmamos la colocación.
         const message = isCombatRune ? `Has trazado una runa de combate cerca de ${closestEnemy.name}.` : "Has trazado parte de una matriz de utilidad.";
         showModal("Runa Inscrita", message);
-    } else {
-        if (isCombatRune) {
-            closestEnemy.formationRunes = {};
-        } else {
-            gameState.utilityRunes = {};
-        }
-        showModal("Patrón Incorrecto", "La runa que has trazado no coincide con ninguna formación conocida. Las runas se han disipado. ¡Inténtalo de nuevo!");
     }
-
+    
     updateUI();
     renderMap();
+    renderQuickSlotBar();
 }
     function checkUtilityPatterns() {
       for (const patternKey in FORMATION_PATTERNS) {
