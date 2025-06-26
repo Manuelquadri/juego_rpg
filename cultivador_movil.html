@@ -8078,10 +8078,11 @@
 
         // Las constantes que definiste para la cantidad de tiles deseada.
         // ¡He actualizado los valores para que coincidan con los que proporcionaste!
-        const TILES_VISIBLE_X_PORTRAIT = 7;
-        const TILES_VISIBLE_Y_PORTRAIT = 5; 
-        const TILES_VISIBLE_X_LANDSCAPE = 9;
-        const TILES_VISIBLE_Y_LANDSCAPE = 7;
+        const TILES_VISIBLE_X_PORTRAIT = 7; 
+        const TILES_VISIBLE_Y_PORTRAIT = 10; // En vertical, queremos ver más arriba/abajo
+
+        const TILES_VISIBLE_X_LANDSCAPE = 11; // Aprovechamos el ancho
+        const TILES_VISIBLE_Y_LANDSCAPE = 5;  // Reducimos drásticamente el alto
 
         // Determina si estamos en modo horizontal (landscape) o vertical (portrait)
         const isLandscape = availableWidth > availableHeight;
