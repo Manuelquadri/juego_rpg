@@ -3447,26 +3447,24 @@
         },
         mision_cazar_bestia_especifica_1: {
           titulo: "Elimina el golem de piedra",
-          descripcion:
-            "Elimina al golem de piedra Geo al sur de la pradera de la secta.Regresa con el Guía Lin luego de eliminarlo.",
+          descripcion: "Elimina al golem de piedra Geo al sur de la pradera de la secta. Regresa con el Guía Lin luego de eliminarlo.",
+          // CORREGIDO: Se eliminó el anidamiento incorrecto de 'objetivo'.
           objetivo: {
-            objetivo: {
               tipo: "eliminar_enemigo",
               enemigoTipo: "boss_ancient_golem",
               cantidad: 1,
-              nombreDisplay: "Geo",
+              nombreDisplay: "Geo, el Golem Ancestral",
               npcEntrega: "guia_lin",
-            },
           },
           recompensa: {
-            pcs: 150,
-            exp: 300,
-            items: { "Piedras Espirituales": 20, "Carne de Bestia Exótica": 3 },
+              pcs: 150,
+              exp: 300,
+              items: { "Piedras Espirituales": 20, "Carne de Bestia Exótica": 3 },
           },
           npcInicio: "guia_lin",
           requisitoRango: "Discípulo Interno",
           requisitoNivel: 10,
-        },
+      },
 
         // === MISIONES: DISCÍPULO PRINCIPAL ===
         // (Se desbloquean al alcanzar este rango)
@@ -3591,22 +3589,23 @@
           requisitoRango: "Diácono",
         },
         mision_diac_3: {
-            titulo: "Elimina los Bandidos",
-            descripcion: "Hay un grupo de bandidos atacando gente de la secta en lo profundo de la ciénaga, desaste de ellos.",
-            objetivo: {
-                tipo: "eliminar_enemigo", // <-- TIPO CORRECTO
-                npcId: "bandido_desfiladero",   // <-- PROPIEDAD CORRECTA
-                cantidad: 10,
-                npcEntrega: "guia_lin"
-            },
-            recompensa: {
-                pcs: 1000,
-                exp: 5000,
-                items: { "Rollo: Técnica de Absorción de Qi Celestial": 1 }
-            },
-            npcInicio: "guia_lin",
-            requisitoRango: "Diácono", 
-        },
+          titulo: "Elimina los Bandidos",
+          descripcion: "Hay un grupo de bandidos atacando gente de la secta en lo profundo de la ciénaga, desaste de ellos.",
+          objetivo: {
+              tipo: "eliminar_enemigo",
+              enemigoTipo: "bandido_desfiladero",
+              nombreDisplay: "Bandido del Desfiladero", // Añadido para claridad
+              cantidad: 10,
+              npcEntrega: "guia_lin"
+          },
+          recompensa: {
+              pcs: 1000,
+              exp: 5000,
+              items: { "Rollo: Técnica de Absorción de Qi Celestial": 1 }
+          },
+          npcInicio: "guia_lin",
+          requisitoRango: "Diácono",
+      },
         mision_diac_4: {
             titulo: "La Traición de Jin",
             descripcion: "Es hora de acabar con la amenaza del Diácono Renegado Jin. Derrótalo y restaura el honor de la secta.",
@@ -5827,6 +5826,26 @@
           targetY: 20, // Coordenada Y de destino (aparece al lado de la entrada)
           discovered: true,
         },
+        transition_fisura_entrance: {
+          symbol: "🌀",
+          name: "Entrada a la Fisura Demoníaca",
+          spriteUrl: "img/portal.png", // Puedes reutilizar un sprite de portal
+          interaction: "transition",
+          fixedLocation: { x: 140, y: 60 }, // Colócalo en una zona accesible del mapa principal
+          targetX: 401, // Coordenada X de destino (dentro de la Fisura)
+          targetY: 11,  // Coordenada Y de destino
+          discovered: true,
+      },
+      transition_fisura_exit: {
+          symbol: "🌀",
+          name: "Salida de la Fisura",
+          spriteUrl: "img/portal.png",
+          interaction: "transition",
+          fixedLocation: { x: 401, y: 10 }, // Ubicación DENTRO de la Fisura
+          targetX: 140, // Coordenada X de vuelta al mapa principal
+          targetY: 60,  // Coordenada Y de vuelta
+          discovered: true,
+      },
 
         //ENEMIGOS
         monster: {
@@ -6951,7 +6970,7 @@
           symbol: "👹",
           name: "Demonio de la Fisura",
           spriteUrl: "img/demonio_fisura.png",
-          level: 55,
+          level: 20,
           hp: 2500,
           maxHp: 2500,
           attack: 500,
@@ -6982,7 +7001,7 @@
           symbol: "👼",
           name: "Guardián Celestial Caído",
           spriteUrl: "img/guardian_caido.png",
-          level: 60,
+          level: 25,
           hp: 4000,
           maxHp: 4000,
           attack: 450,
@@ -7438,6 +7457,20 @@
           },
           canUse: () => true,
         },
+        "Rollo: Técnica de Gran Anciano Aleatoria": {
+          description: "Un rollo que contiene el conocimiento de una poderosa técnica de nivel Gran Anciano.",
+          effect: (ps) => {
+              // Lógica para dar una técnica aleatoria de nivel 5
+              const t5_techniques = ["sword_t5", "body_t5", "fire_t5", "lightning_t5", "formation_t5", "movement_t5"];
+              const availableTechniques = t5_techniques.filter(t => !ps.learnedTechniques[t]);
+              if (availableTechniques.length > 0) {
+                  const randomTechId = availableTechniques[Math.floor(Math.random() * availableTechniques.length)];
+                  return learnTechniqueFromRoll(ps, randomTechId);
+              }
+              return "Ya conoces todas las técnicas de este nivel. El rollo se disipa en pura energía, otorgando 5000 EXP.";
+          },
+          canUse: () => true,
+      },
         "Semilla del Dao Verdadero": {
           description:
             "Un fragmento del origen de toda la cultivación. Su estudio podría llevarte a la trascendencia.",
@@ -8493,6 +8526,9 @@
           "npc_maestro_jian",
           "npc_anciana_su",
           "transition_valley_exit",
+          "transition_fisura_entrance", // Portal de entrada
+          "transition_fisura_exit",   // Portal de salida
+          "general_demoniaco_abismal",
           //ENEMIGOS
           "jabali_colmilludo_alfa",
           "boss_ancient_golem",
@@ -12778,16 +12814,10 @@
           const objetivo = misionActiva.objetivoOriginal;
 
           // Lógica para actualizar el progreso de la misión de desafío
-          if (
-            objetivo.tipo === "derrotar_npc_especifico" &&
-            enemy.isSectChallengeRival &&
-            enemy.npcId === objetivo.npcId
-          ) {
-            misionActiva.progreso = 1; // 1 significa "objetivo cumplido".
-            logBattle(`¡Has superado la prueba! Reporta tu éxito en la secta.`);
-            console.log(
-              `[Misión Desafío] Progreso de la misión '${misionActiva.id}' actualizado a 1.`
-            );
+          if (objetivo.tipo === "derrotar_npc_especifico" && enemy.npcId === objetivo.npcId) {
+              misionActiva.progreso = 1; // 1 significa "objetivo cumplido".
+              logBattle(`¡Has completado el objetivo de derrotar a ${enemy.name}!`);
+              console.log(`[Misión] Progreso de la misión '${misionActiva.id}' actualizado a 1.`);
           }
           // Lógica para otras misiones de eliminación
           else if (
