@@ -85,30 +85,22 @@
       }
       /* ESTILO PARA LA REJILLA DEL MAPA */
       .grid-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none; /* Muy importante para que no bloquee los clics */
-        z-index: 3; /* Justo encima del terreno (z-index 1), pero debajo de runas (4) y entidades (5) */
-        
-        /* === LA CORRECCIÓN CLAVE ESTÁ AQUÍ === */
-        /* Usamos gradientes para dibujar líneas de 1px de grosor */
-        background-image: 
-            linear-gradient(to right, rgba(255, 223, 0, 0.25) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 223, 0, 0.25) 1px, transparent 1px);
-        
-        /* El tamaño del fondo define el tamaño de cada celda de la rejilla */
-        background-size: var(--tile-size, 100px) var(--tile-size, 100px);
-        /* ==================================== */
-
-        display: none; /* Oculta por defecto */
-    }
-
-    .grid-overlay.active {
-        display: block;
-    }
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          z-index: 2; 
+          background-size: var(--tile-size, 100px) var(--tile-size, 100px);
+          background-image:
+              linear-gradient(to right, #ff00d94d 2px, transparent 1px),
+              linear-gradient(to bottom, #ff00d94d 2px, transparent 1px);
+          display: none;
+      }
+      .grid-overlay.active {
+          display: block;
+      }
       /****************************************
        * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
        ****************************************/
@@ -1388,9 +1380,10 @@
     <!-- ======================================================================= -->
     <div class="game-container">
       <div class="map-container">
-        <div class="map" id="gameMap">
-          <div class="grid-overlay"></div>
-        </div>
+        <div class="map" id="gameMap"></div>
+        
+        <div class="grid-overlay"></div>
+        
         <div class="tile player" id="player">🧘</div>
         <div id="zone-notification" class="zone-notification"></div>
 
@@ -9364,47 +9357,33 @@
         const mapContainerElement = document.querySelector(".map-container");
 
         if (!mapElement || !mapContainerElement) {
-          return;
+            return;
         }
-        // --- INICIO DE LA LÓGICA DE AISLAMIENTO DE ZONA ---
+        
+     
         const currentZone = getPlayerCurrentZone();
-        let currentAmbientColor = "#1a3d2e"; // Color por defecto del mundo principal
-
+        let currentAmbientColor = "#1a3d2e";
         if (currentZone && currentZone.isIsolated) {
-          // Si estamos en una zona aislada, cambiamos el fondo a un color de "vacío"
-          mapContainerElement.style.backgroundColor =
-            currentZone.ambientColor || "#000";
+            mapContainerElement.style.backgroundColor = currentZone.ambientColor || "#000";
         } else {
-          // Si estamos en el mundo principal, el fondo es el definido en el CSS
-          mapContainerElement.style.backgroundColor = "#1a3d2e"; // O el color original de tu .map-container
+            mapContainerElement.style.backgroundColor = "#1a3d2e";
         }
-        // --- FIN DE LA LÓGICA DE AISLAMIENTO DE ZONA ---
         const currentContainerWidth = mapContainerElement.clientWidth;
         const currentContainerHeight = mapContainerElement.clientHeight;
-
         const playerScreenX = currentContainerWidth / 2 - currentTileSize / 2;
         const playerScreenY = currentContainerHeight / 2 - currentTileSize / 2;
-        const mapExpectedScrollX =
-          -(gameState.player.x * currentTileSize) + playerScreenX;
-        const mapExpectedScrollY =
-          -(gameState.player.y * currentTileSize) + playerScreenY;
-
-        const viewWorldXStart = Math.floor(
-          -mapExpectedScrollX / currentTileSize
-        );
-        const viewWorldYStart = Math.floor(
-          -mapExpectedScrollY / currentTileSize
-        );
-        const tilesInViewX =
-          Math.ceil(currentContainerWidth / currentTileSize) + 2;
-        const tilesInViewY =
-          Math.ceil(currentContainerHeight / currentTileSize) + 2;
+        const mapExpectedScrollX = -(gameState.player.x * currentTileSize) + playerScreenX;
+        const mapExpectedScrollY = -(gameState.player.y * currentTileSize) + playerScreenY;
+        const viewWorldXStart = Math.floor(-mapExpectedScrollX / currentTileSize);
+        const viewWorldYStart = Math.floor(-mapExpectedScrollY / currentTileSize);
+        const tilesInViewX = Math.ceil(currentContainerWidth / currentTileSize) + 2;
+        const tilesInViewY = Math.ceil(currentContainerHeight / currentTileSize) + 2;
         const viewWorldXEnd = viewWorldXStart + tilesInViewX;
         const viewWorldYEnd = viewWorldYStart + tilesInViewY;
 
-        mapElement.innerHTML = "";
+        mapElement.innerHTML = ""; 
         
-        mapElement.appendChild(gridOverlay);
+       
         // 1. Renderizar TERRENO BASE
         for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
           for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
@@ -11425,28 +11404,27 @@
                 gridOverlay.classList.remove('active');
                 if (toggleBtn) toggleBtn.textContent = "Mostrar Rejilla";
             }
-            // Llamamos a la función que actualiza la posición y tamaño
-            updateGrid();
+            updateGrid(); // Actualiza el estado inicial de la rejilla
         }
     }
 
     // === AÑADE ESTA NUEVA FUNCIÓN HELPER ===
     function updateGrid() {
-        if (!isGridVisible) return;
-        
-        const gridOverlay = document.querySelector('.grid-overlay');
-        const mapElement = document.getElementById("gameMap");
-        
-        if (gridOverlay && mapElement) {
-            // Hacemos que el tamaño y la posición del fondo de la rejilla coincidan con el del mapa
-            gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
-            gridOverlay.style.backgroundSize = `${currentTileSize}px ${currentTileSize}px`;
-            
-            // Sincronizamos la posición del fondo de la rejilla con la transformación del mapa
-            const mapTransform = mapElement.style.transform;
-            gridOverlay.style.transform = mapTransform;
-        }
-    }
+      if (!isGridVisible) return;
+      
+      const gridOverlay = document.querySelector('.grid-overlay');
+      const mapElement = document.getElementById("gameMap");
+      
+      if (gridOverlay && mapElement) {
+          // Actualizamos el tamaño del fondo de la rejilla para que coincida con el tamaño del tile
+          gridOverlay.style.backgroundSize = `${currentTileSize}px ${currentTileSize}px`;
+          
+          // Hacemos que la posición del fondo de la rejilla se mueva en sentido opuesto al mapa
+          // para que las líneas parezcan estáticas sobre el mundo.
+          const mapTransform = new DOMMatrix(window.getComputedStyle(mapElement).transform);
+          gridOverlay.style.backgroundPosition = `${mapTransform.e}px ${mapTransform.f}px`;
+      }
+  }
 
       function useItem(itemName) {
         if (gameState.battle.active) {
