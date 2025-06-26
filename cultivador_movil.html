@@ -2104,6 +2104,7 @@
           dodgeNextAttack: false,
           healingRainTurns: 0,
           healingRainAmount: 0,
+          manaRegenPerTurn: 0,
           // Para Ritual de Sangre
           bloodRitualTurns: 0,
           bloodRitualAttackBoost: 0,
@@ -9766,6 +9767,10 @@
                     gameState.player.defense += defenseBonus;
                     logBattle(`La "${formationName}" endurece tu cuerpo, ¡ganas ${defenseBonus} de Defensa para este combate!`);
                     showFloatingText(document.querySelector('.character-sprite'), `Defensa +${defenseBonus}`, 'ability');
+                }else if (effect.stat === 'manaRegenPerTurn') {
+                    gameState.player.manaRegenPerTurn = (gameState.player.manaRegenPerTurn || 0) + effect.amount;
+                    logBattle(`El "${formationName}" crea un pozo de energía, restaurando ${effect.amount} Maná cada turno.`);
+                    showFloatingText(document.querySelector('.character-sprite'), `Flujo de Qi`, 'ability');
                 }
                 // =======================================
         
@@ -13703,6 +13708,7 @@
         player.damageToHealingTurns = 0;
         player.hpRegenPerTurn = 0;
         player.manaRegenPerTurn = 0;
+        
 
         gameState.battle.active = false;
         document.getElementById("battleScreen").style.display = "none";
