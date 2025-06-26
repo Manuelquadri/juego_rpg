@@ -4019,8 +4019,8 @@
           // --- CAMBIOS CLAVE ---
           maxLevel: 10, // Ahora se puede subir de nivel
           cultivationSettings: {
-              baseTimeToLevelUp: 180, // Requiere tiempo para dominarla
-              levelTimeMultiplier: 1.8,
+              baseTimeToLevelUp: 300, // Requiere tiempo para dominarla
+              levelTimeMultiplier: 2,
           },
           // Este efecto no se aplica directamente, lo leeremos en otra función
           effect: {
@@ -6836,6 +6836,8 @@
               quantity: [40, 60],
               chance: 1.0,
             },
+            { itemName: "Tinta Rúnica", quantity: [10, 20], chance: 1 },
+
           ],
         },
         murcielago_cristal_sangriento: {
@@ -6891,6 +6893,7 @@
               quantity: [1, 1],
               chance: 1.0, // 
             },
+            { itemName: "Tinta Rúnica", quantity: [20, 50], chance: 1 },
           ],
           fixedLocation: { x: 90, y: 15 }, // Ubicación en el Desfiladero
         },
@@ -10565,40 +10568,48 @@
     }
           
 
-      function sanitizeActiveMissions(player) {
-                if (!player || !player.secta || !player.secta.misionesActivas) {
-                    console.warn("[Sanitize] No se encontraron misiones activas para sanitizar.");
-                    return;
-                }
+    function sanitizeActiveMissions(player) {
+    if (!player || !player.secta || !player.secta.misionesActivas) {
+        console.warn("[Sanitize] No se encontraron misiones activas para sanitizar.");
+        return;
+    }
 
-                console.log("[Sanitize] Iniciando la revisión de misiones activas...");
+    console.log("[Sanitize] Iniciando la revisión y actualización de misiones activas...");
+    
+    // Usamos filter para crear una nueva lista de misiones saneadas y eliminar las obsoletas.
+    const saneadasYValidas = player.secta.misionesActivas.filter(misionActiva => {
+        const masterMissionData = MISIONES_DATA[misionActiva.id];
+        
+        // Si la misión ya no existe en los datos maestros, la eliminamos del guardado.
+        if (!masterMissionData || !masterMissionData.objetivo) {
+            console.warn(`[Sanitize] Misión obsoleta '${misionActiva.id}' eliminada del guardado.`);
+            return false; // 'filter' descartará este elemento.
+        }
 
-                const misionesACorregir = [];
-                
-                player.secta.misionesActivas.forEach(misionActiva => {
-                    const masterMissionData = MISIONES_DATA[misionActiva.id];
-                    
-                    // Comprobamos si la misión aún existe y tiene una definición de objetivo
-                    if (!masterMissionData || !masterMissionData.objetivo) {
-                        console.warn(`[Sanitize] La misión '${misionActiva.id}' ya no existe en los datos del juego. Será eliminada.`);
-                        // Marcar para eliminar, pero no lo haremos en este bucle para no alterarlo
-                        return; 
-                    }
+        // --- LÓGICA DE ACTUALIZACIÓN CLAVE ---
+        // Comparamos el objetivo guardado con el maestro. Si son diferentes, lo actualizamos.
+        // Usamos JSON.stringify para una comparación profunda y sencilla de los objetos.
+        const guardadoJSON = JSON.stringify(misionActiva.objetivoOriginal);
+        const maestroJSON = JSON.stringify(masterMissionData.objetivo);
 
-                    // La comprobación clave: ¿El tipo de objetivo guardado coincide con el tipo de objetivo maestro?
-                    if (!misionActiva.objetivoOriginal || misionActiva.objetivoOriginal.tipo !== masterMissionData.objetivo.tipo) {
-                        console.error(`[Sanitize] ¡INCONSISTENCIA ENCONTRADA! Misión: '${misionActiva.id}'.`);
-                        console.error(`           -> Tipo Guardado: '${misionActiva.objetivoOriginal?.tipo}'`);
-                        console.error(`           -> Tipo Maestro:  '${masterMissionData.objetivo.tipo}'`);
-                        console.log(`[Sanitize]   CORRIGIENDO: Se reemplazará el objetivo guardado con el maestro.`);
-                        
-                        // Reemplazamos el objetivo corrupto con una copia nueva y correcta del maestro.
-                        misionActiva.objetivoOriginal = JSON.parse(JSON.stringify(masterMissionData.objetivo));
-                    }
-                });
-                
-                console.log("[Sanitize] Revisión de misiones completada.");
-      }
+        if (guardadoJSON !== maestroJSON) {
+            console.warn(`[Sanitize] ¡INCONSISTENCIA DETECTADA! Misión: '${misionActiva.id}'.`);
+            console.warn(`           -> Objetivo Guardado: ${guardadoJSON}`);
+            console.warn(`           -> Objetivo Maestro:  ${maestroJSON}`);
+            console.log(`[Sanitize]   CORRIGIENDO: Se reemplazará el objetivo guardado con la versión más reciente.`);
+            
+            // Reemplazamos el objetivo corrupto o desactualizado con una copia nueva y correcta del maestro.
+            misionActiva.objetivoOriginal = JSON.parse(maestroJSON);
+        }
+        
+        return true; // Mantenemos la misión en la lista.
+    });
+
+    // Reemplazamos la lista de misiones del jugador por la versión saneada.
+    player.secta.misionesActivas = saneadasYValidas;
+    
+    console.log("[Sanitize] Revisión de misiones completada.");
+}
       function openFormationTutorial() {
         const modal = document.getElementById('formationTutorialModal');
         const gridContainer = document.getElementById('formation-pattern-grid');
