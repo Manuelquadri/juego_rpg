@@ -2131,6 +2131,7 @@
           silencedTurns: 0, // Turnos en que no puede usar habilidades especiales
           sealedTurns: 0,   // Turnos en que no puede realizar ninguna acción
         },
+        utilityRunes: {},
         cultivationInterval: null,
         inventory: {
           "Piedras Espirituales": 0,
@@ -4008,16 +4009,18 @@
         // == GRADO 1 (Rango: Discípulo Externo)
         // =================================================================
         formation_scribing_1: {
-          id: "formation_scribing_1",
-          name: "Inscripción Rúnica",
-          icon: "✍️",
-          description: "Te permite inscribir una runa en el suelo. Las runas forman matrices de poder alrededor de los enemigos. Requiere 'Tinta Rúnica'.",
-          type: "active_ability",
-          abilityId: "plant_rune", // ID de acción especial
-          manaCost: 5, // Cuesta un poco de maná usarla
-          maxLevel: 1, // No necesita ser mejorada
-          cultivationSettings: { baseTimeToLevelUp: 1, levelTimeMultiplier: 1 },
-      },
+            id: "formation_scribing_1",
+            name: "Inscripción Rúnica",
+            icon: "✍️",
+            // NUEVA DESCRIPCIÓN
+            description: "Te permite usar 'Tinta Rúnica' para trazar runas en el suelo. Cerca de un enemigo, crearás formaciones de combate. Lejos de ellos, podrás trazar matrices de utilidad.",
+            type: "active_ability",
+            abilityId: "plant_rune", // Usaremos este ID único para la acción
+            manaCost: 10, // Un coste de maná estándar
+            maxLevel: 1,
+            cultivationSettings: { baseTimeToLevelUp: 1, levelTimeMultiplier: 1 },
+        },
+      
         qi_to_hp_conversion_1: {
           id: "qi_to_hp_conversion_1",
           name: "Técnica de Conversión de Qi",
@@ -5265,7 +5268,7 @@
           },
         },
       };
-
+//PATRONES DE FORMACIONES /  RUNAS
       const FORMATION_PATTERNS = {
       shattering_hexagram: {
           name: "Hexagrama Devastador",
@@ -5337,7 +5340,22 @@
             stat: 'defenseBoost',
             amount: 40 // Aumenta la defensa en 40 puntos para toda la batalla
         }
-    }
+    },
+        emergency_return_matrix: {
+        name: "Matriz de Retorno de Emergencia",
+        description: "Una matriz que abre un portal directo al centro de la secta.",
+        // El patrón es 3x3. El jugador estará en el centro (1) al completarlo.
+        pattern: [
+            [1, 0, 1],
+            [0, 1, 0],
+            [1, 0, 1]
+        ],
+        effect: {
+            type: 'utility_teleport',
+            // ¡Importante! Este ID debe coincidir con un teletransportador en TELEPORTER_DATA
+            destinationId: 'tp_sect_hub' 
+        }
+    },
       // ¡Puedes añadir más patrones aquí en el futuro!
   };
 
@@ -7499,6 +7517,7 @@
           effect: (ps) => learnTechniqueFromRoll(ps, "qi_absorption_celestial_1"),
           canUse: () => true,
         },
+        
         /// ========================   ROLLOS DE TÉCNICAS    ============================
 
         // -- Rollos Grado 1 --
@@ -9695,28 +9714,47 @@
             }
           }
         });
+        // --- DIBUJAR RUNAS DE COMBATE (LIGADAS A ENEMIGOS) ---
         gameState.map.entities.forEach(entity => {
-          if (entity.formationRunes) {
-              Object.keys(entity.formationRunes).forEach(runeKey => {
-                  const [x, y] = runeKey.split(',').map(Number);
-                  
-                  // Solo dibujar si está en la vista actual
-                  if (x >= viewWorldXStart && x < viewWorldXEnd && y >= viewWorldYStart && y < viewWorldYEnd) {
-                      const runeMarker = document.createElement('div');
-                      runeMarker.className = 'tile rune-marker';
-                      runeMarker.style.left = `${x * currentTileSize}px`;
-                      runeMarker.style.top = `${y * currentTileSize}px`;
-                      runeMarker.style.width = `${currentTileSize * 0.6}px`; // Más pequeñas que la casilla
-                      runeMarker.style.height = `${currentTileSize * 0.6}px`;
-                      runeMarker.style.margin = `${currentTileSize * 0.2}px`; // Centrar el marcador
-                      runeMarker.style.zIndex = '4'; // Encima del terreno, debajo de las entidades
-                      runeMarker.style.pointerEvents = 'none';
+        if (entity.formationRunes) {
+            Object.keys(entity.formationRunes).forEach(runeKey => {
+                const [x, y] = runeKey.split(',').map(Number);
+                if (x >= viewWorldXStart && x < viewWorldXEnd && y >= viewWorldYStart && y < viewWorldYEnd) {
+                    const runeMarker = document.createElement('div');
+                    runeMarker.className = 'tile rune-marker';
+                    runeMarker.style.left = `${x * currentTileSize}px`;
+                    runeMarker.style.top = `${y * currentTileSize}px`;
+                    runeMarker.style.width = `${currentTileSize * 0.6}px`;
+                    runeMarker.style.height = `${currentTileSize * 0.6}px`;
+                    runeMarker.style.margin = `${currentTileSize * 0.2}px`;
+                    runeMarker.style.zIndex = '4';
+                    runeMarker.style.pointerEvents = 'none';
+                    mapElement.appendChild(runeMarker);
+                }
+            });
+        }
+    });
 
-                      mapElement.appendChild(runeMarker);
-                  }
-              });
-          }
-      });
+    // --- DIBUJAR RUNAS DE UTILIDAD (NO LIGADAS A ENEMIGOS) ---
+    Object.keys(gameState.utilityRunes).forEach(runeKey => {
+        const [x, y] = runeKey.split(',').map(Number);
+        
+        if (x >= viewWorldXStart && x < viewWorldXEnd && y >= viewWorldYStart && y < viewWorldYEnd) {
+            const runeMarker = document.createElement('div');
+            runeMarker.className = 'tile rune-marker'; 
+            runeMarker.style.left = `${x * currentTileSize}px`;
+            runeMarker.style.top = `${y * currentTileSize}px`;
+            runeMarker.style.width = `${currentTileSize * 0.6}px`;
+            runeMarker.style.height = `${currentTileSize * 0.6}px`;
+            runeMarker.style.margin = `${currentTileSize * 0.2}px`;
+            runeMarker.style.zIndex = '4';
+            runeMarker.style.pointerEvents = 'none';
+            // Damos un color diferente para distinguirlas visualmente
+            runeMarker.style.borderColor = '#66ccff';
+            runeMarker.style.boxShadow = '0 0 15px #66ccff, inset 0 0 10px #66ccff';
+            mapElement.appendChild(runeMarker);
+        }
+    });
 
         updatePlayerVisualSize();
       }
@@ -11734,111 +11772,215 @@
 
     // REEMPLAZA TU FUNCIÓN plantRune() EXISTENTE CON ESTA VERSIÓN CORREGIDA
 
-    function plantRune() {
-        const player = gameState.player;
-        const inkItem = "Tinta Rúnica";
-        const MAX_ENEMY_DETECTION_RANGE = 5;
+    // REEMPLAZA por completo tu función plantRune con esta nueva versión
 
-        if ((gameState.inventory[inkItem] || 0) < 1) {
-            showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
-            return;
-        }
-        
-        let closestEnemy = null;
-        let minDistance = Infinity;
+    // REEMPLAZA tu función plantRune completa con esta versión definitiva
 
-        gameState.map.entities.forEach(entity => {
-            if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
-                const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestEnemy = entity;
-                }
+function plantRune() {
+    const player = gameState.player;
+    const inkItem = "Tinta Rúnica";
+    const MAX_ENEMY_DETECTION_RANGE = 5;
+
+    // 1. Verificación de Recursos
+    if ((gameState.inventory[inkItem] || 0) < 1) {
+        showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
+        return;
+    }
+    const manaCost = techniqueData.formation_scribing_1.manaCost || 10;
+    if (player.mana < manaCost) {
+        showModal("Maná Insuficiente", `Necesitas ${manaCost} de maná para trazar una runa.`);
+        return;
+    }
+
+    // 2. Determinar contexto y gastar recursos
+    const runeKey = `${player.x},${player.y}`;
+    let closestEnemy = null;
+    let minDistance = Infinity;
+    gameState.map.entities.forEach(entity => {
+        const isHostile = G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss;
+        if (isHostile) {
+            const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestEnemy = entity;
             }
-        });
-
-        if (!closestEnemy || minDistance > MAX_ENEMY_DETECTION_RANGE) {
-            showModal("Objetivo Inválido", "No hay ningún enemigo lo suficientemente cerca como para ser el foco de la formación.");
-            return;
         }
+    });
+    const isCombatRune = closestEnemy && minDistance <= MAX_ENEMY_DETECTION_RANGE;
+    
+    gameState.inventory[inkItem]--;
+    player.mana -= manaCost;
 
+    // 3. Colocar la runa y limpiar el estado opuesto para evitar conflictos
+    if (isCombatRune) {
         if (!closestEnemy.formationRunes) closestEnemy.formationRunes = {};
-
-        const runeKey = `${player.x},${player.y}`;
-        if (closestEnemy.formationRunes[runeKey]) {
-            showModal("Runa Existente", "Ya has inscrito una runa en esta posición para este enemigo.");
-            return;
-        }
-
-        gameState.inventory[inkItem]--;
-        player.mana -= techniqueData.formation_scribing_1.manaCost;
         closestEnemy.formationRunes[runeKey] = 1;
+        gameState.utilityRunes = {};
+    } else {
+        gameState.utilityRunes[runeKey] = 1;
+        if (closestEnemy) closestEnemy.formationRunes = {};
+    }
 
-        // === LÓGICA DE COMPROBACIÓN Y ACUMULACIÓN DE PATRONES ===
-        let patternFound = null;
-        let runesToRemove = [];
+    // 4. Comprobar si se completó algún patrón
+    let patternFound = null;
+    let runesForFoundPattern = [];
 
-        for (const patternKey in FORMATION_PATTERNS) {
-            const formation = FORMATION_PATTERNS[patternKey];
-            const pattern = formation.pattern;
-            let isMatch = true;
-            
-            let currentPatternRunes = []; // Almacena las runas de este patrón específico
+    for (const patternKey in FORMATION_PATTERNS) {
+        const formation = FORMATION_PATTERNS[patternKey];
+        const pattern = formation.pattern;
+        const isUtilityPattern = formation.effect.type === 'utility_teleport';
+
+        // Saltar patrones que no coincidan con el contexto actual
+        if (isCombatRune === isUtilityPattern) continue;
+
+        let requiredRunes = [];
+        let anchor = isCombatRune ? closestEnemy : { x: player.x, y: player.y };
+        let patternCenter = { x: Math.floor(pattern[0].length / 2), y: Math.floor(pattern.length / 2) };
+
+        // Si es un patrón de utilidad, debemos probar cada runa como el posible centro
+        const placedRunes = isCombatRune ? closestEnemy.formationRunes : gameState.utilityRunes;
+        const placedKeys = Object.keys(placedRunes);
+        
+        let matchFoundThisPattern = false;
+        for (const centralRuneKey of placedKeys) {
+            const [cx, cy] = centralRuneKey.split(',').map(Number);
+            let tempRequired = [];
+            let allMatch = true;
 
             for (let r = 0; r < pattern.length; r++) {
                 for (let c = 0; c < pattern[r].length; c++) {
                     if (pattern[r][c] === 1) {
-                        const dx = c - 2;
-                        const dy = r - 2;
-                        const absoluteX = closestEnemy.x + dx;
-                        const absoluteY = closestEnemy.y + dy;
-                        const requiredRuneKey = `${absoluteX},${absoluteY}`;
-                        
-                        if (!closestEnemy.formationRunes[requiredRuneKey]) {
-                            isMatch = false;
-                            break;
-                        }
-                        currentPatternRunes.push(requiredRuneKey);
+                        const requiredX = cx + (c - patternCenter.x);
+                        const requiredY = cy + (r - patternCenter.y);
+                        tempRequired.push(`${requiredX},${requiredY}`);
                     }
                 }
-                if (!isMatch) break;
             }
 
-            if (isMatch && Object.keys(closestEnemy.formationRunes).length === currentPatternRunes.length) {
+            if (placedKeys.length === tempRequired.length && tempRequired.every(k => placedKeys.includes(k))) {
                 patternFound = formation;
-                runesToRemove = currentPatternRunes;
+                runesForFoundPattern = tempRequired;
+                matchFoundThisPattern = true;
                 break;
             }
         }
-
-        if (patternFound) {
-            // Inicializa el array de efectos pendientes si no existe
-            if (!closestEnemy.pendingFormationEffects) {
-                closestEnemy.pendingFormationEffects = [];
-            }
-            
-            // Añade el efecto del patrón a la lista de pendientes
+        if (matchFoundThisPattern) break;
+    }
+    
+    if (patternFound) {
+        if (isCombatRune) {
+            if (!closestEnemy.pendingFormationEffects) closestEnemy.pendingFormationEffects = [];
             closestEnemy.pendingFormationEffects.push(patternFound.effect);
-
-            // Limpia SÓLO las runas que formaron este patrón
-            runesToRemove.forEach(key => {
-                delete closestEnemy.formationRunes[key];
-            });
-
-            // Muestra un mensaje de éxito
-            showModal(
-                "¡Formación Completa!",
-                `Has completado la formación <strong>"${patternFound.name}"</strong>. Sus efectos se han almacenado.<br><br>Puedes trazar otra formación o iniciar el combate.`
-            );
+            runesForFoundPattern.forEach(key => delete closestEnemy.formationRunes[key]);
+            showModal("¡Formación de Combate Completa!", `Has completado <strong>"${patternFound.name}"</strong>.`);
         } else {
-            // Si no se completó nada, muestra el mensaje simple
-            showModal("Runa Inscrita", `Has trazado una runa alrededor de ${closestEnemy.name}. El patrón aún no está completo.`);
+            teleportPlayer(patternFound.effect.destinationId);
+            gameState.utilityRunes = {};
+            showModal("¡Portal Abierto!", `La ${patternFound.name} se activa...`, true);
+            setTimeout(() => closeModal(), 2000);
         }
-        // === FIN DE LA NUEVA LÓGICA ===
-
         updateUI();
         renderMap();
+        return;
     }
+
+    // 5. Si no se completó, comprobar si el patrón es IMPOSIBLE
+    let isAnyPatternPossible = false;
+    const placedRunes = isCombatRune ? closestEnemy.formationRunes : gameState.utilityRunes;
+    const placedKeys = Object.keys(placedRunes);
+
+    for (const patternKey in FORMATION_PATTERNS) {
+        const formation = FORMATION_PATTERNS[patternKey];
+        const isUtilityPattern = formation.effect.type === 'utility_teleport';
+        if (isCombatRune === isUtilityPattern) continue;
+        
+        // La lógica clave: ¿Pueden las runas que he puesto ser un "subconjunto" de este patrón?
+        // Intentamos anclar el patrón a cada runa que hemos puesto.
+        let patternCouldFit = false;
+        for (const anchorRuneKey of placedKeys) {
+            const [ax, ay] = anchorRuneKey.split(',').map(Number);
+            for (let pr = 0; pr < formation.pattern.length; pr++) {
+                for (let pc = 0; pc < formation.pattern[pr].length; pc++) {
+                    if (formation.pattern[pr][pc] === 1) {
+                        // Asumimos que `anchorRuneKey` corresponde a la runa del patrón en (pc, pr)
+                        const offsetX = ax - (pc - Math.floor(formation.pattern[0].length / 2));
+                        const offsetY = ay - (pr - Math.floor(formation.pattern.length / 2));
+                        
+                        let allPlacedRunesFit = true;
+                        for (const keyToTest of placedKeys) {
+                            const [tx, ty] = keyToTest.split(',').map(Number);
+                            const relativeX = tx - offsetX + Math.floor(formation.pattern[0].length / 2);
+                            const relativeY = ty - offsetY + Math.floor(formation.pattern.length / 2);
+
+                            if (relativeX < 0 || relativeX >= formation.pattern[0].length || relativeY < 0 || relativeY >= formation.pattern.length || formation.pattern[relativeY][relativeX] !== 1) {
+                                allPlacedRunesFit = false;
+                                break;
+                            }
+                        }
+                        if (allPlacedRunesFit) {
+                            patternCouldFit = true;
+                            break;
+                        }
+                    }
+                }
+                if (patternCouldFit) break;
+            }
+            if (patternCouldFit) break;
+        }
+        if (patternCouldFit) {
+            isAnyPatternPossible = true;
+            break;
+        }
+    }
+
+    if (isAnyPatternPossible) {
+        const message = isCombatRune ? `Has trazado una runa de combate cerca de ${closestEnemy.name}.` : "Has trazado parte de una matriz de utilidad.";
+        showModal("Runa Inscrita", message);
+    } else {
+        if (isCombatRune) {
+            closestEnemy.formationRunes = {};
+        } else {
+            gameState.utilityRunes = {};
+        }
+        showModal("Patrón Incorrecto", "La runa que has trazado no coincide con ninguna formación conocida. Las runas se han disipado. ¡Inténtalo de nuevo!");
+    }
+
+    updateUI();
+    renderMap();
+}
+    function checkUtilityPatterns() {
+      for (const patternKey in FORMATION_PATTERNS) {
+          const formation = FORMATION_PATTERNS[patternKey];
+          if (formation.effect.type !== 'utility_teleport') continue;
+
+          const pattern = formation.pattern;
+          const patternHeight = pattern.length;
+          const patternWidth = pattern[0].length;
+          const patternCenterX = Math.floor(patternWidth / 2);
+          const patternCenterY = Math.floor(patternHeight / 2);
+
+          // Intenta hacer coincidir el patrón con cada runa de utilidad como posible centro
+          for (const placedRuneKey in gameState.utilityRunes) {
+              const [centerX, centerY] = placedRuneKey.split(',').map(Number);
+              let isMatch = true;
+              for (let r = 0; r < patternHeight; r++) {
+                  for (let c = 0; c < patternWidth; c++) {
+                      if (pattern[r][c] === 1) {
+                          const requiredX = centerX + (c - patternCenterX);
+                          const requiredY = centerY + (r - patternCenterY);
+                          if (!gameState.utilityRunes[`${requiredX},${requiredY}`]) {
+                              isMatch = false;
+                              break;
+                          }
+                      }
+                  }
+                  if (!isMatch) break;
+              }
+              if (isMatch) return formation;
+          }
+      }
+      return null;
+  }
 
     function battleAction(action) {
       
