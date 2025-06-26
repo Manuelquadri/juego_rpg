@@ -3146,7 +3146,8 @@
               "mision_prin_4",
               // Misiones de Rango Diácono
               "mision_diac_1",
-              
+            
+              "mision_diac_3",
               "mision_diac_4",
 
               // Misiones de Rango Anciano
@@ -3593,8 +3594,9 @@
           descripcion: "Hay un grupo de bandidos atacando gente de la secta en lo profundo de la ciénaga, desaste de ellos.",
           objetivo: {
               tipo: "eliminar_enemigo",
+              // CORREGIDO: Se usa 'enemigoTipo' que es la propiedad correcta para este tipo de misión.
               enemigoTipo: "bandido_desfiladero",
-              nombreDisplay: "Bandido del Desfiladero", // Añadido para claridad
+              nombreDisplay: "Bandido del Desfiladero", // Añadido para mayor claridad en los logs.
               cantidad: 10,
               npcEntrega: "guia_lin"
           },
@@ -12808,87 +12810,92 @@
         const misionesActivasDelJugador = [...player.secta.misionesActivas];
 
         misionesActivasDelJugador.forEach((misionActiva) => {
-          const misionDataOriginal = MISIONES_DATA[misionActiva.id];
-          if (!misionDataOriginal || !misionActiva.objetivoOriginal) return;
+            const misionDataOriginal = MISIONES_DATA[misionActiva.id];
+            if (!misionDataOriginal || !misionActiva.objetivoOriginal) return;
 
-          const objetivo = misionActiva.objetivoOriginal;
+            const objetivo = misionActiva.objetivoOriginal;
 
-          // Lógica para actualizar el progreso de la misión de desafío
-          if (objetivo.tipo === "derrotar_npc_especifico" && enemy.npcId === objetivo.npcId) {
-              misionActiva.progreso = 1; // 1 significa "objetivo cumplido".
-              logBattle(`¡Has completado el objetivo de derrotar a ${enemy.name}!`);
-              console.log(`[Misión] Progreso de la misión '${misionActiva.id}' actualizado a 1.`);
-          }
-          // Lógica para otras misiones de eliminación
-          else if (
-            objetivo.tipo === "eliminar_enemigo" &&
-            (enemy.originalEntityTypeId === objetivo.enemigoTipo ||
-              enemy.name === objetivo.nombreDisplay)
-          ) {
-            misionActiva.progreso = (misionActiva.progreso || 0) + 1;
-            logBattle(
-              `Progreso '${misionDataOriginal.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`
-            );
-          } else if (
-            objetivo.tipo === "cazar_y_recuperar_item_de_loot" &&
-            enemy.originalEntityTypeId === objetivo.enemigoTipo
-          ) {
-            misionActiva.progreso = 1;
-            logBattle(
-              `Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`
-            );
-          }
+            // Usamos una estructura switch para que la lógica sea más clara y robusta.
+            switch (objetivo.tipo) {
+                case "eliminar_enemigo":
+                    // Comprueba si el ID original del enemigo coincide con el tipo requerido por la misión.
+                    if (enemy.originalEntityTypeId === objetivo.enemigoTipo) {
+                        misionActiva.progreso = (misionActiva.progreso || 0) + 1;
+                        logBattle(
+                            `Progreso '${misionDataOriginal.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`
+                        );
+                    }
+                    break;
+
+                case "derrotar_npc_especifico":
+                    // Comprueba si el npcId del enemigo (para jefes/rivales) coincide.
+                    if (enemy.npcId === objetivo.npcId) {
+                        misionActiva.progreso = 1; // Se marca como completado.
+                        logBattle(`¡Has completado el objetivo de derrotar a ${enemy.name}!`);
+                        console.log(`[Misión] Progreso de la misión '${misionActiva.id}' actualizado a 1.`);
+                    }
+                    break;
+
+                case "cazar_y_recuperar_item_de_loot":
+                    // Comprueba si el enemigo derrotado es el que suelta el objeto de misión.
+                    if (enemy.originalEntityTypeId === objetivo.enemigoTipo) {
+                        misionActiva.progreso = 1; // Marcamos que el tipo correcto fue derrotado.
+                        logBattle(
+                            `Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`
+                        );
+                    }
+                    break;
+            }
         });
 
         updateSectUI();
 
-        // El resto de la función (loot, etc.) no cambia...
+        // El resto de la función para el botín y el fin de la batalla no cambia.
         let lootObtenidoTexto = "Botín Obtenido: ";
         let algoObtenido = false;
         if (enemy.lootTable) {
-          enemy.lootTable.forEach((loot) => {
-            if (Math.random() < loot.chance) {
-              const cantidad =
-                loot.quantity[0] +
-                Math.floor(
-                  Math.random() * (loot.quantity[1] - loot.quantity[0] + 1)
-                );
-              gameState.inventory[loot.itemName] =
-                (gameState.inventory[loot.itemName] || 0) + cantidad;
-              lootObtenidoTexto += `${cantidad} ${loot.itemName}, `;
-              algoObtenido = true;
-            }
-          });
+            enemy.lootTable.forEach((loot) => {
+                if (Math.random() < loot.chance) {
+                    const cantidad =
+                        loot.quantity[0] +
+                        Math.floor(
+                            Math.random() * (loot.quantity[1] - loot.quantity[0] + 1)
+                        );
+                    gameState.inventory[loot.itemName] =
+                        (gameState.inventory[loot.itemName] || 0) + cantidad;
+                    lootObtenidoTexto += `${cantidad} ${loot.itemName}, `;
+                    algoObtenido = true;
+                }
+            });
         }
         if (!algoObtenido) lootObtenidoTexto += "Nada.";
         else lootObtenidoTexto = lootObtenidoTexto.slice(0, -2) + ".";
 
         if (enemy.isBoss && enemy.originalEntityTypeId) {
-          player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
-          if (enemy.nextBossId) {
-            player.worldState.currentBossToSpawn = enemy.nextBossId;
-          } else {
-            player.worldState.currentBossToSpawn = null;
-          }
+            player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
+            if (enemy.nextBossId) {
+                player.worldState.currentBossToSpawn = enemy.nextBossId;
+            } else {
+                player.worldState.currentBossToSpawn = null;
+            }
         } else if (
-          enemy.isMiniBoss &&
-          enemy.isFixed &&
-          enemy.originalEntityTypeId
+            enemy.isMiniBoss &&
+            enemy.isFixed &&
+            enemy.originalEntityTypeId
         ) {
-          if (!player.worldState.defeatedFixedEntities)
-            player.worldState.defeatedFixedEntities = {};
-          player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] =
-            { time: Date.now() };
+            if (!player.worldState.defeatedFixedEntities)
+                player.worldState.defeatedFixedEntities = {};
+            player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] = { time: Date.now() };
         }
 
         setTimeout(() => {
-          endBattle(true);
-          showModal(
-            "¡Victoria!",
-            `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nRevisa tu diario de misiones para ver el progreso.`
-          );
+            endBattle(true);
+            showModal(
+                "¡Victoria!",
+                `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nRevisa tu diario de misiones para ver el progreso.`
+            );
         }, 1500);
-      }
+    }
 
       function completeMission(misionId, npcIdEntregaManual = null) {
         const player = gameState.player;
