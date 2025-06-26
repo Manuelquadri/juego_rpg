@@ -83,6 +83,25 @@
         /* Para el ícono de salir */
         font-family: 'Arial Unicode MS', 'Apple Symbols', 'sans-serif';
       }
+      /* ESTILO PARA LA REJILLA DEL MAPA */
+      .grid-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none; /* Muy importante para que no bloquee los clics */
+          z-index: 3; /* Justo encima del terreno, pero debajo de las runas/entidades */
+          box-shadow: inset 0 0 0 10000px rgba(212, 175, 55, 0.15); /* Color de las líneas */
+          background-size: var(--tile-size) var(--tile-size);
+          background-image:
+              linear-gradient(to right, rgba(212, 175, 55, 0.3) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(212, 175, 55, 0.3) 1px, transparent 1px);
+          display: none; /* Oculta por defecto */
+      }
+      .grid-overlay.active {
+          display: block;
+      }
       /****************************************
        * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
        ****************************************/
@@ -1432,6 +1451,7 @@
       <button id="action-button-touch">Acción</button>
     </div>
     <button id="toggleMapControlsBtn">Ocultar Controles</button>
+    <button id="toggleGridBtn" style="position: fixed; top: 100px; right: 10px; z-index: 200; padding: 8px 12px; font-size: 14px;">Mostrar Rejilla</button>
 
     <!-- ======================================================================= -->
     <!-- 3. TODAS LAS PANTALLAS Y MODALES SUPERPUESTOS -->
@@ -1954,6 +1974,8 @@
         left: false,
         right: false,
       };
+      let isGridVisible = false;
+
       const topNavBar = document.getElementById("topNavBar");
       const navBtnInventory = document.getElementById("navBtnInventory");
       console.log("Botón de Inventario (navBtnInventory):", navBtnInventory);
@@ -9372,7 +9394,13 @@
         const viewWorldYEnd = viewWorldYStart + tilesInViewY;
 
         mapElement.innerHTML = "";
-
+        const gridOverlay = document.createElement('div');
+        gridOverlay.className = 'grid-overlay';
+        if (isGridVisible) {
+            gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
+            gridOverlay.classList.add('active');
+        }
+        mapElement.appendChild(gridOverlay);
         // 1. Renderizar TERRENO BASE
         for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
           for (let x = viewWorldXStart; x < viewWorldXEnd; x++) {
@@ -11379,6 +11407,24 @@
         renderQuickSlotBar();
       }
 
+      function toggleGrid() {
+          isGridVisible = !isGridVisible;
+          const gridOverlay = document.querySelector('.grid-overlay');
+          const toggleBtn = document.getElementById('toggleGridBtn');
+
+          if (gridOverlay) {
+              if (isGridVisible) {
+                  // Actualizar el tamaño de la rejilla antes de mostrarla
+                  gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
+                  gridOverlay.classList.add('active');
+                  if (toggleBtn) toggleBtn.textContent = "Ocultar Rejilla";
+              } else {
+                  gridOverlay.classList.remove('active');
+                  if (toggleBtn) toggleBtn.textContent = "Mostrar Rejilla";
+              }
+          }
+      }
+
       function useItem(itemName) {
         if (gameState.battle.active) {
           showModal(
@@ -11867,58 +11913,57 @@
 
     // REEMPLAZA TU FUNCIÓN plantRune() EXISTENTE CON ESTA VERSIÓN CORREGIDA
 
-function plantRune() {
-    const player = gameState.player;
-    const inkItem = "Tinta Rúnica";
-    const RUNE_RANGE = 2; // El jugador DEBE estar exactamente a 2 casillas de distancia.
+    function plantRune() {
+      const player = gameState.player;
+      const inkItem = "Tinta Rúnica";
+      const MAX_ENEMY_DETECTION_RANGE = 5; // Las runas solo se asociarán a enemigos a 5 casillas o menos.
 
-    if ((gameState.inventory[inkItem] || 0) < 1) {
-        showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
-        return;
-    }
-    
-    // 1. Encontrar el enemigo más cercano dentro de un radio de búsqueda (ej. 3 casillas)
-    let closestEnemy = null;
-    let minDistance = Infinity;
+      if ((gameState.inventory[inkItem] || 0) < 1) {
+          showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
+          return;
+      }
+      
+      // 1. Encontrar el enemigo más cercano dentro de un radio de búsqueda razonable
+      let closestEnemy = null;
+      let minDistance = Infinity;
 
-    gameState.map.entities.forEach(entity => {
-        if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
-            // Usamos la distancia de Manhattan (más simple y efectiva para cuadrículas)
-            const distance = Math.abs(player.x - entity.x) + Math.abs(player.y - entity.y);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestEnemy = entity;
-            }
-        }
-    });
+      gameState.map.entities.forEach(entity => {
+          if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
+              const distance = Math.hypot(player.x - entity.x, player.y - entity.y); // Usamos distancia real
+              if (distance < minDistance) {
+                  minDistance = distance;
+                  closestEnemy = entity;
+              }
+          }
+      });
 
-    // 2. Validar si el enemigo encontrado está a la distancia correcta
-    if (!closestEnemy || minDistance !== RUNE_RANGE) {
-        showModal("Ubicación Incorrecta", `Debes estar exactamente a ${RUNE_RANGE} casillas de un enemigo para inscribir una runa a su alrededor.`);
-        return;
-    }
+      // 2. Validar si hay un enemigo suficientemente cerca para asociar la runa
+      if (!closestEnemy || minDistance > MAX_ENEMY_DETECTION_RANGE) {
+          showModal("Objetivo Inválido", "No hay ningún enemigo lo suficientemente cerca como para ser el foco de la formación.");
+          return;
+      }
 
-    // 3. Comprobar si ya existe una runa en la posición actual del jugador
-    if (!closestEnemy.formationRunes) {
-        closestEnemy.formationRunes = {};
-    }
+      // 3. Comprobar si ya existe una runa en la posición actual del jugador
+      if (!closestEnemy.formationRunes) {
+          closestEnemy.formationRunes = {};
+      }
 
-    const runeKey = `${player.x},${player.y}`;
-    if (closestEnemy.formationRunes[runeKey]) {
-        showModal("Runa Existente", "Ya has inscrito una runa en esta posición.");
-        return;
-    }
+      const runeKey = `${player.x},${player.y}`;
+      if (closestEnemy.formationRunes[runeKey]) {
+          showModal("Runa Existente", "Ya has inscrito una runa en esta posición para este enemigo.");
+          return;
+      }
 
-    // 4. Gastar recursos y plantar la runa, asociándola con el enemigo cercano
-    gameState.inventory[inkItem]--;
-    player.mana -= techniqueData.formation_scribing_1.manaCost;
-    closestEnemy.formationRunes[runeKey] = 1; // La runa se guarda en el objeto del enemigo
+      // 4. Gastar recursos y plantar la runa
+      gameState.inventory[inkItem]--;
+      player.mana -= techniqueData.formation_scribing_1.manaCost;
+      closestEnemy.formationRunes[runeKey] = 1;
 
-    showModal("Runa Inscrita", `Has canalizado tu Qi y trazado una runa en el suelo alrededor de ${closestEnemy.name}.`);
-    
-    updateUI();
-    renderMap(); // Volver a dibujar el mapa para mostrar la nueva runa
-}
+      showModal("Runa Inscrita", `Has canalizado tu Qi y trazado una runa en el suelo. Sientes que se ha vinculado a ${closestEnemy.name}.`);
+      
+      updateUI();
+      renderMap(); // Volver a dibujar el mapa para mostrar la nueva runa
+  }
 
     function battleAction(action) {
       
@@ -15655,7 +15700,10 @@ function plantRune() {
 
         const fileInput = document.getElementById("fileInput");
         if (fileInput) fileInput.addEventListener("change", loadGameFromFile);
-
+        const toggleGridBtn = document.getElementById("toggleGridBtn");
+        if (toggleGridBtn) {
+            toggleGridBtn.addEventListener("click", toggleGrid);
+        }
         const toggleControlsBtn = document.getElementById(
           "toggleMapControlsBtn"
         );
@@ -15670,6 +15718,10 @@ function plantRune() {
           calculateAndSetTileSize();
           renderMap(); // Vuelve a dibujar con el nuevo tamaño
           updatePlayerPosition(); // Asegura que el jugador esté bien posicionado
+          if (isGridVisible) {
+            const gridOverlay = document.querySelector('.grid-overlay');
+            if (gridOverlay) gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
+        }
         });
 
         // Iniciar el bucle de actualización del juego
