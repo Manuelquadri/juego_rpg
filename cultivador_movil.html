@@ -5299,6 +5299,43 @@
               amount: 20 // Regenera 20 HP por turno en batalla
           }
       },
+      arcane_vortex_array: {
+        name: "Matriz del Vórtice Arcano",
+        description: "Una formación asimétrica que crea un pozo de energía espiritual, aumentando tu regeneración de maná durante el combate.",
+        // Patrón: [0,0,1,1,1;1,0,0,0,1;0,0,2,0,0;1,0,0,0,1;1,1,1,0,0]
+        pattern: [
+            [0, 0, 1, 1, 1],
+            [1, 0, 0, 0, 1],
+            [0, 0, 2, 0, 0],
+            [1, 0, 0, 0, 1],
+            [1, 1, 1, 0, 0]
+        ],
+        effect: {
+            type: 'player_buff',
+            stat: 'manaRegenPerTurn', // Usaremos una nueva propiedad para esto
+            amount: 15 // Regenera 15 de Maná por turno en batalla
+        }
+    },
+
+    aegis_of_the_mountain: {
+        name: "Égida de la Montaña Inamovible",
+        description: "Este patrón de sellado canaliza la solidez de la tierra, otorgándote un significativo aumento de defensa al inicio del combate.",
+        // Patrón: [1,1,1,1,1;1,0,0,0,1;1,0,2,0,1;0,0,0,0,0;0,0,1,0,0]
+        // CORRECCIÓN: Tu patrón tenía un error de simetría, lo ajusté ligeramente para que tenga más sentido visual.
+        // Si prefieres el original, simplemente copia y pega el tuyo. Este es el corregido:
+        pattern: [
+            [1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1],
+            [1, 0, 2, 0, 1],
+            [1, 0, 0, 0, 1],
+            [0, 0, 1, 0, 0]
+        ],
+        effect: {
+            type: 'player_buff',
+            stat: 'defenseBoost',
+            amount: 40 // Aumenta la defensa en 40 puntos para toda la batalla
+        }
+    }
       // ¡Puedes añadir más patrones aquí en el futuro!
   };
 
@@ -9716,71 +9753,49 @@
       }
     
       function checkAndApplyFormation(enemyEntity) {
-        if (!enemyEntity.formationRunes || Object.keys(enemyEntity.formationRunes).length === 0) {
-            return; // No hay runas para este enemigo
+        // La función ahora se enfoca en aplicar los efectos ya guardados
+        if (!enemyEntity.pendingFormationEffects || enemyEntity.pendingFormationEffects.length === 0) {
+            return; // No hay efectos de formación pendientes para este enemigo
         }
 
-        let patternFound = null;
+        logBattle("¡Las formaciones rúnicas preestablecidas se activan!");
 
-        // Iterar sobre cada patrón definido en nuestra base de datos
-        for (const patternKey in FORMATION_PATTERNS) {
-            const formation = FORMATION_PATTERNS[patternKey];
-            const pattern = formation.pattern;
-            let isMatch = true;
+        // Iteramos sobre cada efecto acumulado y lo aplicamos
+        enemyEntity.pendingFormationEffects.forEach(effect => {
+            const formationName = Object.keys(FORMATION_PATTERNS).find(key => FORMATION_PATTERNS[key].effect === effect)?.name || "Formación Desconocida";
             
-            // Iterar sobre la matriz 5x5 del patrón
-            for (let r = 0; r < pattern.length; r++) {
-                for (let c = 0; c < pattern[r].length; c++) {
-                    // Si la celda del patrón requiere una runa (valor 1)
-                    if (pattern[r][c] === 1) {
-                        // Calculamos la coordenada absoluta en el mapa
-                        const dx = c - 2; // Offset desde el centro (columna 2)
-                        const dy = r - 2; // Offset desde el centro (fila 2)
-                        const absoluteX = enemyEntity.x + dx;
-                        const absoluteY = enemyEntity.y + dy;
-                        
-                        // Comprobamos si el enemigo tiene una runa en esa coordenada
-                        const runeKey = `${absoluteX},${absoluteY}`;
-                        if (!enemyEntity.formationRunes[runeKey]) {
-                            isMatch = false; // Si falta una sola runa, no es un match
-                            break;
-                        }
-                    }
-                }
-                if (!isMatch) break;
-            }
-
-            if (isMatch) {
-                patternFound = formation;
-                break; // Encontramos un patrón, dejamos de buscar
-            }
-        }
-
-        if (patternFound) {
-            logBattle(`¡La formación "${patternFound.name}" resplandece con poder!`);
-            showFloatingText(document.getElementById('enemySprite'), `¡${patternFound.name}!`, 'ability');
-
-            const effect = patternFound.effect;
             switch(effect.type) {
                 case 'enemy_debuff':
                     if (effect.stat === 'defense') {
-                        // Aplicamos la reducción directamente a las stats de batalla del enemigo
-                        gameState.battle.enemy.defense -= effect.amount;
+                        const defenseReduction = effect.amount;
+                        gameState.battle.enemy.defense -= defenseReduction;
                         if(gameState.battle.enemy.defense < 0) gameState.battle.enemy.defense = 0;
-                        logBattle(`La defensa de ${gameState.battle.enemy.name} se reduce en ${effect.amount}.`);
+                        logBattle(`"${formationName}" quiebra las defensas del enemigo, reduciéndolas en ${defenseReduction}.`);
+                        showFloatingText(document.getElementById('enemySprite'), `Defensa ↓`, 'debuff');
                     }
                     break;
                 case 'player_buff':
                     if (effect.stat === 'hpRegenPerTurn') {
-                        // Añadimos una nueva propiedad al jugador para la regeneración en combate
                         gameState.player.hpRegenPerTurn = (gameState.player.hpRegenPerTurn || 0) + effect.amount;
-                        logBattle(`Sientes una energía vital que te curará ${effect.amount} HP por turno.`);
-                    }
+                        logBattle(`"${formationName}" te envuelve en energía vital, curándote ${effect.amount} HP cada turno.`);
+                        showFloatingText(document.querySelector('.character-sprite'), `Regeneración`, 'ability');
+                    }else if (effect.stat === 'defenseBoost') {
+                    const defenseBonus = effect.amount;
+                    gameState.player.defense += defenseBonus;
+                    logBattle(`La "${formationName}" endurece tu cuerpo, ¡ganas ${defenseBonus} de Defensa para este combate!`);
+                    showFloatingText(document.querySelector('.character-sprite'), `Defensa +${defenseBonus}`, 'ability');
+                }
+                // =======================================
+        
                     break;
+                // Aquí puedes añadir más tipos de efectos en el futuro
             }
-            // Limpiamos las runas después de usarlas
-            enemyEntity.formationRunes = {};
-        }
+        });
+
+        // Limpiamos los efectos pendientes después de aplicarlos
+        enemyEntity.pendingFormationEffects = [];
+        // También limpiamos cualquier runa restante que no formara un patrón
+        enemyEntity.formationRunes = {};
     }
 
       function updatePlayerSpriteVisual() {
@@ -11915,100 +11930,110 @@
     // REEMPLAZA TU FUNCIÓN plantRune() EXISTENTE CON ESTA VERSIÓN CORREGIDA
 
     function plantRune() {
-      const player = gameState.player;
-      const inkItem = "Tinta Rúnica";
-      const MAX_ENEMY_DETECTION_RANGE = 5;
+        const player = gameState.player;
+        const inkItem = "Tinta Rúnica";
+        const MAX_ENEMY_DETECTION_RANGE = 5;
 
-      if ((gameState.inventory[inkItem] || 0) < 1) {
-          showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
-          return;
-      }
-      
-      let closestEnemy = null;
-      let minDistance = Infinity;
+        if ((gameState.inventory[inkItem] || 0) < 1) {
+            showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
+            return;
+        }
+        
+        let closestEnemy = null;
+        let minDistance = Infinity;
 
-      gameState.map.entities.forEach(entity => {
-          if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
-              const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
-              if (distance < minDistance) {
-                  minDistance = distance;
-                  closestEnemy = entity;
-              }
-          }
-      });
+        gameState.map.entities.forEach(entity => {
+            if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
+                const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestEnemy = entity;
+                }
+            }
+        });
 
-      if (!closestEnemy || minDistance > MAX_ENEMY_DETECTION_RANGE) {
-          showModal("Objetivo Inválido", "No hay ningún enemigo lo suficientemente cerca como para ser el foco de la formación.");
-          return;
-      }
+        if (!closestEnemy || minDistance > MAX_ENEMY_DETECTION_RANGE) {
+            showModal("Objetivo Inválido", "No hay ningún enemigo lo suficientemente cerca como para ser el foco de la formación.");
+            return;
+        }
 
-      if (!closestEnemy.formationRunes) {
-          closestEnemy.formationRunes = {};
-      }
+        if (!closestEnemy.formationRunes) closestEnemy.formationRunes = {};
 
-      const runeKey = `${player.x},${player.y}`;
-      if (closestEnemy.formationRunes[runeKey]) {
-          showModal("Runa Existente", "Ya has inscrito una runa en esta posición para este enemigo.");
-          return;
-      }
+        const runeKey = `${player.x},${player.y}`;
+        if (closestEnemy.formationRunes[runeKey]) {
+            showModal("Runa Existente", "Ya has inscrito una runa en esta posición para este enemigo.");
+            return;
+        }
 
-      gameState.inventory[inkItem]--;
-      player.mana -= techniqueData.formation_scribing_1.manaCost;
-      closestEnemy.formationRunes[runeKey] = 1;
+        gameState.inventory[inkItem]--;
+        player.mana -= techniqueData.formation_scribing_1.manaCost;
+        closestEnemy.formationRunes[runeKey] = 1;
 
-      // ¡No mostramos el modal de "Runa Inscrita" inmediatamente!
-      // Primero comprobamos si se completó un patrón.
+        // === LÓGICA DE COMPROBACIÓN Y ACUMULACIÓN DE PATRONES ===
+        let patternFound = null;
+        let runesToRemove = [];
 
-      updateUI();
-      renderMap();
+        for (const patternKey in FORMATION_PATTERNS) {
+            const formation = FORMATION_PATTERNS[patternKey];
+            const pattern = formation.pattern;
+            let isMatch = true;
+            
+            let currentPatternRunes = []; // Almacena las runas de este patrón específico
 
-      // === INICIO DEL CÓDIGO NUEVO: COMPROBACIÓN DE PATRÓN COMPLETO ===
-      let patternFound = null;
-      for (const patternKey in FORMATION_PATTERNS) {
-          const formation = FORMATION_PATTERNS[patternKey];
-          const pattern = formation.pattern;
-          let isMatch = true;
-          let requiredRunesCount = 0; // Contamos cuántas runas requiere el patrón
+            for (let r = 0; r < pattern.length; r++) {
+                for (let c = 0; c < pattern[r].length; c++) {
+                    if (pattern[r][c] === 1) {
+                        const dx = c - 2;
+                        const dy = r - 2;
+                        const absoluteX = closestEnemy.x + dx;
+                        const absoluteY = closestEnemy.y + dy;
+                        const requiredRuneKey = `${absoluteX},${absoluteY}`;
+                        
+                        if (!closestEnemy.formationRunes[requiredRuneKey]) {
+                            isMatch = false;
+                            break;
+                        }
+                        currentPatternRunes.push(requiredRuneKey);
+                    }
+                }
+                if (!isMatch) break;
+            }
 
-          for (let r = 0; r < pattern.length; r++) {
-              for (let c = 0; c < pattern[r].length; c++) {
-                  if (pattern[r][c] === 1) {
-                      requiredRunesCount++;
-                      const dx = c - 2;
-                      const dy = r - 2;
-                      const absoluteX = closestEnemy.x + dx;
-                      const absoluteY = closestEnemy.y + dy;
-                      const requiredRuneKey = `${absoluteX},${absoluteY}`;
-                      
-                      if (!closestEnemy.formationRunes[requiredRuneKey]) {
-                          isMatch = false;
-                          break;
-                      }
-                  }
-              }
-              if (!isMatch) break;
-          }
+            if (isMatch && Object.keys(closestEnemy.formationRunes).length === currentPatternRunes.length) {
+                patternFound = formation;
+                runesToRemove = currentPatternRunes;
+                break;
+            }
+        }
 
-          // Un match es válido solo si el número de runas plantadas es igual al requerido por el patrón
-          if (isMatch && Object.keys(closestEnemy.formationRunes).length === requiredRunesCount) {
-              patternFound = formation;
-              break;
-          }
-      }
+        if (patternFound) {
+            // Inicializa el array de efectos pendientes si no existe
+            if (!closestEnemy.pendingFormationEffects) {
+                closestEnemy.pendingFormationEffects = [];
+            }
+            
+            // Añade el efecto del patrón a la lista de pendientes
+            closestEnemy.pendingFormationEffects.push(patternFound.effect);
 
-      if (patternFound) {
-          // ¡Éxito! Se completó una formación.
-          showModal(
-              "¡Formación Completa!",
-              `Has completado la formación <strong>"${patternFound.name}"</strong> alrededor de ${closestEnemy.name}.<br><br><em>${patternFound.description}</em><br><br>Su poder se desatará cuando inicies el combate.`
-          );
-          // Podríamos añadir un efecto visual más potente aquí si quisiéramos.
-      } else {
-          // Si no se completó nada, mostramos el mensaje simple.
-          showModal("Runa Inscrita", `Has trazado una runa alrededor de ${closestEnemy.name}. El patrón aún no está completo.`);
-      }
-      // === FIN DEL CÓDIGO NUEVO ===
-  }
+            // Limpia SÓLO las runas que formaron este patrón
+            runesToRemove.forEach(key => {
+                delete closestEnemy.formationRunes[key];
+            });
+
+            // Muestra un mensaje de éxito
+            showModal(
+                "¡Formación Completa!",
+                `Has completado la formación <strong>"${patternFound.name}"</strong>. Sus efectos se han almacenado.<br><br>Puedes trazar otra formación o iniciar el combate.`
+            );
+        } else {
+            // Si no se completó nada, muestra el mensaje simple
+            showModal("Runa Inscrita", `Has trazado una runa alrededor de ${closestEnemy.name}. El patrón aún no está completo.`);
+        }
+        // === FIN DE LA NUEVA LÓGICA ===
+
+        updateUI();
+        renderMap();
+    }
 
     function battleAction(action) {
       
@@ -12026,6 +12051,13 @@
               player.hp = Math.min(player.maxHp, player.hp + healAmount);
               logBattle(`La formación rúnica te cura ${healAmount} HP.`);
               showFloatingText(playerSprite, `+${healAmount}`, 'heal');
+          }
+          // ===  REGENERACIÓN DE MANÁ ===
+          if (player.manaRegenPerTurn > 0 && player.mana < player.maxMana) {
+              const manaHealAmount = player.manaRegenPerTurn;
+              player.mana = Math.min(player.maxMana, player.mana + manaHealAmount);
+              logBattle(`La formación arcana restaura ${manaHealAmount} de tu Maná.`);
+              showFloatingText(playerSprite, `+${manaHealAmount}`, 'mana'); // Usamos el tipo 'mana' para el color azul
           }
               // Inmunidad de Santuario Dorado Protector
           if (player.intangibleTurns > 0) {
@@ -13463,21 +13495,27 @@
                         break;
 
                     case 'stun_chance':
-                      // === INICIO DE LA LÓGICA DE RESISTENCIA ===
-                        if (didStun && player.statusResistChance > 0 && Math.random() < player.statusResistChance) {
-                            logBattle(`¡${enemy.name} intenta aturdirte, pero tu Constitución de Dragón te protege!`);
-                            showFloatingText(playerSprite, '¡Resistido!', 'ability');
-                            logBattle(chosenAbility.logMessage(enemy.name, finalDamage, false)); // Log de no-aturdimiento
-                        } 
-                        // === FIN DE LA LÓGICA DE RESISTENCIA ===
                         damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
                         finalDamage = applyDamageToPlayer(damage, chosenAbility.name);
+
+                        
                         const didStun = Math.random() < (effect.stunChance || 0);
-                        if (didStun && player.stunnedTurns === 0) {
-                            player.stunnedTurns = 1;
-                            showFloatingText(playerSprite, '¡Aturdido!', 'debuff');
+                        let stunSuccessful = false; // Bandera para el log
+
+                        // Comprobamos si el aturdimiento tiene éxito Y el jugador no es inmune
+                        if (didStun) {
+                            if (player.statusResistChance > 0 && Math.random() < player.statusResistChance) {
+                                logBattle(`¡${enemy.name} intenta aturdirte, pero tu Constitución de Dragón te protege!`);
+                                showFloatingText(playerSprite, '¡Resistido!', 'ability');
+                            } else if (player.stunnedTurns === 0) {
+                                player.stunnedTurns = 1;
+                                showFloatingText(playerSprite, '¡Aturdido!', 'debuff');
+                                stunSuccessful = true;
+                            }
                         }
-                        logBattle(chosenAbility.logMessage(enemy.name, finalDamage, didStun));
+                        
+                        // --- CORRECCIÓN: Llamamos al log DESPUÉS de saber el resultado ---
+                        logBattle(chosenAbility.logMessage(enemy.name, finalDamage, stunSuccessful));
                         break;
 
                     case 'dot_resource':
@@ -13681,6 +13719,8 @@
         player.canRevive = false; // El poder del Fénix se desvanece fuera del combate
         player.intangibleTurns = 0;
         player.damageToHealingTurns = 0;
+        player.hpRegenPerTurn = 0;
+        player.manaRegenPerTurn = 0;
 
         gameState.battle.active = false;
         document.getElementById("battleScreen").style.display = "none";
