@@ -5868,7 +5868,7 @@
           name: "Entrada a la Fisura Demoníaca",
           spriteUrl: "img/portal.png", // Puedes reutilizar un sprite de portal
           interaction: "transition",
-          fixedLocation: { x: 140, y: 60 }, // Colócalo en una zona accesible del mapa principal
+          fixedLocation: { x: 200, y: 47 }, // Colócalo en una zona accesible del mapa principal
           targetX: 401, // Coordenada X de destino (dentro de la Fisura)
           targetY: 11,  // Coordenada Y de destino
           discovered: true,
@@ -6990,26 +6990,22 @@
           defense: 120,
           exp: 5000,
           isBoss: true,
+          // --- LÍNEA CLAVE AÑADIDA ---
+          // Ahora el jefe tiene un ID que el sistema de misiones puede reconocer.
+          npcId: "emperador_lich_del_valle",
+          // --- FIN DE LA LÍNEA AÑADIDA ---
           abilities: [
-            { abilityId: "life_drain", chance: 0.3 },
-            { abilityId: "mana_curse", chance: 0.3 },
-            { abilityId: "clone_hunter", chance: 0.2 },
-          ], // Asume que el jugador podría tener clones a este nivel
-          lootTable: [
-            { itemName: "Filacteria del Lich", quantity: [1, 1], chance: 1.0 },
-            {
-              itemName: "Rollo: Técnica de Anciano Aleatoria",
-              quantity: [1, 1],
-              chance: 1.0,
-            },
-            {
-              itemName: "Piedras Espirituales",
-              quantity: [200, 250],
-              chance: 1.0,
-            },
+              { abilityId: "life_drain", chance: 0.3 },
+              { abilityId: "mana_curse", chance: 0.3 },
+              { abilityId: "clone_hunter", chance: 0.2 },
           ],
-          fixedLocation: { x: 200, y: 42 }, // Ubicación en el Valle del Dragón Caído
-        },
+          lootTable: [
+              { itemName: "Filacteria del Lich", quantity: [1, 1], chance: 1.0 },
+              { itemName: "Rollo: Técnica de Anciano Aleatoria", quantity: [1, 1], chance: 1.0 },
+              { itemName: "Piedras Espirituales", quantity: [200, 250], chance: 1.0 },
+          ],
+          fixedLocation: { x: 200, y: 42 },
+      },
 
         // -- Nivel Gran Anciano (Nivel 50-60) --
         demonio_de_la_fisura: {
@@ -8837,6 +8833,47 @@
         showTouchControls();
         ensureFixedEntities();
       }
+
+      function dev_defeatEnemy(entityTypeId) {
+        console.log(`[DEV] Intentando forzar la derrota de: ${entityTypeId}`);
+
+        const enemyInstance = gameState.map.entities.find(
+            (e) => (e.originalEntityTypeId === entityTypeId || e.npcId === entityTypeId) && !e.isDecorative
+        );
+
+        if (!enemyInstance) {
+            const message = `[DEV] Error: No se encontró una instancia activa de '${entityTypeId}' en el mapa.`;
+            console.error(message);
+            alert(message);
+            return;
+        }
+
+        console.log("[DEV] Enemigo encontrado en el mapa:", enemyInstance);
+
+        // --- CORRECCIÓN CLAVE ---
+        // Obtenemos la definición maestra del enemigo.
+        const enemyDefinition = entityTypes[entityTypeId];
+        if (!enemyDefinition) {
+            console.error(`[DEV] Error: No se encontró la definición maestra para '${entityTypeId}' en entityTypes.`);
+            return;
+        }
+
+        // Construimos el objeto del enemigo de la forma correcta:
+        // 1. Copiamos la definición maestra completa (que tiene el npcId).
+        // 2. Sobrescribimos con los datos de la instancia del mapa (como el HP actual si fuera relevante).
+        gameState.battle.enemy = {
+            ...enemyDefinition,
+            ...enemyInstance
+        };
+        // --- FIN DE LA CORRECIÓN ---
+
+        gameState.battle.enemy.hp = 0;
+        
+        // Ahora, cuando llamemos a handleEnemyDefeat, el objeto 'enemy' tendrá la propiedad 'npcId'.
+        handleEnemyDefeat();
+
+        console.log(`[DEV] La derrota de '${entityTypeId}' ha sido procesada con éxito.`);
+    }
 
       function populateZoneWithDecorations(zone) {
         if (!zone.decorations || zone.decorations.length === 0) {
@@ -10668,48 +10705,37 @@
       function acceptMission(misionId) {
         const misionData = MISIONES_DATA[misionId];
         const player = gameState.player;
-        if (!misionData) {
-          showModal("Error de Misión", "Datos no encontrados.");
-          return;
+        if (!misionData || !misionData.objetivo) {
+            showModal("Error de Misión", "Datos de misión no encontrados o corruptos.");
+            return;
         }
-        if (
-          player.secta.misionesActivas.some((m) => m.id === misionId) ||
-          player.secta.misionesCompletadas[misionId]
-        ) {
-          showModal("Error de Misión", "Ya activa/completada.");
-          return;
-        }
-        if (!misionData.objetivo) {
-          showModal("Error de Misión", "Objetivo no definido.");
-          return;
+        if (player.secta.misionesActivas.some((m) => m.id === misionId) || player.secta.misionesCompletadas[misionId]) {
+            showModal("Error de Misión", "Ya has aceptado o completado esta misión.");
+            return;
         }
 
-        let nuevaMisionActiva;
-        try {
-          nuevaMisionActiva = {
+        // Creamos el objeto de la misión activa
+        const nuevaMisionActiva = {
             id: misionId,
             progreso: 0,
             objetivoOriginal: JSON.parse(JSON.stringify(misionData.objetivo)),
-          };
-        } catch (error) {
-          showModal("Error de Misión", "Problema al procesar objetivo.");
-          return;
-        }
+        };
+
+        // --- LOG DE INICIO DE MISIÓN ---
+        console.group(`[LOG INICIO MISIÓN] Misión Aceptada: ${misionId}`);
+        console.log("Datos guardados en el estado del jugador:", nuevaMisionActiva);
+        console.groupEnd();
+        // --- FIN DEL LOG ---
 
         player.secta.misionesActivas.push(nuevaMisionActiva);
         showModal("Misión Aceptada", `Has aceptado: ${misionData.titulo}`);
         updateSectUI();
 
         const npcInteractionModal = document.getElementById("interactionModal");
-        const modalTitleElement = document.getElementById("modalTitle");
-        if (
-          npcInteractionModal.style.display === "flex" &&
-          modalTitleElement &&
-          modalTitleElement.textContent.includes("Interacción con Secta")
-        ) {
-          closeModal();
+        if (npcInteractionModal.style.display === "flex") {
+            closeModal();
         }
-      }
+    }
 
       function removeEntity(entityToRemove) {
         const index = gameState.map.entities.findIndex(
@@ -11609,7 +11635,15 @@
         
         gameState.battle.playerTurn = true;
         document.getElementById("battleScreen").style.display = "flex";
-        
+        // --- LOG DE INICIO DE BATALLA ---
+        console.group(`[LOG INICIO BATALLA] Enfrentando a: ${gameState.battle.enemy.name}`);
+        console.log("Propiedades clave del enemigo en batalla:", {
+            name: gameState.battle.enemy.name,
+            npcId: gameState.battle.enemy.npcId,
+            originalEntityTypeId: gameState.battle.enemy.originalEntityTypeId
+        });
+        console.groupEnd();
+    // --- FIN DEL LOG -
         // Ahora estas funciones recibirán un objeto enemigo COMPLETO y correcto.
         populateBattleActionButtons();
         updateBattleUI(); 
@@ -12815,100 +12849,177 @@ function plantRune() {
 
           return texto;
       }
-      function handleEnemyDefeat() {
-        const enemy = gameState.battle.enemy;
-        const player = gameState.player;
+      // REEMPLAZA tu función handleEnemyDefeat completa con esta versión
 
-        logBattle(`¡Has derrotado al ${enemy.name}!`);
-        gainExperience(enemy.exp);
+// REEMPLAZA tu función handleEnemyDefeat completa con esta versión definitiva
 
-        const misionesActivasDelJugador = [...player.secta.misionesActivas];
+function handleEnemyDefeat() {
+    // 1. Obtenemos el objeto de batalla, que puede estar incompleto.
+    const battleEnemy = gameState.battle.enemy;
+    const player = gameState.player;
 
-        misionesActivasDelJugador.forEach((misionActiva) => {
-            const misionDataOriginal = MISIONES_DATA[misionActiva.id];
-            if (!misionDataOriginal || !misionActiva.objetivoOriginal) return;
+    // --- LA CORRECCIÓN CLAVE ---
+    // No confiamos ciegamente en battleEnemy. Usamos su ID para buscar la definición maestra.
+    const enemyDefinition = entityTypes[battleEnemy.originalEntityTypeId] || entityTypes[battleEnemy.npcId] || {};
+    
+    // Creamos un objeto "completo" del enemigo, combinando la definición maestra con el estado actual de la batalla.
+    // Esto GARANTIZA que 'npcId' y todas las demás propiedades maestras estén presentes.
+    const enemy = {
+        ...enemyDefinition,
+        ...battleEnemy
+    };
+    // --- FIN DE LA CORRECCIÓN ---
 
-            const objetivo = misionActiva.objetivoOriginal;
+    logBattle(`¡Has derrotado al ${enemy.name}!`);
+    gainExperience(enemy.exp);
 
-            // Usamos una estructura switch para que la lógica sea más clara y robusta.
-            switch (objetivo.tipo) {
-                case "eliminar_enemigo":
-                    // Comprueba si el ID original del enemigo coincide con el tipo requerido por la misión.
-                    if (enemy.originalEntityTypeId === objetivo.enemigoTipo) {
-                        misionActiva.progreso = (misionActiva.progreso || 0) + 1;
-                        logBattle(
-                            `Progreso '${misionDataOriginal.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`
-                        );
-                    }
-                    break;
+    // Ahora, el resto de la función usará el objeto 'enemy' completo y correcto.
+    const misionesActivasDelJugador = [...player.secta.misionesActivas];
+    misionesActivasDelJugador.forEach((misionActiva) => {
+        const misionData = MISIONES_DATA[misionActiva.id];
+        if (!misionData || !misionData.objetivo) return;
 
-                case "derrotar_npc_especifico":
-                    // Comprueba si el npcId del enemigo (para jefes/rivales) coincide.
-                    if (enemy.npcId === objetivo.npcId) {
-                        misionActiva.progreso = 1; // Se marca como completado.
-                        logBattle(`¡Has completado el objetivo de derrotar a ${enemy.name}!`);
-                        console.log(`[Misión] Progreso de la misión '${misionActiva.id}' actualizado a 1.`);
-                    }
-                    break;
+        const objetivo = misionData.objetivo;
 
-                case "cazar_y_recuperar_item_de_loot":
-                    // Comprueba si el enemigo derrotado es el que suelta el objeto de misión.
-                    if (enemy.originalEntityTypeId === objetivo.enemigoTipo) {
-                        misionActiva.progreso = 1; // Marcamos que el tipo correcto fue derrotado.
-                        logBattle(
-                            `Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`
-                        );
-                    }
-                    break;
+        if (objetivo.tipo === "derrotar_npc_especifico" && enemy.npcId === objetivo.npcId) {
+            misionActiva.progreso = 1;
+            console.log(`[handleEnemyDefeat] Misión '${misionActiva.id}' actualizada: Progreso = 1.`);
+            logBattle(`¡Has completado el objetivo de derrotar a ${enemy.name}!`);
+        }
+        
+        if (objetivo.tipo === "eliminar_enemigo" && enemy.originalEntityTypeId === objetivo.enemigoTipo) {
+             misionActiva.progreso = (misionActiva.progreso || 0) + 1;
+             logBattle(`Progreso '${misionData.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`);
+        }
+        
+        if (objetivo.tipo === "cazar_y_recuperar_item_de_loot" && enemy.originalEntityTypeId === objetivo.enemigoTipo) {
+            misionActiva.progreso = 1;
+            logBattle(`Has derrotado a un ${enemy.name}. Busca el ${objetivo.itemPrueba} entre el botín.`);
+        }
+    });
+
+    // La lógica de botín y fin de batalla no cambia.
+    let lootObtenidoTexto = "Botín Obtenido: ";
+    let algoObtenido = false;
+    if (enemy.lootTable) {
+        enemy.lootTable.forEach((loot) => {
+            if (Math.random() < loot.chance) {
+                const cantidad = loot.quantity[0] + Math.floor(Math.random() * (loot.quantity[1] - loot.quantity[0] + 1));
+                gameState.inventory[loot.itemName] = (gameState.inventory[loot.itemName] || 0) + cantidad;
+                lootObtenidoTexto += `${cantidad} ${loot.itemName}, `;
+                algoObtenido = true;
             }
         });
-
+    }
+    if (!algoObtenido) lootObtenidoTexto += "Nada.";
+    else lootObtenidoTexto = lootObtenidoTexto.slice(0, -2) + ".";
+    
+    if (enemy.isBoss && enemy.originalEntityTypeId) {
+        player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
+    }
+    
+    // El objeto original de batalla (battleEnemy) tiene la referencia al mapa.
+    if (battleEnemy.entityRef) {
+        removeEntity(battleEnemy.entityRef);
+    } else {
+        // Fallback por si la referencia se pierde, busca por ID en el mapa.
+        const entityOnMap = gameState.map.entities.find(e => e.id === battleEnemy.id);
+        if(entityOnMap) removeEntity(entityOnMap);
+    }
+    
+    setTimeout(() => {
+        endBattle(true);
+        showModal("¡Victoria!", `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nRevisa tu diario de misiones para ver el progreso.`);
         updateSectUI();
-
-        // El resto de la función para el botín y el fin de la batalla no cambia.
-        let lootObtenidoTexto = "Botín Obtenido: ";
-        let algoObtenido = false;
-        if (enemy.lootTable) {
-            enemy.lootTable.forEach((loot) => {
-                if (Math.random() < loot.chance) {
-                    const cantidad =
-                        loot.quantity[0] +
-                        Math.floor(
-                            Math.random() * (loot.quantity[1] - loot.quantity[0] + 1)
-                        );
-                    gameState.inventory[loot.itemName] =
-                        (gameState.inventory[loot.itemName] || 0) + cantidad;
-                    lootObtenidoTexto += `${cantidad} ${loot.itemName}, `;
-                    algoObtenido = true;
-                }
-            });
-        }
-        if (!algoObtenido) lootObtenidoTexto += "Nada.";
-        else lootObtenidoTexto = lootObtenidoTexto.slice(0, -2) + ".";
-
-        if (enemy.isBoss && enemy.originalEntityTypeId) {
-            // Simplemente marcamos al jefe como derrotado.
-            player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
-            console.log(`[Progreso] Jefe '${enemy.originalEntityTypeId}' marcado como derrotado.`);
-        }  else if (
-            enemy.isMiniBoss &&
-            enemy.isFixed &&
-            enemy.originalEntityTypeId
-        ) {
-            if (!player.worldState.defeatedFixedEntities)
-                player.worldState.defeatedFixedEntities = {};
-            player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] = { time: Date.now() };
-        }
-
-        setTimeout(() => {
-            endBattle(true);
-            showModal(
-                "¡Victoria!",
-                `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nRevisa tu diario de misiones para ver el progreso.`
-            );
-        }, 1500);
+    }, 500);
+}
+function dev_resetMission(missionId) {
+    const player = gameState.player;
+    if (!player || !player.secta) {
+        console.error("[DEV] No se puede resetear la misión, estado del jugador no encontrado.");
+        return;
     }
 
+    // Eliminar de misiones activas
+    const initialActiveCount = player.secta.misionesActivas.length;
+    player.secta.misionesActivas = player.secta.misionesActivas.filter(m => m.id !== missionId);
+    const finalActiveCount = player.secta.misionesActivas.length;
+
+    if (initialActiveCount > finalActiveCount) {
+        console.log(`[DEV] Misión '${missionId}' eliminada de la lista de misiones activas.`);
+    }
+
+    // Eliminar de misiones completadas
+    if (player.secta.misionesCompletadas[missionId]) {
+        delete player.secta.misionesCompletadas[missionId];
+        console.log(`[DEV] Misión '${missionId}' eliminada del historial de misiones completadas.`);
+    }
+    
+    // Actualizar toda la interfaz para reflejar el cambio.
+    updateUI();
+    updateSectUI();
+    openMissionsModal(); // Abrimos el diario para ver que ha desaparecido.
+
+    const message = `El estado de la misión '${missionId}' ha sido reseteado. Ahora puedes volver a aceptarla del NPC correspondiente.`;
+    console.log(message);
+    alert(message);
+}
+function dev_forceCompleteMission(missionId) {
+    const player = gameState.player;
+    const misionActiva = player.secta.misionesActivas.find(m => m.id === missionId);
+
+    if (!misionActiva) {
+        const message = `[DEV] Error: La misión '${missionId}' no está activa. No se puede forzar su finalización.`;
+        console.error(message);
+        alert(message);
+        return;
+    }
+
+    const misionData = MISIONES_DATA[missionId];
+    if (!misionData) {
+        const message = `[DEV] Error: No se encontraron datos para la misión '${missionId}' en MISIONES_DATA.`;
+        console.error(message);
+        alert(message);
+        return;
+    }
+
+    console.log(`[DEV] Forzando la finalización de: "${misionData.titulo}"`);
+
+    // --- 1. OTORGAR RECOMPENSAS (Lógica copiada de completeMission) ---
+    player.secta.puntosContribucion += misionData.recompensa.pcs || 0;
+    gainExperience(misionData.recompensa.exp || 0);
+    if (misionData.recompensa.items) {
+        for (const itemName in misionData.recompensa.items) {
+            gameState.inventory[itemName] = (gameState.inventory[itemName] || 0) + misionData.recompensa.items[itemName];
+        }
+    }
+    console.log("[DEV] Recompensas otorgadas.");
+
+    // --- 2. MOVER LA MISIÓN DE ACTIVA A COMPLETADA ---
+    player.secta.misionesActivas = player.secta.misionesActivas.filter(m => m.id !== missionId);
+    player.secta.misionesCompletadas[missionId] = true;
+    console.log(`[DEV] Misión movida de 'activas' a 'completadas'.`);
+
+    // --- 3. LIMPIAR EL JEFE DEL MAPA ---
+    const objetivo = misionData.objetivo;
+    if (objetivo.tipo === 'derrotar_npc_especifico' && objetivo.npcId) {
+        const bossInstance = gameState.map.entities.find(e => e.npcId === objetivo.npcId);
+        if (bossInstance) {
+            removeEntity(bossInstance); // Llama a la función que ya tienes para borrar entidades
+            player.worldState.defeatedBosses[objetivo.npcId] = true;
+            console.log(`[DEV] Jefe asociado '${objetivo.npcId}' eliminado del mapa y marcado como derrotado.`);
+        }
+    }
+    
+    // --- 4. ACTUALIZAR TODA LA INTERFAZ ---
+    updateUI();
+    updateSectUI();
+    renderMap(); // Para que el jefe desaparezca visualmente
+
+    const message = `La misión '${misionData.titulo}' ha sido marcada como completada por la fuerza.`;
+    showModal("Finalización Forzada", message);
+    console.log(message);
+}
       function completeMission(misionId, npcIdEntregaManual = null) {
         const player = gameState.player;
         const misionActiva = player.secta.misionesActivas.find(
