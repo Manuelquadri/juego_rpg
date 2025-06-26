@@ -4009,17 +4009,25 @@
         // == GRADO 1 (Rango: Discípulo Externo)
         // =================================================================
         formation_scribing_1: {
-            id: "formation_scribing_1",
-            name: "Inscripción Rúnica",
-            icon: "✍️",
-            // NUEVA DESCRIPCIÓN
-            description: "Te permite usar 'Tinta Rúnica' para trazar runas en el suelo. Cerca de un enemigo, crearás formaciones de combate. Lejos de ellos, podrás trazar matrices de utilidad.",
-            type: "active_ability",
-            abilityId: "plant_rune", // Usaremos este ID único para la acción
-            manaCost: 10, // Un coste de maná estándar
-            maxLevel: 1,
-            cultivationSettings: { baseTimeToLevelUp: 1, levelTimeMultiplier: 1 },
-        },
+          id: "formation_scribing_1",
+          name: "Inscripción Rúnica",
+          icon: "✍️",
+          description: "Te permite usar 'Tinta Rúnica' para trazar runas. Cultivar esta técnica mejora la potencia de todas tus formaciones completadas.",
+          type: "active_ability",
+          abilityId: "plant_rune",
+          manaCost: 10,
+          // --- CAMBIOS CLAVE ---
+          maxLevel: 10, // Ahora se puede subir de nivel
+          cultivationSettings: {
+              baseTimeToLevelUp: 180, // Requiere tiempo para dominarla
+              levelTimeMultiplier: 1.8,
+          },
+          // Este efecto no se aplica directamente, lo leeremos en otra función
+          effect: {
+              // +10% de potencia por cada nivel después del primero.
+              amplificationPerLevel: 0.10 
+          }
+      },
       
         qi_to_hp_conversion_1: {
           id: "qi_to_hp_conversion_1",
@@ -5380,6 +5388,15 @@
             fixedLocation: { x: 19, y: 14 }, // Cerca de la Anciana Su en la "biblioteca"
             discovered: true, // Para que sea visible desde el principio
         },
+        mural_circulo_vital: {
+          symbol: "🎨",
+          name: "Mural Desgastado",
+          spriteUrl: "img/mural_formaciones.png", // Puedes reutilizar la imagen existente
+          interaction: "read_lore", // Un nuevo tipo de interacción
+          loreText: "La imagen muestra ocho figuras rodeando a una novena en un círculo protector. Una inscripción casi ilegible reza: '...y en el abrazo de los ocho, la vida misma florece de nuevo...'",
+          fixedLocation: { x: 58, y: 12 }, // Una ubicación escondida en el Bosque Esmeralda Profundo
+          discovered: true,
+      },
 
         secta_entrada_principal: {
           symbol: "⛩️",
@@ -7293,6 +7310,7 @@
               chance: 0.3,
               extraData: { elementalType: "earth" },
             },
+            { itemName: "Diagrama: Hexagrama Devastador", quantity: [1, 1], chance: 1.0 }, // 
           ],
           
           fixedLocation: { x: 72, y: 51 },
@@ -7303,6 +7321,10 @@
         "Tinta Rúnica": {
             description: "Tinta especial para inscribir runas de poder. No se puede usar directamente.",
             canUse: () => false, // No es un consumible normal
+        },
+        "Diagrama: Hexagrama Devastador": {
+            description: "Un trozo de pergamino antiguo. Muestra un diagrama de seis puntos rodeando un centro, con notas que dicen: 'El sello del caparazón se rompe cuando la estrella lo abraza.'",
+            canUse: () => false, // Es un objeto de lore, no se consume
         },
         "Hierbas Medicinales": {
           description: "Restaura un 30 de HP.",
@@ -8511,7 +8533,8 @@
         "transition_ruins_entrance", "transition_ruins_exit",
         "transition_valley_entrance", "transition_valley_exit",
         "transition_fisura_entrance", "transition_fisura_exit",
-        "tp_sect_hub", "tp_forest_shrine", "tp_desert_oasis", "tp_swamp_ruin", "tp_desfiladero", "tp_dragon_valley"
+        "tp_sect_hub", "tp_forest_shrine", "tp_desert_oasis", "tp_swamp_ruin", "tp_desfiladero", "tp_dragon_valley",
+        "mural_circulo_vital",
         ];
         const defeated = player.worldState.defeatedBosses || {};
         const activeMissions = player.secta.misionesActivas.map(m => m.id);
@@ -9766,34 +9789,47 @@
         }
 
         logBattle("¡Las formaciones rúnicas preestablecidas se activan!");
-
+        const scribingTech = gameState.player.learnedTechniques["formation_scribing_1"];
+        let amplification = 1.0; // Por defecto, sin amplificación
+        if (scribingTech && scribingTech.level > 1) {
+            const baseAmplification = techniqueData.formation_scribing_1.effect.amplificationPerLevel;
+            amplification += (scribingTech.level - 1) * baseAmplification;
+        }
         // Iteramos sobre cada efecto acumulado y lo aplicamos
         enemyEntity.pendingFormationEffects.forEach(effect => {
             const formationName = Object.keys(FORMATION_PATTERNS).find(key => FORMATION_PATTERNS[key].effect === effect)?.name || "Formación Desconocida";
             
             switch(effect.type) {
-                case 'enemy_debuff':
-                    if (effect.stat === 'defense') {
-                        const defenseReduction = effect.amount;
-                        gameState.battle.enemy.defense -= defenseReduction;
-                        if(gameState.battle.enemy.defense < 0) gameState.battle.enemy.defense = 0;
-                        logBattle(`"${formationName}" quiebra las defensas del enemigo, reduciéndolas en ${defenseReduction}.`);
-                        showFloatingText(document.getElementById('enemySprite'), `Defensa ↓`, 'debuff');
-                    }
-                    break;
+              case 'enemy_debuff':
+                if (effect.stat === 'defense') {
+                    // Aplicamos la amplificación
+                    const defenseReduction = Math.floor(effect.amount * amplification);
+                    gameState.battle.enemy.defense -= defenseReduction;
+                    if(gameState.battle.enemy.defense < 0) gameState.battle.enemy.defense = 0;
+                    let logMsg = `"${formationName}" quiebra las defensas del enemigo, reduciéndolas en ${defenseReduction}`;
+                    if (amplification > 1.0) logMsg += " (¡Amplificado!)";
+                    logBattle(logMsg + ".");
+                    showFloatingText(document.getElementById('enemySprite'), `Defensa ↓↓`, 'debuff');
+                }
+                break;
                 case 'player_buff':
-                    if (effect.stat === 'hpRegenPerTurn') {
-                        gameState.player.hpRegenPerTurn = (gameState.player.hpRegenPerTurn || 0) + effect.amount;
-                        logBattle(`"${formationName}" te envuelve en energía vital, curándote ${effect.amount} HP cada turno.`);
-                        showFloatingText(document.querySelector('.character-sprite'), `Regeneración`, 'ability');
-                    }else if (effect.stat === 'defenseBoost') {
-                    const defenseBonus = effect.amount;
+                if (effect.stat === 'hpRegenPerTurn') {
+                    // Aplicamos la amplificación
+                    const hpRegen = Math.floor(effect.amount * amplification);
+                    gameState.player.hpRegenPerTurn = (gameState.player.hpRegenPerTurn || 0) + hpRegen;
+                    let logMsg = `"${formationName}" te envuelve en energía vital, curándote ${hpRegen} HP cada turno`;
+                    if (amplification > 1.0) logMsg += " (¡Amplificado!)";
+                    logBattle(logMsg + ".");
+                    showFloatingText(document.querySelector('.character-sprite'), `Regeneración+`, 'ability');
+                }else if (effect.stat === 'defenseBoost') {
+                    const defenseBonus = Math.floor(effect.amount * amplification);
                     gameState.player.defense += defenseBonus;
                     logBattle(`La "${formationName}" endurece tu cuerpo, ¡ganas ${defenseBonus} de Defensa para este combate!`);
                     showFloatingText(document.querySelector('.character-sprite'), `Defensa +${defenseBonus}`, 'ability');
                 }else if (effect.stat === 'manaRegenPerTurn') {
-                    gameState.player.manaRegenPerTurn = (gameState.player.manaRegenPerTurn || 0) + effect.amount;
-                    logBattle(`El "${formationName}" crea un pozo de energía, restaurando ${effect.amount} Maná cada turno.`);
+                    const manaRegenBonus = Math.floor(effect.amount * amplification);
+                    gameState.player.manaRegenPerTurn = (gameState.player.manaRegenPerTurn || 0) + manaRegenBonus;
+                    logBattle(`El "${formationName}" crea un pozo de energía, restaurando ${manaRegenBonus} Maná cada turno.`);
                     showFloatingText(document.querySelector('.character-sprite'), `Flujo de Qi`, 'ability');
                 }
                 // =======================================
@@ -10219,6 +10255,11 @@
                     }
                 }
                 return;
+            case "read_lore":
+              if (entity.loreText) {
+                  showModal(entity.name, `<em>${entity.loreText}</em>`);
+              }
+              return;
             case "talk_secta_npc":
               if (entity.npcId) {
                 interactWithSectNPC(entity.npcId);
