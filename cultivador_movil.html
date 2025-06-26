@@ -7209,6 +7209,7 @@
           exp: 1000,
           maxHp: 500,
           isBoss: true,
+          npcId: "boss_dem",
           specialChance: 0.35,
           specialAttackMultiplier: 1.8,
           healChance: 0.15,
@@ -7229,7 +7230,7 @@
 
         
           ],
-          nextBossId: "boss_ancient_golem",
+          
           fixedLocation: { x: 9, y: 36 },
         },
 
@@ -7245,6 +7246,7 @@
           exp: 500,
           maxHp: 800,
           isBoss: true,
+          npcId: "boss_ancient_golem",
           abilities: [
             {
               name: "Golpe Sísmico",
@@ -7274,7 +7276,7 @@
               extraData: { elementalType: "earth" },
             },
           ],
-          nextBossId: null,
+          
           fixedLocation: { x: 72, y: 51 },
         },
       };
@@ -8483,83 +8485,52 @@
       function ensureFixedEntities() {
         const player = gameState.player;
         let entities = gameState.map.entities;
-
-        let idsParaProcesar = [
-          "shop",
-          "tutorial_formation_mural",
-          "secta_entrada_principal",
-          "secta_entrada_principal_2",
-          "secta_entrada_principal_3",
-          "secta_entrada_principal_4",
-          "npc_secta_guia",
-          "npc_secta_admin",
-          "transition_ruins_entrance",
-          "transition_ruins_exit",
-          "transition_valley_entrance",
-          "tp_sect_hub",
-          "tp_forest_shrine",
-          "tp_desert_oasis",
-          "tp_swamp_ruin",
-          "tp_desfiladero",
-          "tp_dragon_valley",
-          "npc_maestro_jian",
-          "npc_anciana_su",
-          "transition_valley_exit",
-          "transition_fisura_entrance", // Portal de entrada
-          "transition_fisura_exit",   // Portal de salida
-          "general_demoniaco_abismal",
-          //ENEMIGOS
-          "jabali_colmilludo_alfa",
-          "boss_ancient_golem",
-          
-          "diacono_renegado_jin",
-          "jabali_alfa_1",
-          "jabali_alfa_2",
-          "jabali_alfa_3",
-          "jabali_alfa_4",
-          "jabali_alfa_5",
-          "jabali_alfa_6",
-          "jabali_alfa_7",
-          "jabali_alfa_8",
-          "jabali_alfa_9",
-          "jabali_alfa_10",
-          "jabali_alfa_11",
-          "jabali_alfa_12",
-
-          // Puedes añadir otros IDs de entidades fijas aquí directamente
+        let baseIds = [
+        "shop", "tutorial_formation_mural",
+        "secta_entrada_principal", "secta_entrada_principal_2", "secta_entrada_principal_3", "secta_entrada_principal_4",
+        "npc_secta_guia", "npc_secta_admin", "npc_maestro_jian", "npc_anciana_su",
+        "transition_ruins_entrance", "transition_ruins_exit",
+        "transition_valley_entrance", "transition_valley_exit",
+        "transition_fisura_entrance", "transition_fisura_exit",
+        "tp_sect_hub", "tp_forest_shrine", "tp_desert_oasis", "tp_swamp_ruin", "tp_desfiladero", "tp_dragon_valley"
         ];
+        const defeated = player.worldState.defeatedBosses || {};
+        const activeMissions = player.secta.misionesActivas.map(m => m.id);
+        let bossIdsToProcess = [];
 
-        // Lógica para jefes principales (actuales)
-        if (
-          player.worldState.currentBossToSpawn &&
-          entityTypes[player.worldState.currentBossToSpawn]
-        ) {
-          const bossDef = entityTypes[player.worldState.currentBossToSpawn];
-          if (
-            bossDef.fixedLocation &&
-            !player.worldState.defeatedBosses[
-              player.worldState.currentBossToSpawn
-            ]
-          ) {
-            if (
-              !idsParaProcesar.includes(player.worldState.currentBossToSpawn)
-            ) {
-              idsParaProcesar.push(player.worldState.currentBossToSpawn);
-            }
-          }
+        // Lógica para los primeros jefes de la historia
+        if (!defeated.boss_dem) {
+            bossIdsToProcess.push("boss_dem");
+        } else if (!defeated.boss_ancient_golem) {
+            // El golem solo aparece si el demonio ha sido derrotado
+            bossIdsToProcess.push("boss_ancient_golem");
         }
-        player.secta.misionesActivas.forEach((misionActiva) => {
-        const misionData = MISIONES_DATA[misionActiva.id];
-        // Buscamos misiones cuyo objetivo sea derrotar a un NPC específico
-        if (misionData?.objetivo?.tipo === "derrotar_npc_especifico" && misionData.objetivo.npcId) {
-            const npcId = misionData.objetivo.npcId;
-            // Si este NPC tiene una ubicación fija y aún no está en nuestra lista para procesar, lo añadimos.
-            if (entityTypes[npcId]?.fixedLocation && !idsParaProcesar.includes(npcId)) {
-                console.log(`[EnsureFixed] Añadiendo al NPC de misión '${npcId}' a la lista de aparición.`);
-                idsParaProcesar.push(npcId);
+        // Lógica para jefes de misión de secta (el sistema actual ya los maneja bien, pero podemos ser explícitos)
+        activeMissions.forEach(misionId => {
+            const misionData = MISIONES_DATA[misionId];
+            if (misionData?.objetivo?.tipo === "derrotar_npc_especifico") {
+                const npcId = misionData.objetivo.npcId;
+                if (npcId && !bossIdsToProcess.includes(npcId)) {
+                    bossIdsToProcess.push(npcId);
+                }
+            }
+        });
+        // --- LÓGICA CLAVE PARA EL JEFE FINAL ---
+        // El Avatar solo aparecerá si la misión final 'mision_maestro_1' está activa.
+        if (activeMissions.includes('mision_maestro_1')) {
+            if (!bossIdsToProcess.includes('avatar_del_dao_corrupto')) {
+                bossIdsToProcess.push('avatar_del_dao_corrupto');
             }
         }
-    });
+        // Unimos la lista base con los jefes que deben aparecer
+          const idsParaProcesar = [...new Set([...baseIds, ...bossIdsToProcess])];
+
+          console.log("[EnsureFixed] IDs a procesar en este ciclo:", idsParaProcesar);
+
+        
+
+       
+  
         // Lógica para rivales de desafío de secta (actuales)
         player.secta.misionesActivas.forEach((misionActiva) => {
           const misionData = MISIONES_DATA[misionActiva.id];
@@ -12749,13 +12720,10 @@
         else lootObtenidoTexto = lootObtenidoTexto.slice(0, -2) + ".";
 
         if (enemy.isBoss && enemy.originalEntityTypeId) {
+            // Simplemente marcamos al jefe como derrotado.
             player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
-            if (enemy.nextBossId) {
-                player.worldState.currentBossToSpawn = enemy.nextBossId;
-            } else {
-                player.worldState.currentBossToSpawn = null;
-            }
-        } else if (
+            console.log(`[Progreso] Jefe '${enemy.originalEntityTypeId}' marcado como derrotado.`);
+        }  else if (
             enemy.isMiniBoss &&
             enemy.isFixed &&
             enemy.originalEntityTypeId
