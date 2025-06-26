@@ -8056,8 +8056,8 @@
           const TILES_VISIBLE_X_PORTRAIT = 7; // Menos tiles de ancho en vertical
           const TILES_VISIBLE_Y_PORTRAIT = 5; // Más tiles de alto en vertical
 
-          const TILES_VISIBLE_X_LANDSCAPE = 8; // Más tiles de ancho en horizontal
-          const TILES_VISIBLE_Y_LANDSCAPE = 6; // Menos tiles de alto en horizontal
+          const TILES_VISIBLE_X_LANDSCAPE = 9; // Más tiles de ancho en horizontal
+          const TILES_VISIBLE_Y_LANDSCAPE = 7; // Menos tiles de alto en horizontal
 
           let tileSizeBasedOnWidth;
           let tileSizeBasedOnHeight;
@@ -11917,20 +11917,19 @@
     function plantRune() {
       const player = gameState.player;
       const inkItem = "Tinta Rúnica";
-      const MAX_ENEMY_DETECTION_RANGE = 5; // Las runas solo se asociarán a enemigos a 5 casillas o menos.
+      const MAX_ENEMY_DETECTION_RANGE = 5;
 
       if ((gameState.inventory[inkItem] || 0) < 1) {
           showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
           return;
       }
       
-      // 1. Encontrar el enemigo más cercano dentro de un radio de búsqueda razonable
       let closestEnemy = null;
       let minDistance = Infinity;
 
       gameState.map.entities.forEach(entity => {
           if (G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss) {
-              const distance = Math.hypot(player.x - entity.x, player.y - entity.y); // Usamos distancia real
+              const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
               if (distance < minDistance) {
                   minDistance = distance;
                   closestEnemy = entity;
@@ -11938,13 +11937,11 @@
           }
       });
 
-      // 2. Validar si hay un enemigo suficientemente cerca para asociar la runa
       if (!closestEnemy || minDistance > MAX_ENEMY_DETECTION_RANGE) {
           showModal("Objetivo Inválido", "No hay ningún enemigo lo suficientemente cerca como para ser el foco de la formación.");
           return;
       }
 
-      // 3. Comprobar si ya existe una runa en la posición actual del jugador
       if (!closestEnemy.formationRunes) {
           closestEnemy.formationRunes = {};
       }
@@ -11955,15 +11952,62 @@
           return;
       }
 
-      // 4. Gastar recursos y plantar la runa
       gameState.inventory[inkItem]--;
       player.mana -= techniqueData.formation_scribing_1.manaCost;
       closestEnemy.formationRunes[runeKey] = 1;
 
-      showModal("Runa Inscrita", `Has canalizado tu Qi y trazado una runa en el suelo. Sientes que se ha vinculado a ${closestEnemy.name}.`);
-      
+      // ¡No mostramos el modal de "Runa Inscrita" inmediatamente!
+      // Primero comprobamos si se completó un patrón.
+
       updateUI();
-      renderMap(); // Volver a dibujar el mapa para mostrar la nueva runa
+      renderMap();
+
+      // === INICIO DEL CÓDIGO NUEVO: COMPROBACIÓN DE PATRÓN COMPLETO ===
+      let patternFound = null;
+      for (const patternKey in FORMATION_PATTERNS) {
+          const formation = FORMATION_PATTERNS[patternKey];
+          const pattern = formation.pattern;
+          let isMatch = true;
+          let requiredRunesCount = 0; // Contamos cuántas runas requiere el patrón
+
+          for (let r = 0; r < pattern.length; r++) {
+              for (let c = 0; c < pattern[r].length; c++) {
+                  if (pattern[r][c] === 1) {
+                      requiredRunesCount++;
+                      const dx = c - 2;
+                      const dy = r - 2;
+                      const absoluteX = closestEnemy.x + dx;
+                      const absoluteY = closestEnemy.y + dy;
+                      const requiredRuneKey = `${absoluteX},${absoluteY}`;
+                      
+                      if (!closestEnemy.formationRunes[requiredRuneKey]) {
+                          isMatch = false;
+                          break;
+                      }
+                  }
+              }
+              if (!isMatch) break;
+          }
+
+          // Un match es válido solo si el número de runas plantadas es igual al requerido por el patrón
+          if (isMatch && Object.keys(closestEnemy.formationRunes).length === requiredRunesCount) {
+              patternFound = formation;
+              break;
+          }
+      }
+
+      if (patternFound) {
+          // ¡Éxito! Se completó una formación.
+          showModal(
+              "¡Formación Completa!",
+              `Has completado la formación <strong>"${patternFound.name}"</strong> alrededor de ${closestEnemy.name}.<br><br><em>${patternFound.description}</em><br><br>Su poder se desatará cuando inicies el combate.`
+          );
+          // Podríamos añadir un efecto visual más potente aquí si quisiéramos.
+      } else {
+          // Si no se completó nada, mostramos el mensaje simple.
+          showModal("Runa Inscrita", `Has trazado una runa alrededor de ${closestEnemy.name}. El patrón aún no está completo.`);
+      }
+      // === FIN DEL CÓDIGO NUEVO ===
   }
 
     function battleAction(action) {
