@@ -85,23 +85,30 @@
       }
       /* ESTILO PARA LA REJILLA DEL MAPA */
       .grid-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          pointer-events: none; /* Muy importante para que no bloquee los clics */
-          z-index: 3; /* Justo encima del terreno, pero debajo de las runas/entidades */
-          box-shadow: inset 0 0 0 10000px rgba(212, 175, 55, 0.15); /* Color de las líneas */
-          background-size: var(--tile-size) var(--tile-size);
-          background-image:
-              linear-gradient(to right, rgba(212, 175, 55, 0.3) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(212, 175, 55, 0.3) 1px, transparent 1px);
-          display: none; /* Oculta por defecto */
-      }
-      .grid-overlay.active {
-          display: block;
-      }
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* Muy importante para que no bloquee los clics */
+        z-index: 3; /* Justo encima del terreno (z-index 1), pero debajo de runas (4) y entidades (5) */
+        
+        /* === LA CORRECCIÓN CLAVE ESTÁ AQUÍ === */
+        /* Usamos gradientes para dibujar líneas de 1px de grosor */
+        background-image: 
+            linear-gradient(to right, rgba(255, 223, 0, 0.25) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 223, 0, 0.25) 1px, transparent 1px);
+        
+        /* El tamaño del fondo define el tamaño de cada celda de la rejilla */
+        background-size: var(--tile-size, 100px) var(--tile-size, 100px);
+        /* ==================================== */
+
+        display: none; /* Oculta por defecto */
+    }
+
+    .grid-overlay.active {
+        display: block;
+    }
       /****************************************
        * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
        ****************************************/
@@ -1381,7 +1388,9 @@
     <!-- ======================================================================= -->
     <div class="game-container">
       <div class="map-container">
-        <div class="map" id="gameMap"></div>
+        <div class="map" id="gameMap">
+          <div class="grid-overlay"></div>
+        </div>
         <div class="tile player" id="player">🧘</div>
         <div id="zone-notification" class="zone-notification"></div>
 
@@ -9394,12 +9403,7 @@
         const viewWorldYEnd = viewWorldYStart + tilesInViewY;
 
         mapElement.innerHTML = "";
-        const gridOverlay = document.createElement('div');
-        gridOverlay.className = 'grid-overlay';
-        if (isGridVisible) {
-            gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
-            gridOverlay.classList.add('active');
-        }
+        
         mapElement.appendChild(gridOverlay);
         // 1. Renderizar TERRENO BASE
         for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
@@ -9920,6 +9924,7 @@
         updatePlayerVisualSize();
         updatePlayerBarsOnMap();
         updateExtraStatsUI();
+        updateGrid();
       }
 
       function updateUI() {
@@ -11408,22 +11413,40 @@
       }
 
       function toggleGrid() {
-          isGridVisible = !isGridVisible;
-          const gridOverlay = document.querySelector('.grid-overlay');
-          const toggleBtn = document.getElementById('toggleGridBtn');
+        isGridVisible = !isGridVisible;
+        const gridOverlay = document.querySelector('.grid-overlay');
+        const toggleBtn = document.getElementById('toggleGridBtn');
 
-          if (gridOverlay) {
-              if (isGridVisible) {
-                  // Actualizar el tamaño de la rejilla antes de mostrarla
-                  gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
-                  gridOverlay.classList.add('active');
-                  if (toggleBtn) toggleBtn.textContent = "Ocultar Rejilla";
-              } else {
-                  gridOverlay.classList.remove('active');
-                  if (toggleBtn) toggleBtn.textContent = "Mostrar Rejilla";
-              }
-          }
-      }
+        if (gridOverlay) {
+            if (isGridVisible) {
+                gridOverlay.classList.add('active');
+                if (toggleBtn) toggleBtn.textContent = "Ocultar Rejilla";
+            } else {
+                gridOverlay.classList.remove('active');
+                if (toggleBtn) toggleBtn.textContent = "Mostrar Rejilla";
+            }
+            // Llamamos a la función que actualiza la posición y tamaño
+            updateGrid();
+        }
+    }
+
+    // === AÑADE ESTA NUEVA FUNCIÓN HELPER ===
+    function updateGrid() {
+        if (!isGridVisible) return;
+        
+        const gridOverlay = document.querySelector('.grid-overlay');
+        const mapElement = document.getElementById("gameMap");
+        
+        if (gridOverlay && mapElement) {
+            // Hacemos que el tamaño y la posición del fondo de la rejilla coincidan con el del mapa
+            gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
+            gridOverlay.style.backgroundSize = `${currentTileSize}px ${currentTileSize}px`;
+            
+            // Sincronizamos la posición del fondo de la rejilla con la transformación del mapa
+            const mapTransform = mapElement.style.transform;
+            gridOverlay.style.transform = mapTransform;
+        }
+    }
 
       function useItem(itemName) {
         if (gameState.battle.active) {
@@ -15718,6 +15741,7 @@
           calculateAndSetTileSize();
           renderMap(); // Vuelve a dibujar con el nuevo tamaño
           updatePlayerPosition(); // Asegura que el jugador esté bien posicionado
+          updateGrid();
           if (isGridVisible) {
             const gridOverlay = document.querySelector('.grid-overlay');
             if (gridOverlay) gridOverlay.style.setProperty('--tile-size', `${currentTileSize}px`);
