@@ -302,6 +302,34 @@
         box-shadow: 0 0 10px rgba(102, 102, 255, 0.7);
         animation: pulse-conversion 2s infinite;
       }
+      .rune-slot {
+          font-size: 28px;
+          border-style: solid;
+          color: #ff99ff; /* Un tono magenta/rosa para la magia rúnica */
+          opacity: 0.6; /* Un poco tenue cuando no se usa activamente */
+          transition: all 0.3s;
+      }
+
+      .rune-slot:hover {
+          opacity: 1;
+          color: #ffc0ff;
+          border-color: #ff99ff;
+      }
+
+      /* (Opcional) Un estilo para cuando la habilidad se esté usando, aunque para plantar runas no es tan necesario */
+      .rune-slot.active-scribing {
+          opacity: 1;
+          background-color: rgba(255, 100, 255, 0.2); /* Brillo magenta */
+          border-color: #ff99ff;
+          box-shadow: 0 0 10px rgba(255, 153, 255, 0.7);
+          animation: pulse-rune-slot 1.5s infinite;
+      }
+
+      @keyframes pulse-rune-slot {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+      }
       .rune-marker {
           background-color: rgba(255, 100, 255, 0.2);
           border: 2px solid #ff00ff;
@@ -12001,10 +12029,7 @@
                 // Lo que sigue es un ejemplo de cómo debe quedar el caso de 'sword_t1'.
 
                 switch (action) {
-                  case "plant_rune":
-                    plantRune();
-                    actionTaken = false; // Importante: Plantar una runa NO consume el turno de combate.
-                    return;
+                  
                   case "sword_t1"://Tajo del Viento Veloz
                     const swordTechDetails = techniqueData["sword_t1"];
                     const swordManaCost = swordTechDetails.manaCost || 10;
@@ -14391,134 +14416,124 @@
         reader.readAsText(file);
     }
 
-      function renderQuickSlotBar() {
+    function renderQuickSlotBar() {
         const bar = document.getElementById("quickSlotBar");
         if (!bar) return;
         bar.innerHTML = "";
 
-        // ---- INICIO DE LA LÓGICA DE TAP vs LONG PRESS ----
-        const LONG_PRESS_DURATION = 800; // 800 milisegundos para un toque largo
+        const player = gameState.player;
+        const LONG_PRESS_DURATION = 800;
+        
+        // Contamos cuántos botones especiales se mostrarán
+        let specialButtonCount = 1; // El de Cultivo siempre está
+        if (player.canUseQiConversion) specialButtonCount++;
+        if (player.learnedTechniques["formation_scribing_1"]) specialButtonCount++;
 
-        gameState.player.quickSlots.forEach((itemName, index) => {
-          const slot = document.createElement("div");
-          slot.className = "quick-slot";
+        // Determinamos cuántos slots de ítems mostrar (máximo 5, menos los especiales)
+        const itemSlotCount = 5 - specialButtonCount;
 
-          let pressTimer = null; // Temporizador para el toque largo
-          let isLongPress = false; // Bandera para saber si se activó el toque largo
-
-          // Evento: cuando el usuario empieza a tocar/presionar
-          const handlePressStart = (event) => {
-            // Prevenir comportamiento por defecto si es táctil (como el menú contextual en algunos navegadores)
-            if (event.type === "touchstart") {
-              event.preventDefault();
-            }
-            isLongPress = false;
-            pressTimer = setTimeout(() => {
-              isLongPress = true;
-              // Si el temporizador se completa, es un toque largo
-              console.log(
-                `Toque largo detectado en slot ${index + 1}. Abriendo modal.`
-              );
-              openItemAssignmentModal(index);
-            }, LONG_PRESS_DURATION);
-          };
-
-          // Evento: cuando el usuario deja de tocar/presionar
-          const handlePressEnd = (event) => {
-            clearTimeout(pressTimer); // Cancelar el temporizador del toque largo
-            // Si no fue un toque largo, entonces es un toque corto (tap/click)
-            if (!isLongPress) {
-              console.log(
-                `Toque corto detectado en slot ${index + 1}. Usando ítem.`
-              );
-              useQuickSlotItem(index);
-            }
-          };
-
-          // Evento: si el usuario mueve el dedo, cancelamos todo
-          const handlePressCancel = (event) => {
-            clearTimeout(pressTimer);
-          };
-
-          // Asignar los listeners
-          slot.addEventListener("mousedown", handlePressStart);
-          slot.addEventListener("touchstart", handlePressStart, {
-            passive: false,
-          });
-
-          slot.addEventListener("mouseup", handlePressEnd);
-          slot.addEventListener("mouseleave", handlePressCancel);
-          slot.addEventListener("touchend", handlePressEnd);
-          slot.addEventListener("touchcancel", handlePressCancel);
-          slot.addEventListener("touchmove", handlePressCancel); // Cancelar si se desliza
-
-          // ---- FIN DE LA LÓGICA DE TAP vs LONG PRESS ----
-
-          const keyHint = document.createElement("span");
-          keyHint.className = "slot-key-hint";
-          keyHint.textContent = index + 1;
-          slot.appendChild(keyHint);
-
-          if (itemName && itemData[itemName]) {
-            const itemCount = gameState.inventory[itemName] || 0;
-            slot.innerHTML += getItemIcon(itemName);
-            const countDisplay = document.createElement("span");
-            countDisplay.className = "slot-item-count";
-            countDisplay.textContent = itemCount;
-            slot.appendChild(countDisplay);
-
-            if (itemCount === 0) {
-              slot.style.opacity = 0.5;
-              slot.title = `Slot ${
-                index + 1
-              }: ${itemName} (Agotado)\nToque largo para reasignar.`;
-            } else {
-              slot.title = `Slot ${
-                index + 1
-              }: ${itemName} (x${itemCount})\nToque para usar, toque largo para reasignar.`;
-            }
-          } else {
-            slot.classList.add("empty");
-            slot.title = `Slot ${index + 1} (Vacío)\nToque para asignar.`;
-            // Para los slots vacíos, no necesitamos la lógica de toque largo, un simple clic es suficiente.
-            // Sobrescribimos el `onclick` para que sea más directo.
-            slot.onclick = () => {
-              clearTimeout(pressTimer); // Asegurarse de limpiar cualquier temporizador
-              openItemAssignmentModal(index);
+        // --- RENDERIZAR SLOTS DE ÍTEMS ---
+        for (let index = 0; index < itemSlotCount; index++) {
+            const itemName = player.quickSlots[index];
+            const slot = document.createElement("div");
+            slot.className = "quick-slot";
+            
+            // ... (TODA la lógica de TAP vs LONG PRESS que ya tenías para los slots de ítems va aquí, sin cambios)
+            let pressTimer = null;
+            let isLongPress = false;
+            const handlePressStart = (event) => {
+                if (event.type === "touchstart") event.preventDefault();
+                isLongPress = false;
+                pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    openItemAssignmentModal(index);
+                }, LONG_PRESS_DURATION);
             };
-          }
-          bar.appendChild(slot);
-        });
+            const handlePressEnd = () => {
+                clearTimeout(pressTimer);
+                if (!isLongPress) useQuickSlotItem(index);
+            };
+            const handlePressCancel = () => clearTimeout(pressTimer);
+            slot.addEventListener("mousedown", handlePressStart);
+            slot.addEventListener("touchstart", handlePressStart, { passive: false });
+            slot.addEventListener("mouseup", handlePressEnd);
+            slot.addEventListener("mouseleave", handlePressCancel);
+            slot.addEventListener("touchend", handlePressEnd);
+            slot.addEventListener("touchcancel", handlePressCancel);
+            slot.addEventListener("touchmove", handlePressCancel);
 
-        // --- El resto de la función para Cultivar y Conversión no cambia ---
+            const keyHint = document.createElement("span");
+            keyHint.className = "slot-key-hint";
+            keyHint.textContent = index + 1;
+            slot.appendChild(keyHint);
+            if (itemName && itemData[itemName]) {
+                const itemCount = gameState.inventory[itemName] || 0;
+                slot.innerHTML += getItemIcon(itemName);
+                const countDisplay = document.createElement("span");
+                countDisplay.className = "slot-item-count";
+                countDisplay.textContent = itemCount;
+                slot.appendChild(countDisplay);
+                if (itemCount === 0) {
+                    slot.style.opacity = 0.5;
+                    slot.title = `Slot ${index + 1}: ${itemName} (Agotado)\nToque largo para reasignar.`;
+                } else {
+                    slot.title = `Slot ${index + 1}: ${itemName} (x${itemCount})\nToque para usar, toque largo para reasignar.`;
+                }
+            } else {
+                slot.classList.add("empty");
+                slot.title = `Slot ${index + 1} (Vacío)\nToque para asignar.`;
+                slot.onclick = () => { clearTimeout(pressTimer); openItemAssignmentModal(index); };
+            }
+            bar.appendChild(slot);
+        }
+
+
+        // --- RENDERIZAR BOTONES DE ACCIÓN ESPECIALES ---
+
+        // Botón de Cultivo (siempre visible)
         const cultivateSlot = document.createElement("div");
         cultivateSlot.className = "quick-slot cultivate-slot";
         cultivateSlot.title = "Cultivar (🧘)";
         cultivateSlot.innerHTML = "🧘";
         cultivateSlot.onclick = () => toggleCultivation();
-        if (gameState.player.isCultivating) {
-          cultivateSlot.classList.add("active-cultivation");
-          cultivateSlot.title = "Ver/Detener Cultivo";
+        if (player.isCultivating) {
+            cultivateSlot.classList.add("active-cultivation");
+            cultivateSlot.title = "Ver/Detener Cultivo";
         }
         bar.appendChild(cultivateSlot);
 
-        if (gameState.player.canUseQiConversion) {
-          const conversionSlot = document.createElement("div");
-          conversionSlot.className = "quick-slot conversion-slot";
-          conversionSlot.innerHTML = "☯️";
-          conversionSlot.onclick = () => toggleQiConversion();
-          if (
-            gameState.player.isCultivating &&
-            gameState.player.cultivationMode.isConversionCultivation
-          ) {
-            conversionSlot.classList.add("active-conversion");
-            conversionSlot.title = "Conversión ACTIVA (clic para detener)";
-          } else {
-            conversionSlot.title = "Iniciar Conversión de Maná a Vida";
-          }
-          bar.appendChild(conversionSlot);
+        // Botón de Conversión de Qi (condicional)
+        if (player.canUseQiConversion) {
+            const conversionSlot = document.createElement("div");
+            conversionSlot.className = "quick-slot conversion-slot";
+            conversionSlot.innerHTML = "☯️";
+            conversionSlot.onclick = () => toggleQiConversion();
+            if (player.isCultivating && player.cultivationMode.isConversionCultivation) {
+                conversionSlot.classList.add("active-conversion");
+                conversionSlot.title = "Conversión ACTIVA (clic para detener)";
+            } else {
+                conversionSlot.title = "Iniciar Conversión de Maná a Vida";
+            }
+            bar.appendChild(conversionSlot);
         }
-      }
+        
+        // === INICIO DEL CÓDIGO NUEVO: BOTÓN DE RUNAS (CONDICIONAL) ===
+        // Comprobamos si el jugador ha aprendido la técnica específica
+        if (player.learnedTechniques["formation_scribing_1"]) {
+            const runeSlot = document.createElement("div");
+            runeSlot.className = "quick-slot rune-slot";
+            runeSlot.innerHTML = "✍️"; // O el ícono que prefieras para las runas
+            runeSlot.title = "Inscribir Runa (Consume 1 Tinta Rúnica)";
+            
+            // Al hacer clic, se intenta plantar una runa. La función plantRune ya comprueba si hay tinta y un enemigo cerca.
+            runeSlot.onclick = () => {
+                // No usamos battleAction aquí porque plantar runas es una acción del mapa, no de combate.
+                plantRune(); 
+            };
+            bar.appendChild(runeSlot);
+        }
+        // === FIN DEL CÓDIGO NUEVO ===
+    }
 
       function unassignQuickSlot(slotIndex) {
         gameState.player.quickSlots[slotIndex] = null;
