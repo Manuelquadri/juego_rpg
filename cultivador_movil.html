@@ -12017,135 +12017,101 @@ function plantRune() {
     const MAX_ENEMY_DETECTION_RANGE = 5;
 
     // 1. Verificación de Recursos
-    if ((gameState.inventory[inkItem] || 0) < 1) {
-        showModal("Sin Materiales", `Necesitas al menos 1 ${inkItem} para inscribir una runa.`);
-        return;
-    }
+    if ((gameState.inventory[inkItem] || 0) < 1) { /* ... */ return; }
     const manaCost = techniqueData.formation_scribing_1.manaCost || 10;
-    if (player.mana < manaCost) {
-        showModal("Maná Insuficiente", `Necesitas ${manaCost} de maná para trazar una runa.`);
-        return;
-    }
+    if (player.mana < manaCost) { /* ... */ return; }
 
-    // 2. Determinar Contexto (Combate vs. Utilidad)
-    let closestEnemy = null;
-    let minDistance = Infinity;
-    gameState.map.entities.forEach(entity => {
-        const isHostile = G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss;
-        if (isHostile) {
-            const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestEnemy = entity;
+    // 2. Determinar el OBJETIVO de la runa (Prioridad: Seleccionado > Cercano)
+    let targetEnemy = null;
+    if (gameState.selectedEnemyId) {
+        targetEnemy = gameState.map.entities.find(e => e.id === gameState.selectedEnemyId);
+    } else {
+        // Si no hay ninguno seleccionado, buscamos el más cercano como antes
+        let closestEnemy = null;
+        let minDistance = Infinity;
+        gameState.map.entities.forEach(entity => {
+            const isHostile = G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss;
+            if (isHostile) {
+                const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestEnemy = entity;
+                }
             }
+        });
+        if (closestEnemy && minDistance <= MAX_ENEMY_DETECTION_RANGE) {
+            targetEnemy = closestEnemy;
         }
-    });
-    const isCombatRune = closestEnemy && minDistance <= MAX_ENEMY_DETECTION_RANGE;
+    }
     
-    // Gastar recursos y colocar la runa en el estado correcto
+    // Gasta los recursos
     gameState.inventory[inkItem]--;
     player.mana -= manaCost;
     const runeKey = `${player.x},${player.y}`;
 
-    if (isCombatRune) {
-        if (!closestEnemy.formationRunes) closestEnemy.formationRunes = {};
-        closestEnemy.formationRunes[runeKey] = 1;
-        gameState.utilityRunes = {}; // Limpia runas de utilidad para evitar conflictos
+    // 3. Lógica Diferenciada basada en si tenemos un objetivo o no
+    if (targetEnemy) {
+        // --- LÓGICA DE RUNAS DE COMBATE (Ahora usa 'targetEnemy') ---
+        if (!targetEnemy.formationRunes) targetEnemy.formationRunes = {};
+        targetEnemy.formationRunes[runeKey] = 1;
+        gameState.utilityRunes = {};
+        
+        // Comprobar patrones de combate
+        let patternFound = checkCombatPatterns(targetEnemy);
+
+        if (patternFound) {
+            if (!targetEnemy.pendingFormationEffects) targetEnemy.pendingFormationEffects = [];
+            targetEnemy.pendingFormationEffects.push(patternFound.effect);
+            targetEnemy.formationRunes = {}; // Limpiar las runas del enemigo
+            showModal("¡Formación de Combate Completa!", `Has completado <strong>"${patternFound.name}"</strong>.`);
+        } else {
+            showModal("Runa de Combate Inscrita", `Has trazado una runa de combate para ${targetEnemy.name}.`);
+        }
     } else {
+        // --- LÓGICA DE RUNAS DE UTILIDAD ---
         gameState.utilityRunes[runeKey] = 1;
-        if (closestEnemy) closestEnemy.formationRunes = {}; // Limpia runas de combate si existen
+        
+        let utilityPatternFound = checkUtilityPatterns();
+        if (utilityPatternFound) {
+            teleportPlayer(utilityPatternFound.effect.destinationId);
+            gameState.utilityRunes = {};
+            showModal("¡Portal Abierto!", `La ${utilityPatternFound.name} se activa...`, true);
+            setTimeout(() => closeModal(), 2000);
+        } else {
+            showModal("Runa de Utilidad Inscrita", "Has trazado parte de una matriz de utilidad.");
+        }
     }
 
-    // 3. Comprobar si se completó algún patrón
-    let patternFound = null;
-    const placedRunes = isCombatRune ? closestEnemy.formationRunes : gameState.utilityRunes;
+    updateUI();
+    renderMap();
+    renderQuickSlotBar();
+}
+function checkCombatPatterns(targetEnemy) {
+    const placedRunes = targetEnemy.formationRunes || {};
     const placedKeys = Object.keys(placedRunes);
 
     for (const patternKey in FORMATION_PATTERNS) {
         const formation = FORMATION_PATTERNS[patternKey];
-        const isUtilityPattern = formation.effect.type === 'utility_teleport';
-        
-        // Saltar patrones que no coincidan con el contexto
-        if ((isCombatRune && isUtilityPattern) || (!isCombatRune && !isUtilityPattern)) {
-            continue;
-        }
+        if (formation.effect.type === 'utility_teleport') continue;
 
         const pattern = formation.pattern;
-        let requiredRunesForMatch = [];
-        let isMatch = false;
-
-        if (isCombatRune) {
-            // Lógica para Combate: El centro es FIJO (el enemigo)
-            const patternCenterX = Math.floor(pattern[0].length / 2);
-            const patternCenterY = Math.floor(pattern.length / 2);
-            
-            for (let r = 0; r < pattern.length; r++) {
-                for (let c = 0; c < pattern[r].length; c++) {
-                    if (pattern[r][c] === 1) {
-                        const requiredX = closestEnemy.x + (c - patternCenterX);
-                        const requiredY = closestEnemy.y + (r - patternCenterY);
-                        requiredRunesForMatch.push(`${requiredX},${requiredY}`);
-                    }
-                }
-            }
-            if (placedKeys.length === requiredRunesForMatch.length && requiredRunesForMatch.every(k => placedKeys.includes(k))) {
-                isMatch = true;
-            }
-        } else {
-            // Lógica para Utilidad: El centro es VARIABLE (cualquiera de las runas puestas)
-            for (const centralRuneKey of placedKeys) {
-                const [cx, cy] = centralRuneKey.split(',').map(Number);
-                const patternCenterX = Math.floor(pattern[0].length / 2);
-                const patternCenterY = Math.floor(pattern.length / 2);
-                
-                let tempRequired = [];
-                for (let r = 0; r < pattern.length; r++) {
-                    for (let c = 0; c < pattern[r].length; c++) {
-                        if (pattern[r][c] === 1) {
-                            const requiredX = cx + (c - patternCenterX);
-                            const requiredY = cy + (r - patternCenterY);
-                            tempRequired.push(`${requiredX},${requiredY}`);
-                        }
-                    }
-                }
-                if (placedKeys.length === tempRequired.length && tempRequired.every(k => placedKeys.includes(k))) {
-                    isMatch = true;
-                    requiredRunesForMatch = tempRequired;
-                    break;
+        const requiredRunesForMatch = [];
+        const patternCenterX = Math.floor(pattern[0].length / 2);
+        const patternCenterY = Math.floor(pattern.length / 2);
+        
+        for (let r = 0; r < pattern.length; r++) {
+            for (let c = 0; c < pattern[r].length; c++) {
+                if (pattern[r][c] === 1) {
+                    requiredRunesForMatch.push(`${targetEnemy.x + (c - patternCenterX)},${targetEnemy.y + (r - patternCenterY)}`);
                 }
             }
         }
 
-        if (isMatch) {
-            patternFound = formation;
-            break;
+        if (placedKeys.length === requiredRunesForMatch.length && requiredRunesForMatch.every(k => placedKeys.includes(k))) {
+            return formation; // Devolvemos la formación encontrada
         }
     }
-
-    // 4. Procesar el resultado
-    if (patternFound) {
-        // ¡Éxito! Aplicar efecto y limpiar runas
-        if (isCombatRune) {
-            if (!closestEnemy.pendingFormationEffects) closestEnemy.pendingFormationEffects = [];
-            closestEnemy.pendingFormationEffects.push(patternFound.effect);
-            closestEnemy.formationRunes = {}; // Limpiar todas las runas del enemigo
-            showModal("¡Formación Completa!", `Has completado la formación de combate: <strong>"${patternFound.name}"</strong>.`);
-        } else {
-            teleportPlayer(patternFound.effect.destinationId);
-            gameState.utilityRunes = {}; // Limpiar las runas de utilidad
-            showModal("¡Portal Abierto!", `La ${patternFound.name} se activa...`, true);
-            setTimeout(() => closeModal(), 2000);
-        }
-    } else {
-        // Aún no se completa un patrón. Aquí podrías re-implementar la lógica de "patrón incorrecto" si lo deseas,
-        // pero por ahora, solo confirmamos la colocación.
-        const message = isCombatRune ? `Has trazado una runa de combate cerca de ${closestEnemy.name}.` : "Has trazado parte de una matriz de utilidad.";
-        showModal("Runa Inscrita", message);
-    }
-    
-    updateUI();
-    renderMap();
-    renderQuickSlotBar();
+    return null; // No se encontró ningún patrón completo
 }
     function checkUtilityPatterns() {
       for (const patternKey in FORMATION_PATTERNS) {
