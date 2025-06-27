@@ -5230,6 +5230,38 @@
             },
           },
         },
+        shattering_curse: {
+          name: "Maldición Quebrantadora",
+          type: "debuff_stat_percent", // Nuevo tipo de habilidad
+          logMessage: (enemyName, percent, duration) => `${enemyName} lanza una Maldición Quebrantadora. ¡Tu defensa se reduce en un ${percent}% por ${duration} turnos!`,
+          effect: {
+              debuff: {
+                  stat: "defense",
+                  percentage: 0.3, // Reduce la defensa en un 30%
+                  duration: 3,
+              }
+          }
+      },
+
+        // Habilidad que causa daño basado en el % de vida máxima del jugador
+        abyssal_drain: {
+            name: "Drenaje Abismal",
+            type: "percent_hp_damage", // Nuevo tipo
+            logMessage: (enemyName, damage) => `${enemyName} usa Drenaje Abismal, arrancando un trozo de tu fuerza vital y causándote ${damage} de daño!`,
+            effect: {
+                percentage: 0.25 // Causa un 25% de la vida máxima del jugador como daño
+            }
+        },
+
+        // Habilidad de daño verdadero que ignora toda defensa
+        reality_tear: {
+            name: "Desgarro de Realidad",
+            type: "true_damage", // Nuevo tipo
+            logMessage: (enemyName, damage) => `${enemyName} desgarra el tejido de la realidad, ¡causándote ${damage} de daño verdadero que ignora toda defensa!`,
+            effect: {
+                damage: 500 // Un valor fijo y alto de daño verdadero
+            }
+        },
         // --- HABILIDADES DE CURACIÓN Y ROBO DE VIDA ---
         basic_heal: {
           name: "Recuperación Menor",
@@ -7025,16 +7057,17 @@
           level: 20,
           hp: 2500,
           maxHp: 2500,
-          attack: 15000,
+          attack: 50000,
           defense: 350,
           exp: 3000,
           abilities: [
             {
               abilityId: "fire_breath",
               chance: 0.5,
-              effect: { burnDamagePerTurn: 1000, duration: 3 },
+              effect: { burnDamagePerTurn: 5000, duration: 3 },
             },
             { abilityId: "armor_break", chance: 0.6 },
+            { abilityId: "shattering_curse", chance: 0.4 },
             { abilityId: "armor_piercing_strike", chance: 0.6 },
           ],
           lootTable: [
@@ -7057,10 +7090,11 @@
           level: 25,
           hp: 4000,
           maxHp: 4000,
-          attack: 24500,
+          attack: 30500,
           defense: 450,
           exp: 4000,
           abilities: [
+          { abilityId: "reality_tear", chance: 0.3 },
             { abilityId: "stone_skin_1", chance: 0.3 },
             { abilityId: "basic_heal", chance: 0.6 },
             { abilityId: "armor_piercing_strike", chance: 0.2 },
@@ -7082,11 +7116,13 @@
           level: 65,
           hp: 10000,
           maxHp: 10000,
-          attack: 2600,
+          attack: 58600,
           defense: 500,
           exp: 10000,
           isBoss: true,
           abilities: [
+            { abilityId: "abyssal_drain", chance: 0.4 }, 
+            { abilityId: "shattering_curse", chance: 0.3 }, 
             { abilityId: "intimidating_roar", chance: 0.4 },
             { abilityId: "thorns_aura", chance: 0.3 },
             { abilityId: "fire_breath", chance: 0.2 },
