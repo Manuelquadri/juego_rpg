@@ -7832,37 +7832,7 @@
           canUse: () => true,
         },
 
-        // -- Rollos Grado 10 --
-        "Rollo: Espada del Emperador Celestial": {
-          description: "Enseña 'Espada del Emperador Celestial'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t6"),
-          canUse: () => true,
-        },
-        "Rollo: Cuerpo Inmortal de Jade": {
-          description: "Enseña 'Cuerpo Inmortal de Jade'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "body_t6"),
-          canUse: () => true,
-        },
-        "Rollo: Incineración del Mundo Mortal": {
-          description: "Enseña 'Incineración del Mundo Mortal'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "fire_t6"),
-          canUse: () => true,
-        },
-        "Rollo: Decreto del Señor del Trueno": {
-          description: "Enseña 'Decreto del Señor del Trueno'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "lightning_t6"),
-          canUse: () => true,
-        },
-        "Rollo: Matriz del Sello del Demonio": {
-          description: "Enseña 'Matriz del Sello del Demonio'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "formation_t6"),
-          canUse: () => true,
-        },
-        "Rollo: Omnipresencia Divina": {
-          description: "Enseña 'Omnipresencia Divina'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "movement_t6"),
-          canUse: () => true,
-        },
+        
 
         "Rollo: Absorción de Qi Menor": {
           description: "Enseña 'Técnica de Absorción de Qi Menor'.",
@@ -14673,8 +14643,8 @@ function dev_forceCompleteMission(missionId) {
         bar.innerHTML = "";
 
         const player = gameState.player;
-        const LONG_PRESS_DURATION = 800;
-        
+        const LONG_PRESS_DURATION = 700; // Un poco más rápido para mejorar la sensación en móvil
+        const MOVE_THRESHOLD = 10; // El jugador debe mover el dedo más de 10px para que se considere un arrastre
         // Contamos cuántos botones especiales se mostrarán
         let specialButtonCount = 1; // El de Cultivo siempre está
         if (player.canUseQiConversion) specialButtonCount++;
@@ -14692,51 +14662,88 @@ function dev_forceCompleteMission(missionId) {
             // ... (TODA la lógica de TAP vs LONG PRESS que ya tenías para los slots de ítems va aquí, sin cambios)
             let pressTimer = null;
             let isLongPress = false;
-            const handlePressStart = (event) => {
-                if (event.type === "touchstart") event.preventDefault();
-                isLongPress = false;
-                pressTimer = setTimeout(() => {
-                    isLongPress = true;
-                    openItemAssignmentModal(index);
-                }, LONG_PRESS_DURATION);
+            let startX = 0;
+            let startY = 0;
+
+            const handlePressStart = (e) => {
+              isLongPress = false;
+              // Guardamos la posición inicial del toque
+              if (e.type === 'touchstart') {
+                  startX = e.changedTouches[0].clientX;
+                  startY = e.changedTouches[0].clientY;
+              }
+              
+              // Iniciamos el temporizador para el toque largo
+              pressTimer = setTimeout(() => {
+                  isLongPress = true;
+                  openItemAssignmentModal(index);
+              }, LONG_PRESS_DURATION);
             };
             const handlePressEnd = () => {
-                clearTimeout(pressTimer);
-                if (!isLongPress) useQuickSlotItem(index);
+              clearTimeout(pressTimer);
+              // Solo se "usa" el item si no fue un toque largo
+              if (!isLongPress) {
+                  useQuickSlotItem(index);
+              }
             };
+            
             const handlePressCancel = () => clearTimeout(pressTimer);
+            // --- NUEVO MANEJADOR INTELIGENTE PARA touchmove ---
+            const handlePressMove = (e) => {
+                if (e.type === 'touchmove') {
+                    const moveX = e.changedTouches[0].clientX;
+                    const moveY = e.changedTouches[0].clientY;
+                    // Calculamos la distancia que se ha movido el dedo
+                    const distance = Math.hypot(moveX - startX, moveY - startY);
+                    
+                    // Si la distancia supera nuestro umbral, es un arrastre, no un toque largo.
+                    if (distance > MOVE_THRESHOLD) {
+                        clearTimeout(pressTimer);
+                    }
+                }
+            };
+
+            // Asignar los listeners
             slot.addEventListener("mousedown", handlePressStart);
-            slot.addEventListener("touchstart", handlePressStart, { passive: false });
             slot.addEventListener("mouseup", handlePressEnd);
             slot.addEventListener("mouseleave", handlePressCancel);
+            
+            // Usamos { passive: false } para poder prevenir el scroll del navegador si es necesario
+            slot.addEventListener("touchstart", handlePressStart, { passive: false });
             slot.addEventListener("touchend", handlePressEnd);
             slot.addEventListener("touchcancel", handlePressCancel);
-            slot.addEventListener("touchmove", handlePressCancel);
+            // El nuevo listener inteligente
+            slot.addEventListener("touchmove", handlePressMove, { passive: false });
+
 
             const keyHint = document.createElement("span");
+
             keyHint.className = "slot-key-hint";
             keyHint.textContent = index + 1;
             slot.appendChild(keyHint);
+
             if (itemName && itemData[itemName]) {
-                const itemCount = gameState.inventory[itemName] || 0;
-                slot.innerHTML += getItemIcon(itemName);
-                const countDisplay = document.createElement("span");
-                countDisplay.className = "slot-item-count";
-                countDisplay.textContent = itemCount;
-                slot.appendChild(countDisplay);
-                if (itemCount === 0) {
-                    slot.style.opacity = 0.5;
-                    slot.title = `Slot ${index + 1}: ${itemName} (Agotado)\nToque largo para reasignar.`;
-                } else {
-                    slot.title = `Slot ${index + 1}: ${itemName} (x${itemCount})\nToque para usar, toque largo para reasignar.`;
-                }
-            } else {
-                slot.classList.add("empty");
-                slot.title = `Slot ${index + 1} (Vacío)\nToque para asignar.`;
-                slot.onclick = () => { clearTimeout(pressTimer); openItemAssignmentModal(index); };
-            }
-            bar.appendChild(slot);
-        }
+                  const itemCount = gameState.inventory[itemName] || 0;
+                  slot.innerHTML += getItemIcon(itemName); // Mantenemos el ícono
+                  slot.appendChild(keyHint); // Re-añadimos el hint que se borra con innerHTML
+
+                  const countDisplay = document.createElement("span");
+                  countDisplay.className = "slot-item-count";
+                  countDisplay.textContent = itemCount;
+                  slot.appendChild(countDisplay);
+
+                  if (itemCount === 0) {
+                      slot.style.opacity = 0.5;
+                      slot.title = `Slot ${index + 1}: ${itemName} (Agotado)\nToque largo para reasignar.`;
+                  } else {
+                      slot.title = `Slot ${index + 1}: ${itemName} (x${itemCount})\nToque para usar, toque largo para reasignar.`;
+                  }
+              } else {
+                  slot.classList.add("empty");
+                  slot.title = `Slot ${index + 1} (Vacío)\nToque para asignar.`;
+              }
+              bar.appendChild(slot);
+          }
 
 
         // --- RENDERIZAR BOTONES DE ACCIÓN ESPECIALES ---
