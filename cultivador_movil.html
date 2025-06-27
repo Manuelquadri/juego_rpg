@@ -101,6 +101,39 @@
       .grid-overlay.active {
           display: block;
       }
+      /* --- Estilos para el Diagrama de Formación en el Modal de Técnicas --- */
+      .technique-section-title {
+          margin-top: 20px;
+          padding-top: 15px;
+          border-top: 1px solid rgba(212, 175, 55, 0.3);
+          color: #f4d03f;
+      }
+
+      .formation-diagram-grid {
+          display: grid;
+          width: 100px; /* Tamaño pequeño para el diagrama */
+          height: 100px;
+          margin: 10px 0 5px 0;
+          border: 1px solid #555;
+          background-color: rgba(0,0,0,0.1);
+      }
+
+      .formation-diagram-grid .grid-cell {
+          border: 1px solid #333;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.9em;
+      }
+
+      .formation-diagram-grid .grid-cell.rune {
+          color: #ff00ff;
+          font-weight: bold;
+      }
+
+      .formation-diagram-grid .grid-cell.enemy {
+          color: #ff4d4d;
+      }
       /****************************************
        * 2. INTERFAZ PRINCIPAL (HUD, BARRAS, BOTONES)
        ****************************************/
@@ -2025,6 +2058,7 @@
         player: {
           isChannelingRune: false,     // true si está en modo seguro para plantar runas
           channelingTimeout: null,
+          discoveredFormationPatterns: {},
           x: 11,
           y: 15,
           level: 1,
@@ -12151,11 +12185,23 @@ function plantRune() {
     placeRuneAt(player.x, player.y);
 }
 function checkCombatPatterns(targetEnemy) {
+    // --- INICIO DE LA CORRECCIÓN: GUARD CLAUSE ---
+    // Esta comprobación de seguridad detiene la función si la constante de patrones no está disponible.
+    if (typeof FORMATION_PATTERNS === 'undefined' || FORMATION_PATTERNS === null) {
+        console.error("FATAL ERROR: La función checkCombatPatterns se ejecutó, pero FORMATION_PATTERNS no está definido en este punto. Asegúrate de que todas las 'const' de datos están declaradas al principio del script, antes de cualquier función.");
+        return null;
+    }
+    // --- FIN DE LA CORRECCIÓN ---
+
     const placedRunes = targetEnemy.formationRunes || {};
     const placedKeys = Object.keys(placedRunes);
+    const player = gameState.player;
 
     for (const patternKey in FORMATION_PATTERNS) {
         const formation = FORMATION_PATTERNS[patternKey];
+        // Comprobación adicional por si el patrón en sí es inválido
+        if (!formation || !formation.effect || !formation.pattern) continue;
+        
         if (formation.effect.type === 'utility_teleport') continue;
 
         const pattern = formation.pattern;
@@ -12171,45 +12217,21 @@ function checkCombatPatterns(targetEnemy) {
             }
         }
 
-        if (placedKeys.length === requiredRunesForMatch.length && requiredRunesForMatch.every(k => placedKeys.includes(k))) {
-            return formation; // Devolvemos la formación encontrada
+        const isMatch = placedKeys.length === requiredRunesForMatch.length && requiredRunesForMatch.every(k => placedKeys.includes(k));
+
+        if (isMatch) {
+            if (!player.discoveredFormationPatterns[patternKey]) {
+                player.discoveredFormationPatterns[patternKey] = true; 
+                showModal(
+                    "¡Patrón Antiguo Descifrado!",
+                    `Has completado con éxito la formación: <strong>${formation.name}</strong>.<br><br><em>${formation.description}</em><br><br>El diagrama ha sido anotado en tu panel de Técnicas para futuras consultas.`
+                );
+            }
+            return formation; 
         }
     }
-    return null; // No se encontró ningún patrón completo
+    return null;
 }
-    function checkUtilityPatterns() {
-      for (const patternKey in FORMATION_PATTERNS) {
-          const formation = FORMATION_PATTERNS[patternKey];
-          if (formation.effect.type !== 'utility_teleport') continue;
-
-          const pattern = formation.pattern;
-          const patternHeight = pattern.length;
-          const patternWidth = pattern[0].length;
-          const patternCenterX = Math.floor(patternWidth / 2);
-          const patternCenterY = Math.floor(patternHeight / 2);
-
-          // Intenta hacer coincidir el patrón con cada runa de utilidad como posible centro
-          for (const placedRuneKey in gameState.utilityRunes) {
-              const [centerX, centerY] = placedRuneKey.split(',').map(Number);
-              let isMatch = true;
-              for (let r = 0; r < patternHeight; r++) {
-                  for (let c = 0; c < patternWidth; c++) {
-                      if (pattern[r][c] === 1) {
-                          const requiredX = centerX + (c - patternCenterX);
-                          const requiredY = centerY + (r - patternCenterY);
-                          if (!gameState.utilityRunes[`${requiredX},${requiredY}`]) {
-                              isMatch = false;
-                              break;
-                          }
-                      }
-                  }
-                  if (!isMatch) break;
-              }
-              if (isMatch) return formation;
-          }
-      }
-      return null;
-  }
 
     function battleAction(action) {
       
@@ -14177,30 +14199,31 @@ function dev_forceCompleteMission(missionId) {
       }
 
       function showTechniquePanel() {
-        const container = document.getElementById("learnedTechniquesContainer");
-        container.innerHTML = ""; // Limpiar contenido anterior
-        
-        const player = gameState.player;
-        if (Object.keys(player.learnedTechniques).length === 0) {
-            container.innerHTML = "<p style='text-align: center; opacity: 0.7;'>Aún no has aprendido ninguna técnica.</p>";
-        } else {
-            // Ordenamos las técnicas para una mejor visualización (opcional)
-            const sortedTechIds = Object.keys(player.learnedTechniques).sort();
+    const container = document.getElementById("learnedTechniquesContainer");
+    container.innerHTML = "";
+    
+    const player = gameState.player;
+    const learnedTechs = Object.keys(player.learnedTechniques);
+
+    if (learnedTechs.length === 0 && Object.keys(player.discoveredFormationPatterns).length === 0) {
+        container.innerHTML = "<p style='text-align: center; opacity: 0.7;'>Aún no has aprendido ninguna técnica ni descifrado ningún patrón rúnico.</p>";
+    } else {
+        if (learnedTechs.length > 0) {
+            container.innerHTML += `<h4>Técnicas de Cultivo y Combate</h4>`;
+            const sortedTechIds = learnedTechs.sort();
 
             sortedTechIds.forEach(techId => {
                 const techInfo = techniqueData[techId];
                 const playerTech = player.learnedTechniques[techId];
-                if (!techInfo) return; // Salto de seguridad
+                if (!techInfo) return; 
 
                 const div = document.createElement("div");
-                // Usamos la misma clase que los ítems del inventario para un estilo consistente
                 div.className = "inventory-modal-item"; 
                 
                 let levelText = playerTech.level >= techInfo.maxLevel 
                     ? `<span style="color: #f4d03f;">(MAX)</span>`
                     : `(Nv. ${playerTech.level} / ${techInfo.maxLevel})`;
                 
-                // --- LLAMADA A LA NUEVA FUNCIÓN DE DETALLES ---
                 const detailsText = getTechniqueDetailsAsText(techInfo, playerTech.level);
                 
                 let cultivationProgressText = '';
@@ -14221,10 +14244,62 @@ function dev_forceCompleteMission(missionId) {
                 container.appendChild(div);
             });
         }
-        
-        document.getElementById("techniqueModal").style.display = "flex";
-        hideTouchControls();
+
+        const discoveredPatterns = Object.keys(player.discoveredFormationPatterns);
+        if (discoveredPatterns.length > 0) {
+            const title = document.createElement('h4');
+            title.className = 'technique-section-title';
+            title.textContent = 'Diagramas de Formaciones Rúnicas';
+            container.appendChild(title);
+
+            discoveredPatterns.forEach(patternId => {
+                // Se añade comprobación por si el patrón no existe (aunque no debería pasar)
+                const patternInfo = FORMATION_PATTERNS ? FORMATION_PATTERNS[patternId] : null;
+                if (!patternInfo) return;
+
+                const patternDiv = document.createElement("div");
+                patternDiv.className = "inventory-modal-item";
+
+                const patternGridId = `diagram-grid-${patternId}`;
+                patternDiv.innerHTML = `
+                    <div class="item-details">
+                        <div class="item-name">📖 ${patternInfo.name}</div>
+                        <div class="item-description">${patternInfo.description}</div>
+                        <div class="formation-diagram-grid" id="${patternGridId}"></div>
+                    </div>
+                `;
+                container.appendChild(patternDiv);
+                
+                const diagramGridEl = document.getElementById(patternGridId);
+                if (diagramGridEl) {
+                    const patternMatrix = patternInfo.pattern;
+                    const gridSize = patternMatrix.length;
+                    diagramGridEl.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+                    diagramGridEl.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+                    for (let r = 0; r < patternMatrix.length; r++) {
+                        for (let c = 0; c < patternMatrix[r].length; c++) {
+                            const cellValue = patternMatrix[r][c];
+                            const cellDiv = document.createElement('div');
+                            cellDiv.className = 'grid-cell';
+                            if (cellValue === 1) {
+                                cellDiv.classList.add('rune');
+                                cellDiv.textContent = '●';
+                            } else if (cellValue === 2) {
+                                cellDiv.classList.add('enemy');
+                                cellDiv.textContent = 'X';
+                            }
+                            diagramGridEl.appendChild(cellDiv);
+                        }
+                    }
+                }
+            });
+        }
     }
+    
+    document.getElementById("techniqueModal").style.display = "flex";
+    hideTouchControls();
+}
 
     function getTechniqueDetailsAsText(techInfo, currentLevel) {
       if (!techInfo) return "";
