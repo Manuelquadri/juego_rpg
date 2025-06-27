@@ -8484,63 +8484,76 @@
  * @param {string} itemName - El nombre del rollo que se está usando (ej: "Rollo: Cuerpo Inmortal de Jade").
  * @returns {string} Un mensaje de feedback para el jugador.
  */
-    function learnTechniqueFromRoll(playerState, itemName) {
-      console.group(`[learnTechniqueFromRoll] Procesando el rollo: "${itemName}"`);
-        if (!itemName.startsWith("Rollo: ")) {
-          console.error("Fallo: El nombre del ítem no empieza con 'Rollo: '.");
-          console.groupEnd();
-            return "Error: Este objeto no es un rollo de técnica válido.";
-        }
-
-        const techNameToLearn = itemName.substring(7); // Extrae "Cuerpo Inmortal de Jade"
-        console.log(`Paso 1: Nombre de la técnica a aprender extraído -> "${techNameToLearn}"`);
-        // Busca en TODOS los datos de técnicas cuál tiene el nombre que coincide.
-        const techId = Object.keys(techniqueData).find(
-            (id) => techniqueData[id].name === techNameToLearn
-        );
-        console.log(`Paso 2: Búsqueda en techniqueData por nombre...`);
-
-        if (!techId) {
-          console.error(`¡FALLO CRÍTICO! No se encontró ninguna técnica con el nombre exacto "${techNameToLearn}" en el objeto techniqueData.`);
+ function learnTechniqueFromRoll(playerState, itemName) {
+    console.group(`[learnTechniqueFromRoll] Procesando el rollo: "${itemName}"`);
+    if (!itemName.startsWith("Rollo: ")) {
+        console.error("Fallo: El nombre del ítem no empieza con 'Rollo: '.");
         console.groupEnd();
-            return `Error: No se encontró la definición de la técnica llamada '${techNameToLearn}'.`;
-        }
-        console.log(`   -> Éxito. ID de la técnica encontrado: "${techId}"`);
-        const techInfo = techniqueData[techId];
-        console.log(`Paso 3: Comprobando si el jugador ya conoce la técnica "${techId}"...`);
-        // El resto de la función (comprobaciones de nivel, etc.) no cambia.
-        if (playerState.learnedTechniques[techId]) {
-          console.warn("Fallo: El jugador ya tiene esta técnica en su libro.");
-        console.groupEnd();
-            return `Ya conoces esta técnica: ${techInfo.name}.`;
-        }
-        console.log("   -> El jugador NO conoce la técnica. Continuando...");
-    
-        console.log(`Paso 4: Verificando requisitos de rango... (Requerido: ${techInfo.requiredRank || 'Ninguno'})`);
-        if (techInfo.requiredRank) {
-            const playerRankIndex = SECTA_DATA.rangos.findIndex(r => r.nombre === playerState.secta.rango);
-            const requiredRankIndex = SECTA_DATA.rangos.findIndex(r => r.nombre === techInfo.requiredRank);
-            if (playerRankIndex < requiredRankIndex) {
-              console.error(`Fallo: Rango insuficiente. Jugador: ${playerState.secta.rango} (${playerRankIndex}), Requerido: ${techInfo.requiredRank} (${requiredRankIndex})`);
-            console.groupEnd();
-                return `Rango insuficiente. Necesitas ser al menos <strong>${techInfo.requiredRank}</strong> para aprender '${techInfo.name}'.`;
-            }
-            console.log("   -> Rango suficiente. Continuando...");
-        }else {
-        console.log("   -> No se requiere rango. Continuando...");
-        }
-        console.log(`Paso 5: Añadiendo la técnica al estado del jugador...`);
-        playerState.learnedTechniques[techId] = {
-            level: 1, 
-            currentCultivationProgress: 0,
-            cultivationTimeToNextLevel: techInfo.cultivationSettings?.baseTimeToLevelUp || 120,
-        };
-        console.log("   -> Técnica añadida con éxito:", playerState.learnedTechniques[techId])  
-        recalculatePlayerStats(); 
-        console.log("Proceso completado con éxito.");
-        console.groupEnd();
-        return `Has aprendido '${techInfo.name}' (Nivel 1). Puedes cultivarla para mejorarla.`;
+        return "Error: Este objeto no es un rollo de técnica válido.";
     }
+
+    const techNameToLearn = itemName.substring(7);
+    console.log(`Paso 1: Nombre de la técnica a aprender extraído -> "${techNameToLearn}"`);
+    
+    const techId = Object.keys(techniqueData).find(
+        (id) => techniqueData[id].name === techNameToLearn
+    );
+    console.log(`Paso 2: Búsqueda en techniqueData por nombre...`);
+
+    if (!techId) {
+        console.error(`¡FALLO CRÍTICO! No se encontró ninguna técnica con el nombre exacto "${techNameToLearn}" en el objeto techniqueData.`);
+        console.groupEnd();
+        return `Error: No se encontró la definición de la técnica llamada '${techNameToLearn}'.`;
+    }
+    console.log(`   -> Éxito. ID de la técnica encontrado: "${techId}"`);
+    
+    const techInfo = techniqueData[techId];
+    console.log(`Paso 3: Comprobando si el jugador ya conoce la técnica "${techId}"...`);
+    
+    if (playerState.learnedTechniques[techId]) {
+        console.warn("Fallo: El jugador ya tiene esta técnica en su libro.");
+        console.groupEnd();
+        return `Ya conoces esta técnica: ${techInfo.name}.`;
+    }
+    console.log("   -> El jugador NO conoce la técnica. Continuando...");
+
+    console.log(`Paso 4: Verificando requisitos de rango...`);
+    if (techInfo.requiredRank) {
+        const playerRankIndex = SECTA_DATA.rangos.findIndex(r => r.nombre === playerState.secta.rango);
+        const requiredRankIndex = SECTA_DATA.rangos.findIndex(r => r.nombre === techInfo.requiredRank);
+        if (playerRankIndex < requiredRankIndex) {
+            console.error(`Fallo: Rango insuficiente.`);
+            console.groupEnd();
+            return `Rango insuficiente. Necesitas ser al menos <strong>${techInfo.requiredRank}</strong> para aprender '${techInfo.name}'.`;
+        }
+        console.log("   -> Rango suficiente. Continuando...");
+    } else {
+        console.log("   -> No se requiere rango. Continuando...");
+    }
+    
+    console.log(`Paso 5: Añadiendo la técnica al estado del jugador...`);
+    playerState.learnedTechniques[techId] = {
+        level: 1, 
+        currentCultivationProgress: 0,
+        cultivationTimeToNextLevel: techInfo.cultivationSettings?.baseTimeToLevelUp || 120,
+    };
+    console.log("   -> Técnica añadida con éxito:", playerState.learnedTechniques[techId]);
+
+    // --- INICIO DE LA MODIFICACIÓN CLAVE ---
+    // Si la técnica que acabamos de aprender es la de Conversión de Qi, activamos la bandera.
+    if (techId === 'qi_to_hp_conversion_1') {
+        playerState.canUseQiConversion = true;
+        console.log(`[learnTechniqueFromRoll] ¡Técnica de Conversión de Qi aprendida! Se ha activado 'canUseQiConversion'.`);
+    }
+    // --- FIN DE LA MODIFICACIÓN CLAVE ---
+
+    recalculatePlayerStats(); 
+    renderQuickSlotBar(); // ¡Muy importante! Redibujamos la barra para que el nuevo botón aparezca.
+    
+    console.log("Proceso completado con éxito.");
+    console.groupEnd();
+    return `Has aprendido '${techInfo.name}' (Nivel 1). Puedes cultivarla para mejorarla.`;
+}
 
       function showModal(title, text, nonInteractive = false) {
         document.querySelector(".stats-panel").style.display = "none";
@@ -15087,7 +15100,7 @@ function dev_forceCompleteMission(missionId) {
         bar.appendChild(cultivateSlot);
 
         // Botón de Conversión de Qi (condicional)
-        if (player.canUseQiConversion) {
+        if (player.canUseQiConversion) { // <-- ¡ESTA ES LA LÍNEA CLAVE!
             const conversionSlot = document.createElement("div");
             conversionSlot.className = "quick-slot conversion-slot";
             conversionSlot.innerHTML = "☯️";
