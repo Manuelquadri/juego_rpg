@@ -9902,9 +9902,10 @@
       function checkAndApplyFormation(enemyEntity) {
         // La función ahora se enfoca en aplicar los efectos ya guardados
         if (!enemyEntity.pendingFormationEffects || enemyEntity.pendingFormationEffects.length === 0) {
+          console.log("[checkAndApplyFormation] No hay efectos de formación pendientes para este enemigo.");
             return; // No hay efectos de formación pendientes para este enemigo
         }
-
+        console.group(`[DEBUG FORMACIÓN] Aplicando efectos para: ${enemyEntity.name}`);
         logBattle("¡Las formaciones rúnicas preestablecidas se activan!");
 
         const scribingTech = gameState.player.learnedTechniques["formation_scribing_1"];
@@ -9912,11 +9913,12 @@
         if (scribingTech && scribingTech.level > 1) {
             const baseAmplification = techniqueData.formation_scribing_1.effect.amplificationPerLevel;
             amplification += (scribingTech.level - 1) * baseAmplification;
+            console.log(` -> Nivel de Inscripción Rúnica: ${scribingTech.level}. Amplificación: ${amplification.toFixed(2)}x`);
         }
         // Iteramos sobre cada efecto acumulado y lo aplicamos
         enemyEntity.pendingFormationEffects.forEach(effect => {
             const formationName = Object.keys(FORMATION_PATTERNS).find(key => FORMATION_PATTERNS[key].effect === effect)?.name || "Formación Desconocida";
-            
+            console.log(` -> Procesando efecto de: "${formationName}"`, effect);
             switch(effect.type) {
               case 'enemy_debuff':
                 if (effect.stat === 'defense') {
@@ -9940,11 +9942,16 @@
                     logBattle(logMsg + ".");
                     showFloatingText(document.querySelector('.character-sprite'), `Regeneración+`, 'ability');
                 }else if (effect.stat === 'defenseBoost') {
+                  console.log("   -> Efecto 'defenseBoost' detectado.");
+                    console.log("      Defensa del jugador ANTES:", gameState.player.defense);
                     const defenseBonus = Math.floor(effect.amount * amplification);
                     // Aplicamos el bono directamente a los stats de batalla del jugador
+                    console.log(`      Calculando bono de defensa: ${effect.amount} * ${amplification.toFixed(2)} = ${defenseBonus}`);
                     gameState.player.defense += defenseBonus;
+                    console.log("      Defensa del jugador DESPUÉS:", gameState.player.defense);
                     let logMsg = `La "${formationName}" endurece tu cuerpo, ¡ganas ${defenseBonus} de Defensa para este combate!`;
                     if (amplification > 1.0) logMsg += " (¡Amplificado!)";
+
                     logBattle(logMsg);
                     showFloatingText(document.querySelector('.character-sprite'), `Defensa +${defenseBonus}`, 'ability');
                 }
@@ -9964,6 +9971,8 @@
 
         // Limpiamos los efectos pendientes después de aplicarlos
         enemyEntity.pendingFormationEffects = [];
+        console.log(" -> Todos los efectos pendientes han sido aplicados y limpiados.");
+        console.groupEnd();
         // También limpiamos cualquier runa restante que no formara un patrón
         enemyEntity.formationRunes = {};
     }
@@ -11719,6 +11728,7 @@
             silencedTurns: 0,
             sealedTurns: 0,
         };
+        console.log("[startBattle] Comprobando y aplicando formaciones pendientes...");
         checkAndApplyFormation(mapEntity);
         // ================================================
 
