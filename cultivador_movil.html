@@ -7025,16 +7025,17 @@
           level: 20,
           hp: 2500,
           maxHp: 2500,
-          attack: 1500,
-          defense: 150,
+          attack: 15000,
+          defense: 350,
           exp: 3000,
           abilities: [
             {
               abilityId: "fire_breath",
               chance: 0.5,
-              effect: { burnDamagePerTurn: 100, duration: 3 },
+              effect: { burnDamagePerTurn: 1000, duration: 3 },
             },
-            { abilityId: "armor_break", chance: 0.3 },
+            { abilityId: "armor_break", chance: 0.6 },
+            { abilityId: "armor_piercing_strike", chance: 0.6 },
           ],
           lootTable: [
             {
@@ -7056,12 +7057,13 @@
           level: 25,
           hp: 4000,
           maxHp: 4000,
-          attack: 2450,
-          defense: 250,
+          attack: 24500,
+          defense: 450,
           exp: 4000,
           abilities: [
             { abilityId: "stone_skin_1", chance: 0.3 },
-            { abilityId: "basic_heal", chance: 0.2 },
+            { abilityId: "basic_heal", chance: 0.6 },
+            { abilityId: "armor_piercing_strike", chance: 0.2 },
           ],
           lootTable: [
             { itemName: "Lágrima Celestial", quantity: [1, 1], chance: 0.2 },
@@ -7081,7 +7083,7 @@
           hp: 10000,
           maxHp: 10000,
           attack: 2600,
-          defense: 200,
+          defense: 500,
           exp: 10000,
           isBoss: true,
           abilities: [
