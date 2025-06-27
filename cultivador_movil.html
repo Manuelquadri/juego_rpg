@@ -1586,6 +1586,9 @@
               <button id="boostCultivationButton10" onclick="boostCultivationProgress(10)" style="flex-grow: 1; background: linear-gradient(135deg, #e8c34f, #c9a82e);">
                   ⚡⚡ Usar 10 PS (+100s)
               </button>
+              <button id="boostCultivationButtonAll" style="flex-grow: 1; background: linear-gradient(135deg, #ff5733, #c70039); color: white;">
+                ⚡⚡⚡ Usar Todas
+            </button>
       
           </div>
       </div>
@@ -4257,7 +4260,7 @@
           description:
             "Aumenta pasivamente tu Defensa base, haciéndote más resistente.",
           type: "passive_stat",
-          effect: { statToBoost: "baseDefense", value: 5 },
+          effect: { statToBoost: "baseDefense", value: 0.1 },
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 200,
@@ -4383,7 +4386,7 @@
           description:
             "Pasivamente, tu voluntad de hierro reduce una porción de todo el daño recibido.",
           type: "passive_stat",
-          effect: { statToBoost: "damageReduction", value: 0.05 }, // Esto necesitará lógica en el cálculo de daño
+          effect: { statToBoost: "damageReduction", value: 0.01 }, // Esto necesitará lógica en el cálculo de daño
           maxLevel: 10,
           cultivationSettings: {
             baseTimeToLevelUp: 350,
@@ -4594,7 +4597,7 @@
         body_t5: {
             id: "body_t5",
             requiredRank: "Gran Anciano",
-            name: "Constitución de Dragón Ancestral (Transcendente)",
+            name: "Constitución de Dragón Ancestral (Trascendente)",
             icon: "🐉",
             description: "Tu cuerpo alcanza la perfección dracónica, aumentando tu resistencia a efectos de estado y regenerando vida poderosamente.",
             type: "passive_stat",
@@ -4736,8 +4739,8 @@
           type: "passive_stat",
           effect: {
             statToBoost: "damageReduction",
-            value: 0.25,
-            deathSaveChance: 0.5,
+            value: 0.01,
+            deathSaveChance: 0.2,
           },
           maxLevel: 10,
           cultivationSettings: {
@@ -6948,7 +6951,7 @@
           level: 18,
           hp: 1500,
           maxHp: 1500,
-          attack: 350,
+          attack: 250,
           defense: 100,
           exp: 1200,
           abilities: [
@@ -6976,7 +6979,7 @@
           level: 19,
           hp: 2000,
           maxHp: 2000,
-          attack: 380,
+          attack: 280,
           defense: 120,
           exp: 12000,
           abilities: [
@@ -7004,7 +7007,7 @@
           level: 18,
           hp: 1200,
           maxHp: 1200,
-          attack: 700,
+          attack: 300,
           defense: 80,
           exp: 1500,
           abilities: [
@@ -7028,7 +7031,7 @@
           level: 19,
           hp: 5000,
           maxHp: 5000,
-          attack: 900,
+          attack: 600,
           defense: 120,
           exp: 5000,
           isBoss: true,
@@ -7055,17 +7058,18 @@
           name: "Demonio de la Fisura",
           spriteUrl: "img/demonio_fisura.png",
           level: 20,
-          hp: 2500,
+          hp: 500,
           maxHp: 2500,
-          attack: 50000,
+          attack: 250000,
           defense: 350,
           exp: 3000,
           abilities: [
             {
               abilityId: "fire_breath",
               chance: 0.5,
-              effect: { burnDamagePerTurn: 5000, duration: 3 },
+              effect: { burnDamagePerTurn: 50000, duration: 3 },
             },
+            { abilityId: "reality_tear", chance: 0.3 },
             { abilityId: "armor_break", chance: 0.6 },
             { abilityId: "shattering_curse", chance: 0.4 },
             { abilityId: "armor_piercing_strike", chance: 0.6 },
@@ -7090,7 +7094,7 @@
           level: 25,
           hp: 4000,
           maxHp: 4000,
-          attack: 30500,
+          attack: 550,
           defense: 450,
           exp: 4000,
           abilities: [
@@ -7116,7 +7120,7 @@
           level: 65,
           hp: 10000,
           maxHp: 10000,
-          attack: 58600,
+          attack: 700,
           defense: 500,
           exp: 10000,
           isBoss: true,
@@ -7292,7 +7296,7 @@
           typeOverride: "monster",
           hp: 500,
           level: 10,
-          attack: 45,
+          attack: 50,
           defense: 20,
           exp: 1000,
           maxHp: 500,
@@ -7589,7 +7593,7 @@
         },
         "Rollo: Técnica de Absorción de Qi Celestial": {
           description: "Enseña 'Técnica de Absorción de Qi Celestial'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "qi_absorption_celestial_1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         
@@ -7598,156 +7602,156 @@
         // -- Rollos Grado 1 --
         "Rollo: Inscripción Rúnica": {
             description: "Un manual antiguo que enseña el arte de trazar formaciones rúnicas en el suelo. Te permite aprender la habilidad 'Inscripción Rúnica'.",
-            effect: (ps) => learnTechniqueFromRoll(ps, "formation_scribing_1"),
+            effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
             canUse: () => true, // Se puede usar desde el inventario
         },
         "Rollo: Tajo del Viento Veloz (Inferior)": {
           description: "Enseña 'Tajo del Viento Veloz'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Físico de Buey de Piedra (Inferior)": {
           description: "Enseña 'Físico de Buey de Piedra'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "body_t1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Matriz de Escudo de Qi (Inferior)": {
           description: "Enseña 'Matriz de Escudo de Qi'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "formation_t1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Chispa Ígnea (Inferior)": {
           description: "Enseña 'Chispa Ígnea'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "fire_t1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Dedo de Relámpago (Inferior)": {
           description: "Enseña 'Dedo de Relámpago'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "lightning_t1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Paso Veloz (Inferior)": {
           description: "Enseña 'Paso Veloz'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "movement_t1"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
 
         // -- Rollos Grado 2 --
         "Rollo: Estocada Perfora-Armadura (Terrenal)": {
           description: "Enseña 'Estocada Perfora-Armadura'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t2"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Piel de Acero Fundido (Terrenal)": {
           description: "Enseña 'Piel de Acero Fundido'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "body_t2"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Matriz de Grilletes de Qi (Terrenal)": {
           description: "Enseña 'Matriz de Grilletes de Qi'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "formation_t2"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Paso Etéreo (Terrenal)": {
           description: "Enseña 'Paso Etéreo'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "movement_t2"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Aliento de Dragón Menor (Terrenal)": {
           description: "Enseña 'Aliento de Dragón Menor'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "fire_t2"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
 
         // -- Rollos Grado 3 --
         "Rollo: Danza de Espada Ciclónica (Marcial)": {
           description: "Enseña 'Danza de Espada Ciclónica'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t3"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Corazón de Voluntad Indomable (Marcial)": {
           description: "Enseña 'Corazón de Voluntad Indomable'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "body_t3"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Matriz de Supresión Espiritual (Marcial)": {
           description: "Enseña 'Matriz de Supresión Espiritual'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "formation_t3"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
        "Rollo: Jaula de Rayos (Marcial)": {
           description: "Enseña 'Jaula de Rayos'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "lightning_t3"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Parpadeo de Sombra (Marcial)": {
           description: "Enseña 'Parpadeo de Sombra'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "movement_t3"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
 
         // -- Rollos Grado 4 --
         "Rollo: Intento de Espada del Tirano (Soberano)": {
           description: "Enseña 'Intento de Espada del Tirano'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t4"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Cuerpo Dorado Inmortal (Soberano)": {
           description: "Enseña 'Cuerpo Dorado Inmortal'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "body_t4"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Sol Abrasador (Soberano)": {
           description: "Enseña 'Sol Abrasador'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "fire_t4"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Llamada del Juicio del Trueno (Soberano)": {
           description: "Enseña 'Llamada del Juicio del Trueno'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "lightning_t4"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Santuario Dorado Protector (Soberano)": {
           description: "Enseña 'Santuario Dorado Protector'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "formation_t4"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         // -- Rollos Grado 5 --
         "Rollo: Corte que Divide Cielos y Tierra (Trascendente)": {
           description: "Enseña 'Corte que Divide Cielos y Tierra'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t5"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Constitución de Dragón Ancestral (Trascendente)": {
           description: "Enseña 'Constitución de Dragón Ancestral'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "body_t5"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Llama del Fénix Renaciente (Trascendente)": {
           description: "Enseña 'Llama del Fénix Renaciente'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "fire_t5"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Tribulación de los Nueve Cielos (Trascendente)": {
           description: "Enseña 'Tribulación de los Nueve Cielos'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "lightning_t5"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Matriz de Reversión del Cosmos (Trascendente)": {
           description: "Enseña 'Matriz de Reversión del Cosmos'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "formation_t5"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Paso del Vacío Infinito (Trascendente)": {
           description: "Enseña 'Paso del Vacío Infinito'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "movement_t5"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
 
         // -- Rollos Grado 6 --
         "Rollo: Espada del Emperador (Celestial)": {
           description: "Enseña 'Espada del Emperador Celestial'.",
-          effect: (ps) => learnTechniqueFromRoll(ps, "sword_t6"),
+          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
         "Rollo: Cuerpo Inmortal de Jade (Celestial)": {
@@ -7839,37 +7843,7 @@
           effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
           canUse: () => true,
         },
-        // -- Rollos Grado 9 --
-        "Rollo: Corte del Origen Absoluto": {
-          description: "Enseña 'Corte del Origen Absoluto'.",
-          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
-          canUse: () => true,
-        },
-        "Rollo: Constitución de Dragón Ancestral": {
-          description: "Enseña 'Constitución de Dragón Ancestral'.",
-          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
-          canUse: () => true,
-        },
-        "Rollo: Llama del Fénix Renaciente": {
-          description: "Enseña 'Llama del Fénix Renaciente'.",
-          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
-          canUse: () => true,
-        },
-        "Rollo: Tribulación de los Nueve Cielos": {
-          description: "Enseña 'Tribulación de los Nueve Cielos'.",
-          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
-          canUse: () => true,
-        },
-        "Rollo: Matriz de Reversión del Cosmos": {
-          description: "Enseña 'Matriz de Reversión del Cosmos'.",
-          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
-          canUse: () => true,
-        },
-        "Rollo: Paso del Vacío Infinito": {
-          description: "Enseña 'Paso del Vacío Infinito'.",
-          effect: (ps, _, itemName) => learnTechniqueFromRoll(ps, itemName),
-          canUse: () => true,
-        },
+ 
 
         
 
@@ -11063,13 +11037,30 @@
             const stonesDisplay = document.getElementById("cultivationModalPlayerStones");
             const boostButton1 = document.getElementById("boostCultivationButton1");
             const boostButton10 = document.getElementById("boostCultivationButton10");
+            const boostButtonAll = document.getElementById("boostCultivationButtonAll"); 
             const currentStones = gameState.inventory["Piedras Espirituales"] || 0;
+            const isMaxLevel = playerTech.level >= techData.maxLevel;
             if (stonesDisplay) stonesDisplay.textContent = currentStones;
+            
             if (boostButton1) {
-                boostButton1.disabled = currentStones < 1 || playerTech.level >= techData.maxLevel;
+                boostButton1.disabled = currentStones < 1 || isMaxLevel;
             }
             if (boostButton10) {
-                boostButton10.disabled = currentStones < 10 || playerTech.level >= techData.maxLevel;
+                boostButton10.disabled = currentStones < 10 || isMaxLevel;
+            }if (boostButtonAll) {
+                if (isMaxLevel) {
+                    boostButtonAll.disabled = true;
+                    boostButtonAll.textContent = "Nivel Máximo";
+                } else {
+                    const timePerStone = 10;
+                    const progressNeeded = playerTech.cultivationTimeToNextLevel - (playerTech.currentCultivationProgress || 0);
+                    const stonesNeeded = Math.ceil(progressNeeded / timePerStone);
+
+                    boostButtonAll.disabled = currentStones < 1;
+                    // Actualizamos el texto para que sea claro
+                    boostButtonAll.textContent = `⏫ Subir Nivel (${stonesNeeded} PS)`;
+                    boostButtonAll.onclick = () => boostCultivationWithAllStones();
+                }
             }
           
           
@@ -11472,7 +11463,7 @@
           levelUp();
         }
       }
-
+//SUBIR NIVEL
       function levelUp() {
         const player = gameState.player;
         player.exp -= player.expToNext;
@@ -11688,6 +11679,49 @@
         logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
         updateTopNavVisibility();
         updatePlayerBarsOnMap();
+    }
+    function boostCultivationWithAllStones() {
+        const player = gameState.player;
+        const mode = player.cultivationMode;
+        const timePerStone = 10; // 10 segundos de progreso por cada piedra
+
+        if (!player.isCultivating || mode.type !== 'technique' || !mode.targetId) {
+            return; // Salir si no se está cultivando una técnica
+        }
+        
+        const techId = mode.targetId;
+        const playerTech = player.learnedTechniques[techId];
+        const techData = techniqueData[techId];
+        
+        if (!playerTech || !techData || playerTech.level >= techData.maxLevel) {
+            showModal("Límite Alcanzado", "Esta técnica ya está en su nivel máximo.");
+            return;
+        }
+
+        // --- INICIO DE LA LÓGICA DE CÁLCULO ---
+        const progressNeeded = playerTech.cultivationTimeToNextLevel - (playerTech.currentCultivationProgress || 0);
+        if (progressNeeded <= 0) {
+            showModal("Listo para Subir", "Esta técnica ya tiene suficiente progreso para subir de nivel al continuar el cultivo.");
+            return;
+        }
+
+        // Calculamos cuántas piedras se necesitan para cubrir el progreso faltante.
+        // Usamos Math.ceil para redondear hacia arriba y asegurar que se complete el nivel.
+        const stonesNeeded = Math.ceil(progressNeeded / timePerStone);
+        
+        const stonesAvailable = gameState.inventory["Piedras Espirituales"] || 0;
+
+        // Determinamos cuántas piedras se usarán realmente: el mínimo entre lo necesario y lo disponible.
+        const stonesToUse = Math.min(stonesNeeded, stonesAvailable);
+
+        if (stonesToUse <= 0) {
+            showModal("Sin Piedras", "No tienes Piedras Espirituales para acelerar el cultivo.");
+            return;
+        }
+        // --- FIN DE LA LÓGICA DE CÁLCULO ---
+
+        // Llamamos a la función original con la cantidad EXACTA que hemos calculado.
+        boostCultivationProgress(stonesToUse);
     }
       function showFloatingText(targetElement, text, type) {
         // --- ¡ESTA ES LA VERIFICACIÓN CLAVE! ---
