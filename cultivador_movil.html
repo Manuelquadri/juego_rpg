@@ -14819,55 +14819,57 @@ function dev_forceCompleteMission(missionId) {
       }
 
       function useQuickSlotItem(slotIndex) {
-        const itemName = gameState.player.quickSlots[slotIndex];
-        if (!itemName) {
-          console.log(`Slot ${slotIndex + 1} está vacío.`);
-          openItemAssignmentModal(slotIndex); // Correcto, permite asignar si está vacío
-          return;
+    // 1. Obtener el nombre del objeto desde la ranura
+    const itemName = gameState.player.quickSlots[slotIndex];
+    if (!itemName) {
+        openItemAssignmentModal(slotIndex); // Si la ranura está vacía, abrir el menú de asignación
+        return;
+    }
+
+    // 2. Obtener la definición maestra del objeto y la cantidad actual
+    // Usaremos un nombre de variable claro: "itemDefinition"
+    const itemDefinition = itemData[itemName];
+    const itemCount = gameState.inventory[itemName] || 0;
+
+    // 3. Comprobar si el objeto está agotado
+    if (itemCount <= 0) {
+        showModal("Agotado", `No te quedan más ${itemName}.`);
+        gameState.player.quickSlots[slotIndex] = null; // Limpiar la ranura vacía
+        renderQuickSlotBar();
+        return;
+    }
+
+    // 4. Comprobar si el objeto tiene una definición y si se puede usar
+    if (!itemDefinition) {
+        showModal("Error", `El objeto "${itemName}" no se encontró en la base de datos.`);
+        return;
+    }
+
+    if (itemDefinition.canUse && !itemDefinition.canUse(gameState.player)) {
+        showModal("No se puede usar", `No puedes usar ${itemName} ahora.`);
+        return;
+    }
+
+    // 5. Comprobar si el objeto tiene un efecto y ejecutarlo
+    if (itemDefinition.effect) {
+        // Llamar al efecto, pasando todos los argumentos necesarios
+        const message = itemDefinition.effect(gameState.player, gainExperience, itemName);
+
+        // 6. Procesar el resultado de la acción
+        if (message && !message.toLowerCase().includes("error") && !message.toLowerCase().includes("al máximo")) {
+            gameState.inventory[itemName]--; // Reducir del inventario
+            const newCount = gameState.inventory[itemName] || 0;
+            if (newCount <= 0) {
+                gameState.player.quickSlots[slotIndex] = null; // Limpiar si fue el último
+            }
         }
-
-        const item = itemData[itemName];
-        const itemCount = gameState.inventory[itemName] || 0;
-
-        if (itemCount <= 0) {
-          showModal("Agotado", `No te quedan más ${itemName}.`);
-          gameState.player.quickSlots[slotIndex] = null; // Limpiar el slot si se agotó
-          renderQuickSlotBar(); // <-- Importante actualizar la UI
-          return;
-        }
-
-        if (item && item.canUse && !item.canUse(gameState.player)) {
-          showModal("No se puede usar", `No puedes usar ${itemName} ahora.`);
-          return;
-        }
-
-        // Usar el objeto
-        const message = itemInfo.effect(gameState.player, gainExperience, itemName);
-
-        if (
-          message &&
-          !message.toLowerCase().includes("error") &&
-          !message.toLowerCase().includes("al máximo")
-        ) {
-          gameState.inventory[itemName]--;
-          showModal("Objeto Usado", message);
-          updateUI();
-
-          // Después de usar el ítem, verificamos si se agotó.
-          const newCount = gameState.inventory[itemName] || 0;
-          if (newCount <= 0) {
-            // Si la cantidad es 0, vaciamos el slot.
-            gameState.player.quickSlots[slotIndex] = null;
-            console.log(
-              `Ítem ${itemName} agotado. Vaciando slot ${slotIndex + 1}.`
-            );
-          }
-
-          renderQuickSlotBar(); // Vuelve a renderizar la barra para actualizar la cantidad o mostrar el slot vacío.
-        } else {
-          showModal("Acción no posible", message);
-        }
-      }
+        showModal("Objeto Usado", message);
+        updateUI();
+        renderQuickSlotBar(); // Actualizar siempre la UI y la barra rápida
+    } else {
+        showModal("Sin efecto", `El objeto "${itemName}" no tiene un efecto utilizable.`);
+    }
+}
 
       function showHelp() {
         showModal(
