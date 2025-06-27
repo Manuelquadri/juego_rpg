@@ -13916,6 +13916,44 @@ function dev_forceCompleteMission(missionId) {
         updateGameOverlayVisibility();
       }
 
+      function sanitizeMapEntities(mapState) {
+          if (!mapState || !mapState.entities || mapState.entities.length === 0) {
+              console.warn("[Sanitize Entities] No se encontraron entidades para revisar.");
+              return;
+          }
+
+          console.log("[Sanitize Entities] Iniciando la revisión y actualización de entidades del mapa...");
+
+          mapState.entities.forEach(entityInstance => {
+              // Obtenemos el ID de la definición maestra. Usamos originalEntityTypeId como prioridad.
+              const masterId = entityInstance.originalEntityTypeId || entityInstance.type;
+              const masterDefinition = entityTypes[masterId];
+
+              // Si la entidad ya no existe en el juego o es decorativa, la saltamos.
+              if (!masterDefinition || masterDefinition.isDecorative) {
+                  return;
+              }
+
+              let needsUpdate = false;
+              const propsToSync = ['hp', 'maxHp', 'attack', 'defense', 'exp', 'abilities', 'lootTable'];
+
+              // Comparamos cada propiedad clave. Si es diferente, la actualizamos.
+              propsToSync.forEach(prop => {
+                  // Usamos JSON.stringify para comparar objetos complejos como 'abilities' y 'lootTable'.
+                  if (JSON.stringify(entityInstance[prop]) !== JSON.stringify(masterDefinition[prop])) {
+                      console.log(`[Sanitize Entities] Actualizando '${prop}' para la entidad '${entityInstance.name}' (ID: ${masterId}).`);
+                      entityInstance[prop] = masterDefinition[prop];
+                      needsUpdate = true;
+                  }
+              });
+
+              if (needsUpdate) {
+                  console.log(` -> La entidad '${entityInstance.name}' ha sido actualizada a su versión más reciente.`);
+              }
+          });
+
+          console.log("[Sanitize Entities] Revisión de entidades completada.");
+      }
       function findEscapeTile(player, enemy) {
         const playerX = player.x;
         const playerY = player.y;
@@ -14629,6 +14667,7 @@ function dev_forceCompleteMission(missionId) {
                     throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
                 }
                 sanitizeActiveMissions(loadedGameState.player);
+                sanitizeMapEntities(loadedGameState.map);
                 // --- INICIO DE LA LÓGICA DE COMPATIBILIDAD MEJORADA ---
 
                 const loadedPlayer = loadedGameState.player;
