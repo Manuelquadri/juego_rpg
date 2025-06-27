@@ -13596,7 +13596,29 @@ function dev_forceCompleteMission(missionId) {
                         }
                         break;
 
-                    case 'debuff_stat':
+                    case 'debuff_stat_percent':
+                        if (effect.debuff && effect.debuff.stat === 'defense') {
+                            const reductionAmount = Math.floor(player.defense * effect.debuff.percentage);
+                            player.defenseReductionAmount += reductionAmount;
+                            player.defense -= reductionAmount;
+                            player.defenseReductionTurns = Math.max(player.defenseReductionTurns, effect.debuff.duration);
+                            
+                            logBattle(chosenAbility.logMessage(enemy.name, effect.debuff.percentage * 100, effect.debuff.duration));
+                            showFloatingText(playerSprite, 'Defensa ↓↓↓', 'debuff');
+                        }
+                        break;
+                    case 'percent_hp_damage':
+                      damage = Math.floor(player.maxHp * effect.percentage);
+                      applyDamageToPlayer(damage, chosenAbility.name);
+                      logBattle(chosenAbility.logMessage(enemy.name, damage));
+                      break;
+                    case 'true_damage':
+                      damage = effect.damage;
+                      // El daño verdadero se aplica directamente, sin pasar por applyDamageToPlayer para evitar reducciones.
+                      player.hp -= damage;
+                      logBattle(chosenAbility.logMessage(enemy.name, damage));
+                      showFloatingText(playerSprite, `-${damage}`, 'damage');
+                      break;
                     case 'dot_damage':
                     case 'heal_damage':
                         damage = Math.floor(enemy.attack * (effect.baseDamageMultiplier || 1.0));
