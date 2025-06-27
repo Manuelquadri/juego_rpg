@@ -328,7 +328,16 @@
       .selectable-enemy:hover {
           filter: brightness(1.3) drop-shadow(0 0 5px #fff);
       }
+      .player.channeling {
+            filter: drop-shadow(0 0 8px #ff99ff) brightness(1.5);
+            animation: pulse-channeling 1.5s infinite;
+        }
 
+        @keyframes pulse-channeling {
+            0% { filter: drop-shadow(0 0 8px #ff99ff) brightness(1.5); }
+            50% { filter: drop-shadow(0 0 16px #ffc0ff) brightness(1.8); }
+            100% { filter: drop-shadow(0 0 8px #ff99ff) brightness(1.5); }
+        }
       /* El estilo para el sombreado rojo del "área de peligro" */
       .danger-zone-tile {
           position: absolute;
@@ -2014,6 +2023,8 @@
       // Estado del juego y datos principales
       gameState = {
         player: {
+          isChannelingRune: false,     // true si está en modo seguro para plantar runas
+          channelingTimeout: null,
           x: 11,
           y: 15,
           level: 1,
@@ -9266,6 +9277,7 @@
         const newX = gameState.player.x + dx;
         const newY = gameState.player.y + dy;
         let canMove = true;
+        
 
         // Lógica de colisiones y movimiento (esta parte es correcta)
         if (
@@ -9283,18 +9295,19 @@
           }
         }
         if (canMove) {
+          const player = gameState.player; // Asegúrate de tener acceso al estado del jugador
           const entityAtNewPosition = gameState.map.entities.find(
             (e) => e.x === newX && e.y === newY
           );
           if (entityAtNewPosition) {
-            if (
-              G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) ||
-              entityAtNewPosition.isBoss ||
-              entityAtNewPosition.isSectChallengeRival
-            ) {
+            // AÑADIMOS LA CONDICIÓN !player.isChannelingRune
+            if (entityAtNewPosition && G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) && !player.isChannelingRune) {
               startBattle(entityAtNewPosition);
               return;
             }
+            player.x = newX;
+            player.y = newY;
+            updatePlayerPosition("normal_move");
             const entityTypeToCheck =
               entityAtNewPosition.originalEntityTypeId ||
               entityAtNewPosition.type;
@@ -9366,9 +9379,54 @@
       }
 
       //FIN FUNCION MOVE PLAYER
+      function placeRuneAt(x, y) {
+        const player = gameState.player;
+        
+        // Gasta los recursos
+        gameState.inventory["Tinta Rúnica"]--;
+        player.mana -= techniqueData.formation_scribing_1.manaCost || 10;
+        
+        const runeKey = `${x},${y}`;
+        
+        let targetEnemy = null;
+        if (gameState.selectedEnemyId) {
+            targetEnemy = gameState.map.entities.find(e => e.id === gameState.selectedEnemyId);
+        }
+        
+        if (targetEnemy) {
+            if (!targetEnemy.formationRunes) targetEnemy.formationRunes = {};
+            targetEnemy.formationRunes[runeKey] = 1;
+            gameState.utilityRunes = {};
+            
+            let patternFound = checkCombatPatterns(targetEnemy);
+            if (patternFound) {
+                if (!targetEnemy.pendingFormationEffects) targetEnemy.pendingFormationEffects = [];
+                targetEnemy.pendingFormationEffects.push(patternFound.effect);
+                targetEnemy.formationRunes = {};
+                showModal("¡Formación de Combate Completa!", `Has completado <strong>"${patternFound.name}"</strong>.`);
+            } else {
+                showModal("Runa de Combate Inscrita", `Has trazado una runa para ${targetEnemy.name}.`);
+            }
+        } else {
+            gameState.utilityRunes[runeKey] = 1;
+            let utilityPatternFound = checkUtilityPatterns();
+            if (utilityPatternFound) {
+                teleportPlayer(utilityPatternFound.effect.destinationId);
+                gameState.utilityRunes = {};
+                showModal("¡Portal Abierto!", `La ${utilityPatternFound.name} se activa...`, true);
+                setTimeout(() => closeModal(), 2000);
+            } else {
+                showModal("Runa de Utilidad Inscrita", "Has trazado parte de una matriz de utilidad.");
+            }
+        }
+
+        updateUI();
+        renderMap();
+        renderQuickSlotBar();
+    }
       function checkForAggressiveEnemies() {
-        if (gameState.battle.active || isAnyModalOpen()) {
-          return; // No iniciar combate si ya estamos en uno o en un modal.
+        if (gameState.battle.active || isAnyModalOpen() || gameState.player.isChannelingRune) {
+          return;
         }
 
         const playerX = gameState.player.x;
@@ -10216,6 +10274,11 @@
       }
 
       function interact() {
+        // Si estamos en modo de concentración, la interacción planta la runa.
+        if (gameState.player.isChannelingRune) {
+            plantRune(); // plantRune() ya maneja la lógica de "segundo clic"
+            return;
+        }
         if (gameState.player.isCultivating) {
           showModal(
             "Acción no permitida",
@@ -11688,6 +11751,11 @@
             toggleBtn.classList.add("hidden-during-battle");
         }
         const player = gameState.player;
+
+        if (player.isChannelingRune) {
+        player.isChannelingRune = false;
+        document.getElementById('player').classList.remove('channeling');
+    }
         if (player.isCultivating) stopCultivation();
         hideTouchControls();
         document.getElementById('quickSlotBar').classList.add('hidden');
@@ -12023,78 +12091,64 @@
 
 function plantRune() {
     const player = gameState.player;
-    const inkItem = "Tinta Rúnica";
-    const MAX_ENEMY_DETECTION_RANGE = 5;
 
-    // 1. Verificación de Recursos
-    if ((gameState.inventory[inkItem] || 0) < 1) { /* ... */ return; }
-    const manaCost = techniqueData.formation_scribing_1.manaCost || 10;
-    if (player.mana < manaCost) { /* ... */ return; }
+    // --- Lógica para el PRIMER clic (Activar el modo) ---
+    if (!player.isChannelingRune) {
+        // Comprobación de recursos
+        if ((gameState.inventory["Tinta Rúnica"] || 0) < 1) {
+            showModal("Sin Materiales", "Necesitas Tinta Rúnica para empezar a canalizar.");
+            return;
+        }
+        const manaCost = techniqueData.formation_scribing_1.manaCost || 10;
+        if (player.mana < manaCost) {
+            showModal("Maná Insuficiente", `Necesitas ${manaCost} de maná para canalizar la runa.`);
+            return;
+        }
 
-    // 2. Determinar el OBJETIVO de la runa (Prioridad: Seleccionado > Cercano)
-    let targetEnemy = null;
-    if (gameState.selectedEnemyId) {
-        targetEnemy = gameState.map.entities.find(e => e.id === gameState.selectedEnemyId);
-    } else {
-        // Si no hay ninguno seleccionado, buscamos el más cercano como antes
-        let closestEnemy = null;
-        let minDistance = Infinity;
-        gameState.map.entities.forEach(entity => {
-            const isHostile = G_COMBAT_ENTITY_TYPES.includes(entity.type) || entity.isBoss || entity.isMiniBoss;
-            if (isHostile) {
-                const distance = Math.hypot(player.x - entity.x, player.y - entity.y);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestEnemy = entity;
-                }
+        // Activar Modo Canalización
+        player.isChannelingRune = true;
+        document.getElementById('player').classList.add('channeling');
+        showModal(
+            "Canalizando Runa...",
+            "Estás en modo de trazado rúnico. Eres inmune a combates. Muévete a la posición deseada y pulsa el botón ✍️ de nuevo para trazar la runa. Tienes 10 segundos.",
+            true
+        );
+        setTimeout(() => closeModal(), 1000);
+
+        // Limpiar cualquier temporizador antiguo por si acaso
+        if (player.channelingTimeout) {
+            clearTimeout(player.channelingTimeout);
+        }
+
+        // Temporizador para salir del modo si no se hace nada
+        player.channelingTimeout = setTimeout(() => {
+            if (player.isChannelingRune) {
+                player.isChannelingRune = false;
+                document.getElementById('player').classList.remove('channeling');
+                // Mensaje mejorado y más genérico
+                showModal("Canalización Terminada", "La energía rúnica que estabas canalizando se ha disipado.");
             }
-        });
-        if (closestEnemy && minDistance <= MAX_ENEMY_DETECTION_RANGE) {
-            targetEnemy = closestEnemy;
-        }
-    }
-    
-    // Gasta los recursos
-    gameState.inventory[inkItem]--;
-    player.mana -= manaCost;
-    const runeKey = `${player.x},${player.y}`;
+        }, 10000); // 10 segundos para moverse y plantar
 
-    // 3. Lógica Diferenciada basada en si tenemos un objetivo o no
-    if (targetEnemy) {
-        // --- LÓGICA DE RUNAS DE COMBATE (Ahora usa 'targetEnemy') ---
-        if (!targetEnemy.formationRunes) targetEnemy.formationRunes = {};
-        targetEnemy.formationRunes[runeKey] = 1;
-        gameState.utilityRunes = {};
-        
-        // Comprobar patrones de combate
-        let patternFound = checkCombatPatterns(targetEnemy);
-
-        if (patternFound) {
-            if (!targetEnemy.pendingFormationEffects) targetEnemy.pendingFormationEffects = [];
-            targetEnemy.pendingFormationEffects.push(patternFound.effect);
-            targetEnemy.formationRunes = {}; // Limpiar las runas del enemigo
-            showModal("¡Formación de Combate Completa!", `Has completado <strong>"${patternFound.name}"</strong>.`);
-        } else {
-            showModal("Runa de Combate Inscrita", `Has trazado una runa de combate para ${targetEnemy.name}.`);
-        }
-    } else {
-        // --- LÓGICA DE RUNAS DE UTILIDAD ---
-        gameState.utilityRunes[runeKey] = 1;
-        
-        let utilityPatternFound = checkUtilityPatterns();
-        if (utilityPatternFound) {
-            teleportPlayer(utilityPatternFound.effect.destinationId);
-            gameState.utilityRunes = {};
-            showModal("¡Portal Abierto!", `La ${utilityPatternFound.name} se activa...`, true);
-            setTimeout(() => closeModal(), 2000);
-        } else {
-            showModal("Runa de Utilidad Inscrita", "Has trazado parte de una matriz de utilidad.");
-        }
+        return; // Salimos después de activar el modo
     }
 
-    updateUI();
-    renderMap();
-    renderQuickSlotBar();
+    // --- Lógica para clics SUBSECUENTES (Plantar la runa) ---
+    // Si ya estamos en modo de concentración, este clic planta la runa.
+    // Comprobamos los recursos DE NUEVO por si se quieren plantar varias runas.
+    if ((gameState.inventory["Tinta Rúnica"] || 0) < 1) {
+        showModal("Sin Materiales", "No tienes más Tinta Rúnica para trazar otra runa.");
+        return;
+    }
+    const manaCost = techniqueData.formation_scribing_1.manaCost || 10;
+    if (player.mana < manaCost) {
+        showModal("Maná Insuficiente", `Necesitas ${manaCost} de maná para trazar otra runa.`);
+        return;
+    }
+
+    // Llamar a la función que contiene la lógica de colocar y comprobar
+    // ¡YA NO DESACTIVAMOS EL MODO AQUÍ!
+    placeRuneAt(player.x, player.y);
 }
 function checkCombatPatterns(targetEnemy) {
     const placedRunes = targetEnemy.formationRunes || {};
@@ -14260,11 +14314,11 @@ function dev_forceCompleteMission(missionId) {
       return "";
   }
 
-      function startTechniqueRefinement(techId) {}
+    function startTechniqueRefinement(techId) {}
 
-      function stopTechniqueRefinement() {}
+    function stopTechniqueRefinement() {}
 
-      function applyTechniqueEffect(techId, newLevel) {
+    function applyTechniqueEffect(techId, newLevel) {
         // La lógica de aplicar efectos específicos se ha movido a `recalculatePlayerStats`.
         // Esta función ahora solo necesita asegurarse de que, después de que una técnica
         // suba de nivel, todas las estadísticas del jugador se actualicen correctamente
@@ -14274,7 +14328,7 @@ function dev_forceCompleteMission(missionId) {
         updateUI(); // Actualiza la interfaz para mostrar los cambios.
       }
 
-      function closeTechniqueModal() {
+    function closeTechniqueModal() {
         document.getElementById("techniqueModal").style.display = "none";
         updatePlayerBarsOnMap();
         showTouchControls();
