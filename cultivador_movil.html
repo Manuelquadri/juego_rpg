@@ -5384,7 +5384,7 @@
         pattern: [
             [1, 1, 1, 1, 1],
             [1, 0, 0, 0, 1],
-            [1, 0, 2, 0, 1],
+            [1, 0, 0, 0, 1],
             [1, 0, 0, 0, 1],
             [0, 0, 1, 0, 0]
         ],
@@ -9843,6 +9843,7 @@
         }
 
         logBattle("¡Las formaciones rúnicas preestablecidas se activan!");
+
         const scribingTech = gameState.player.learnedTechniques["formation_scribing_1"];
         let amplification = 1.0; // Por defecto, sin amplificación
         if (scribingTech && scribingTech.level > 1) {
@@ -9877,10 +9878,15 @@
                     showFloatingText(document.querySelector('.character-sprite'), `Regeneración+`, 'ability');
                 }else if (effect.stat === 'defenseBoost') {
                     const defenseBonus = Math.floor(effect.amount * amplification);
+                    // Aplicamos el bono directamente a los stats de batalla del jugador
                     gameState.player.defense += defenseBonus;
-                    logBattle(`La "${formationName}" endurece tu cuerpo, ¡ganas ${defenseBonus} de Defensa para este combate!`);
+                    let logMsg = `La "${formationName}" endurece tu cuerpo, ¡ganas ${defenseBonus} de Defensa para este combate!`;
+                    if (amplification > 1.0) logMsg += " (¡Amplificado!)";
+                    logBattle(logMsg);
                     showFloatingText(document.querySelector('.character-sprite'), `Defensa +${defenseBonus}`, 'ability');
-                }else if (effect.stat === 'manaRegenPerTurn') {
+                }
+                
+                else if (effect.stat === 'manaRegenPerTurn') {
                     const manaRegenBonus = Math.floor(effect.amount * amplification);
                     gameState.player.manaRegenPerTurn = (gameState.player.manaRegenPerTurn || 0) + manaRegenBonus;
                     logBattle(`El "${formationName}" crea un pozo de energía, restaurando ${manaRegenBonus} Maná cada turno.`);
