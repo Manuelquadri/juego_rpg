@@ -9776,32 +9776,30 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         }
         const currentContainerWidth = mapContainerElement.clientWidth;
         const currentContainerHeight = mapContainerElement.clientHeight;
-        // Obtenemos la transformación actual del mapa para saber dónde está su esquina superior-izquierda
-        const mapTransform = new DOMMatrixReadOnly(window.getComputedStyle(mapElement).transform);
-        const mapCurrentX = mapTransform.e;
-        const mapCurrentY = mapTransform.f;
+        // Calculamos la posición del jugador en la pantalla para saber dónde centrar la cámara.
+        const playerScreenX = currentContainerWidth / 2 - (gameState.player.frameWidth / 2);
+        const playerScreenY = currentContainerHeight / 2 - (gameState.player.frameHeight / 2);
+
+        // Calculamos cuál debería ser la posición de la esquina superior izquierda del mapa (el scroll).
+        // Esta es la misma lógica que en updatePlayerPosition, asegurando consistencia.
+        // NO leemos del DOM para evitar datos desactualizados.
+        const mapScrollX = -(gameState.player.x * currentTileSize) + playerScreenX;
+        const mapScrollY = -(gameState.player.y * currentTileSize) + playerScreenY;
         
-        // Calculamos qué tile del mundo está en la esquina superior izquierda de la pantalla
-        const viewWorldXStart = Math.floor(-mapCurrentX / currentTileSize);
-        const viewWorldYStart = Math.floor(-mapCurrentY / currentTileSize);
-        // Calculamos cuántos tiles necesitamos para llenar la pantalla y AÑADIMOS UN MARGEN DE SEGURIDAD.
-        // Sumar 2 tiles al ancho y alto asegura que siempre haya un "marco" de tiles renderizados
-        // justo fuera de la vista, eliminando cualquier posible franja.
+        // Basado en ese scroll calculado, determinamos qué tiles del mundo son visibles.
+        const viewWorldXStart = Math.floor(-mapScrollX / currentTileSize);
+        const viewWorldYStart = Math.floor(-mapScrollY / currentTileSize);
+        
+        // Y calculamos el área a renderizar, incluyendo nuestro margen de seguridad para evitar franjas.
         const tilesInViewX = Math.ceil(currentContainerWidth / currentTileSize) + 2;
         const tilesInViewY = Math.ceil(currentContainerHeight / currentTileSize) + 2;
-        // Calculamos el final del área a renderizar
+        
         const viewWorldXEnd = viewWorldXStart + tilesInViewX;
         const viewWorldYEnd = viewWorldYStart + tilesInViewY;
-        const playerScreenX = currentContainerWidth / 2 - currentTileSize / 2;
-        const playerScreenY = currentContainerHeight / 2 - currentTileSize / 2;
-        const mapExpectedScrollX = -(gameState.player.x * currentTileSize) + playerScreenX;
-        const mapExpectedScrollY = -(gameState.player.y * currentTileSize) + playerScreenY;
-       
-        
-      
 
-        mapElement.innerHTML = ""; 
-        
+        // --- FIN DE LA MODIFICACIÓN ---
+
+                mapElement.innerHTML = ""; 
        
         // 1. Renderizar TERRENO BASE
         for (let y = viewWorldYStart; y < viewWorldYEnd; y++) {
