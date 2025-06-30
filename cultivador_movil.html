@@ -2842,6 +2842,7 @@
 
       const G_COMBAT_ENTITY_TYPES = [
         "monster",
+        "mission_boss",
         "esqueleto_podrido",
         "bandido_desfiladero",
         "monster_desierto_escorpion",
@@ -6180,6 +6181,8 @@
             symbol: "👤",
             name: "Líder Cultor Renegado Kai",
             spriteUrl: "img/renegado_Kai.png",
+            type: "mission_boss", // Un tipo específico en lugar de un override.
+            npcId: "lider_renegado_kai",
             typeOverride: "monster",
             hp: 500,
             level: 15,
@@ -8941,7 +8944,7 @@ function closeModal(callback = null) { // <-- Se añade '= null'
           const player = gameState.player;
           const defeated = player.worldState.defeatedBosses || {};
           const activeMissions = player.secta.misionesActivas.map(m => m.id);
-          
+
           // 1. Empezamos con la lista de entidades que casi siempre deben existir.
           const potentialFixedEntities = {
               'shop': true, 'tutorial_formation_mural': true, 'secta_entrada_principal': true, 'secta_entrada_principal_2': true, 'secta_entrada_principal_3': true, 'secta_entrada_principal_4': true,
@@ -9489,7 +9492,12 @@ function closeModal(callback = null) { // <-- Se añade '= null'
           );
           if (entityAtNewPosition) {
             const entityIdentifier = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
-            
+            const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entityAtNewPosition.isBoss || entityAtNewPosition.isMiniBoss;
+
+            if (isCombatTarget && !player.isChannelingRune) {
+              startBattle(entityAtNewPosition);
+              return; 
+            }
             // 3a. ¿Es un enemigo? Inicia batalla.
             if (G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) && !player.isChannelingRune) {
               startBattle(entityAtNewPosition);
