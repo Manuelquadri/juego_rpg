@@ -10778,6 +10778,31 @@ function closeModal(callback = null) { // <-- Se añade '= null'
             console.error(`[interactWithSectNPC] NPC Data no encontrada para npcId: ${npcId}`);
             return;
         }
+        // --- LÓGICA ESPECIAL PARA ANCIANA SU ---
+        // Manejamos a la Anciana Su por separado porque sus interacciones son principalmente de historia.
+        if (npcId === 'anciana_su') {
+            const misionDemonio = player.secta.misionesActivas.find(m => m.id === 'mision_historia_1_demonio');
+            
+            // Si la misión del demonio está activa Y su objetivo está cumplido (progreso >= 1)
+            if (misionDemonio && (misionDemonio.progreso || 0) >= 1) {
+                // Le damos al jugador la opción de completar la misión.
+                showConfirmationModal(
+                    `Reportar a ${npcData.nombre}`,
+                    `Has derrotado al General Demonio. ¿Deseas informar a la Anciana Su y reclamar tu recompensa?`,
+                    () => {
+                        // Al confirmar, se llama a la función que otorga recompensas y limpia la misión.
+                        completeMission('mision_historia_1_demonio', 'anciana_su');
+                    }
+                );
+            } else {
+                // Si la misión no está lista para entregar, simplemente mostramos su diálogo de historia normal.
+                const dialogue = getStoryNpcDialogue(npcId);
+                showModal(`Hablando con ${npcData.nombre}`, dialogue);
+            }
+            // Importante: detenemos la función aquí para no mostrar el menú genérico de misiones para ella.
+            return;
+        }
+       
 
         let modalContentHTML = `<h3>${npcData.nombre} (${npcData.rol})</h3>`;
         modalContentHTML += `<p><em>"${npcData.dialogoInicial}"</em></p><hr>`;
@@ -16592,9 +16617,20 @@ function openItemAssignmentModal(slotIndex) {
                     return "Aún no has completado mi prueba. Recuerda, el diagrama del Sello de Iniciación está en tu panel de Técnicas. Estúdialo y replícalo.";
                 case 2: // Acaba de completar la misión 1, listo para recibir la 2.
                     return "¡Excelente! Sentí la pulsación de tu Sello. Tienes talento. Como prometí, tu siguiente lección es el 'Círculo de Vida Frondoso'. Regenerará tu vitalidad. Ahora, ve al Bosque Profundo, busca a un Treant Anciano y derrótalo. Usa el Círculo para probar tu nueva habilidad. ¿Aceptas este nuevo desafío?";
-                case 3: // Acaba de completar la misión 2, listo para recibir la 3.
-                    return "Has superado la prueba del Treant. Impresionante. Estás listo para una lección avanzada: la 'Matriz del Vórtice Arcano'. Esta formación puede destrozar defensas mágicas. Tu siguiente desafío te espera en el Desierto Profundo. Un Golem Ancestral ha despertado. Solo la Matriz del Vórtice Arcano puede romper su escudo. ¿Irás?";
-                case 4: // Acaba de completar la misión 3, listo para recibir la 4.
+                    case 3: 
+                        // Verificamos si la misión ya está activa para no añadirla dos veces.
+                        if (!player.secta.misionesActivas.some(m => m.id === 'mision_feng_3_romper_sello')) {
+                           // Añadimos la misión al diario del jugador.
+                           acceptMission('mision_feng_3_romper_sello');
+                           console.log("[Maestro Feng] Misión 'mision_feng_3_romper_sello' aceptada automáticamente.");
+                           // Forzamos una comprobación para que el Golem aparezca inmediatamente.
+                           ensureFixedEntities();
+                           renderMap();
+                        }
+                        // Devolvemos el diálogo que el jugador debe ver.
+                        return "Has superado la prueba del Treant. Impresionante. Estás listo para una lección avanzada: la 'Matriz del Vórtice Arcano'. Esta formación puede destrozar defensas mágicas. Tu siguiente desafío te espera en el Desierto Profundo. Un Golem Ancestral ha despertado. Solo la Matriz del Vórtice Arcano puede romper su escudo. ¿Irás?";
+                    // --- FIN DE LA MODIFICACIÓN ---
+                    case 4: // Acaba de completar la misión 3, listo para recibir la 4.
                     return "¡Derrotaste al Golem! Tu dominio de las formaciones ofensivas es innegable. Pero un verdadero maestro equilibra ataque y defensa. Te he enseñado la 'Égida de la Montaña Inamovible'. Para dominarla, enfréntate a un Djinn de las Arenas. Su furia pondrá a prueba tu nueva defensa hasta el límite. ¿Estás listo para tu prueba final de equilibrio?";
                 case 5: // Todas las misiones completas.
                     return "Has superado todas mis pruebas y has dominado el equilibrio entre ataque, defensa y utilidad. Ya no hay más que pueda enseñarte. Eres, por derecho propio, un Maestro de Formaciones. Usa tu conocimiento con sabiduría.";
