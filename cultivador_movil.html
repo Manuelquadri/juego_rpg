@@ -2888,6 +2888,7 @@
         "guardian_celestial_caido",
         "draco_hueso_antiguo_boss",
         "emperador_lich_del_valle",
+        "lider_renegado_kai",
       ];
       const G_MAX_MAP_ENTITIES = 30;
       const G_RESPAWN_THRESHOLD = 15;
@@ -9115,27 +9116,25 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         console.log(`[DEV] La derrota de '${entityTypeId}' ha sido procesada con éxito.`);
     }
 
-      function populateZoneWithDecorations(zone) {
+    function populateZoneWithDecorations(zone) {
         if (!zone.decorations || zone.decorations.length === 0) {
-          return; // No hay nada que decorar en esta zona
+          return;
         }
-
         console.log(`[Decor] Poblando decoraciones para la zona: ${zone.name}`);
 
-        // Recorremos cada celda de la zona
         for (let y = zone.y1; y <= zone.y2; y++) {
           for (let x = zone.x1; x <= zone.x2; x++) {
-            // Verificamos si la celda ya está ocupada por algo importante
-            const isOccupied = gameState.map.entities.some(
-              (e) => e.x === x && e.y === y
-            );
+            
+            // --- INICIO DE LA MODIFICACIÓN PREVENTIVA ---
+            // Comprobamos si la celda ya está ocupada por CUALQUIER entidad (fija, de spawn, etc.)
+            const isOccupied = gameState.map.entities.some((e) => e.x === x && e.y === y);
             if (isOccupied) {
-              continue; // Si ya hay un monstruo o recurso, no ponemos decoración encima
+              // Si ya hay un jefe, NPC, monstruo o recurso, NO ponemos decoración encima.
+              continue; 
             }
+            // --- FIN DE LA MODIFICACIÓN PREVENTIVA ---
 
-            // Iteramos sobre los tipos de decoración definidos para la zona
             for (const deco of zone.decorations) {
-              // Usamos Math.random() para decidir si colocar esta decoración
               if (Math.random() < deco.density) {
                 const decoDefinition = entityTypes[deco.entityTypeId];
                 if (decoDefinition) {
@@ -9150,9 +9149,7 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                     isDecorative: true,
                   };
                   gameState.map.entities.push(newDeco);
-                  // IMPORTANTE: Una vez que ponemos una decoración, salimos del bucle
-                  // para no poner múltiples decoraciones (ej. un árbol y una roca) en la misma celda.
-                  break;
+                  break; 
                 }
               }
             }
@@ -9455,125 +9452,109 @@ function closeModal(callback = null) { // <-- Se añade '= null'
       let lastPlayerMoveTime = 0; // Para controlar el tiempo de la animación
 
       function movePlayer(dx, dy) {
+        console.group(`[movePlayer] Intento de movimiento: dx=${dx}, dy=${dy}`);
+
         movePlayerCallCount++;
         const callId = movePlayerCallCount;
 
         const now = Date.now();
         if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
-          return;
+            console.log("-> Bloqueado por COOLDOWN. Fin de la ejecución.");
+            console.groupEnd();
+            return;
         }
 
-        const newX = gameState.player.x + dx;
-        const newY = gameState.player.y + dy;
+        const player = gameState.player;
+        const newX = player.x + dx;
+        const newY = player.y + dy;
         let canMove = true;
         
-
-        // --- 1. Verificación de Límites del Mapa ---
-        if (
-          newX < 0 ||
-          newX >= gameState.map.width ||
-          newY < 0 ||
-          newY >= gameState.map.height
-        ) {
-          canMove = false;
-        }
-        // --- 2. Verificación del Terreno (Montañas, Agua, etc.) ---
+        console.log(`-> Coordenadas de destino calculadas: (${newX}, ${newY})`);
+        
+        // Verificaciones de Límites y Terreno
+        if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) { canMove = false; }
         if (canMove) {
-          const targetTerrainId = getTerrainTypeAt(newX, newY);
-          if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) {
-            canMove = false;
-          }
+            const targetTerrainId = getTerrainTypeAt(newX, newY);
+            if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) { canMove = false; }
         }
-        // --- 3. Verificación de Entidades en la Casilla de Destino ---
+        
+        // Lógica de Búsqueda de Entidad Mejorada
         if (canMove) {
-          const player = gameState.player; // Asegúrate de tener acceso al estado del jugador
-          const entityAtNewPosition = gameState.map.entities.find(
-            (e) => e.x === newX && e.y === newY
-          );
-          if (entityAtNewPosition) {
-            const entityIdentifier = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
-            const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entityAtNewPosition.isBoss || entityAtNewPosition.isMiniBoss;
+            const entitiesAtNewPosition = gameState.map.entities.filter(e => e.x === newX && e.y === newY);
+            let entityToInteractWith = null;
 
-            if (isCombatTarget && !player.isChannelingRune) {
-              startBattle(entityAtNewPosition);
-              return; 
+            if (entitiesAtNewPosition.length > 0) {
+                entityToInteractWith = entitiesAtNewPosition.find(e => G_COMBAT_ENTITY_TYPES.includes(e.originalEntityTypeId || e.type) || e.isBoss || e.isMiniBoss);
+                if (!entityToInteractWith) {
+                    entityToInteractWith = entitiesAtNewPosition.find(e => G_BLOCKING_ENTITY_TYPES.includes(e.originalEntityTypeId || e.type));
+                }
             }
-            // 3a. ¿Es un enemigo? Inicia batalla.
-            if (G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) && !player.isChannelingRune) {
-              startBattle(entityAtNewPosition);
-              // Detenemos completamente la función de movimiento, ya que entramos en batalla.
-              return; 
+
+            if (entityToInteractWith) {
+                const entityIdentifier = entityToInteractWith.originalEntityTypeId || entityToInteractWith.type;
+                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entityToInteractWith.isBoss || entityToInteractWith.isMiniBoss;
+
+                if (isCombatTarget && !player.isChannelingRune) {
+                    console.log("%c-> Decisión FINAL: INICIAR BATALLA.", "color: #ff69b4; font-weight: bold;");
+                    console.groupEnd();
+                    startBattle(entityToInteractWith);
+                    return; 
+                }
+                
+                if (G_BLOCKING_ENTITY_TYPES.includes(entityIdentifier)) {
+                    canMove = false;
+                    console.log("%c-> Decisión: Entidad bloqueante. canMove = false", "color: orange;");
+                }
             }
+        }
+
+        // --- INICIO DE LA MODIFICACIÓN: RESTAURACIÓN DEL BLOQUE DE MOVIMIENTO ---
+        // Si después de todas las comprobaciones, 'canMove' sigue siendo true,
+        // entonces y solo entonces, ejecutamos la lógica para mover al jugador.
+        if (canMove) {
+            console.log("%c-> Decisión FINAL: PERMITIR MOVIMIENTO. Actualizando estado...", "color: #33cc33; font-weight: bold;");
+
+            const oldZone = getPlayerCurrentZone();
+            const oldZoneName = oldZone ? oldZone.name : "Tierras Salvajes";
             
-            // 3b. ¿Es una entidad bloqueante? Detiene el movimiento.
-            // Esta comprobación ahora se hace ANTES de mover al jugador.
-            if (G_BLOCKING_ENTITY_TYPES.includes(entityIdentifier)) {
-              canMove = false;
+            // Actualizamos las coordenadas del jugador en el estado del juego.
+            player.x = newX;
+            player.y = newY;
+            
+            // Lógica de Misión "Llegar a Punto"
+            const misionesActivas = [...player.secta.misionesActivas];
+            misionesActivas.forEach(misionActiva => {
+                const misionData = MISIONES_DATA[misionActiva.id];
+                if (misionData?.objetivo?.tipo === 'llegar_a_punto' && misionActiva.progreso !== 1) {
+                    if (player.x === misionData.objetivo.x && player.y === misionData.objetivo.y) {
+                        misionActiva.progreso = 1;
+                        logBattle(`Has llegado a ${misionData.objetivo.nombreArea || 'la ubicación designada'}.`);
+                        const npcEntregaNombre = SECTA_DATA.npcs[misionData.objetivo.npcEntrega]?.nombre || "el NPC correspondiente";
+                        showModal("Objetivo Alcanzado", `Has llegado a: <strong>${misionData.objetivo.nombreArea}</strong>.<br><br>Ahora debes reportar tu hallazgo a <strong>${npcEntregaNombre}</strong>.`);
+                        renderMap(); 
+                    }
+                }
+            });
+            
+            // Lógica de cambio de zona
+            const newZone = getPlayerCurrentZone();
+            const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
+            if (newZoneName !== oldZoneName) {
+              showZoneNotification(newZoneName);
             }
-          }
+            player.currentZoneName = newZoneName;
+            
+            // Actualizamos la UI y la posición visual en la pantalla.
+            updatePlayerPosition(`movePlayer_success_call_${callId}`);
+            updateUI();
+            lastSuccessfulMoveTime = now;
+        } else {
+            console.log("%c-> Decisión FINAL: MOVIMIENTO BLOQUEADO. No se actualiza el estado.", "color: red; font-weight: bold;");
         }
-
-        // --- 4. Si el movimiento sigue siendo válido, ACTUALIZAMOS el estado del jugador ---
-        if (canMove) {
-          
-
-          // 1. Obtenemos la zona ANTES de actualizar la posición del jugador
-          const oldZone = getPlayerCurrentZone();
-          const oldZoneName = oldZone ? oldZone.name : "Tierras Salvajes";
-          
-
-          // 2. ACTUALIZAMOS la posición del jugador en el gameState
-          gameState.player.x = newX;
-          gameState.player.y = newY;
-          // === TRIGGER DE MISIÓN DE LLEGAR A PUNTO ===
-          const misionesActivas = [...gameState.player.secta.misionesActivas]; // Copia para evitar problemas al modificar
-          misionesActivas.forEach(misionActiva => {
-              const misionData = MISIONES_DATA[misionActiva.id];
-              if (misionData?.objetivo?.tipo === 'llegar_a_punto') {
-                  const objetivo = misionData.objetivo;
-                  // Comprobamos si las coordenadas del jugador coinciden con el objetivo
-                  if (gameState.player.x === objetivo.x && gameState.player.y === objetivo.y) {
-                      // Comprobamos si la misión no ha sido ya completada en este ciclo
-                      if (misionActiva.progreso !== 1) {
-                          misionActiva.progreso = 1; // Marcamos el objetivo como cumplido
-                          logBattle(`Has llegado a ${objetivo.nombreArea || 'la ubicación designada'}.`); // Usamos logBattle para que se vea en el resumen
-                          
-                          const npcEntregaNombre = SECTA_DATA.npcs[objetivo.npcEntrega]?.nombre || "el NPC correspondiente";
-                          
-                          showModal("Objetivo Alcanzado", 
-                              `Has llegado a: <strong>${objetivo.nombreArea}</strong>.<br><br>Ahora debes reportar tu hallazgo a <strong>${npcEntregaNombre}</strong> en la secta para completar la misión.`);
-                          
-                          // Al llegar, el marcador visual ya no es necesario, así que repintamos el mapa
-                          renderMap(); 
-                      }
-                  }
-              }
-          });
-          // 3. Obtenemos la nueva zona AHORA que el jugador se ha movido
-          const newZone = getPlayerCurrentZone();
-          const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
-          
-
-          // 4. La comparación clave
-         
-          if (newZoneName !== oldZoneName) {
-           
-            showZoneNotification(newZoneName);
-          } else {
-            console.log(`   ==> NO, el jugador sigue en la misma zona.`);
-          }
-
-          // 5. Actualizamos la propiedad del jugador para la UI del panel de estado.
-          gameState.player.currentZoneName = newZoneName;
-
-          // Actualizar el resto del juego
-          updatePlayerPosition(`movePlayer_success_call_${callId}`);
-          updateUI();
-          lastSuccessfulMoveTime = now;
-
-        }
+        // --- FIN DE LA MODIFICACIÓN ---
+        
+        console.groupEnd();
       }
-
       //FIN FUNCION MOVE PLAYER
       function placeRuneAt(x, y) {
         const player = gameState.player;
@@ -14572,37 +14553,56 @@ function completeMission(misionId, npcIdEntregaManual = null) {
               return;
           }
 
-          console.log("[Sanitize Entities] Iniciando la revisión y actualización de entidades del mapa...");
+          console.log("[Sanitize Entities] Iniciando RECONSTRUCCIÓN y saneamiento de entidades del mapa...");
+          
+          const sanitizedEntities = [];
 
-          mapState.entities.forEach(entityInstance => {
-              // Obtenemos el ID de la definición maestra. Usamos originalEntityTypeId como prioridad.
-              const masterId = entityInstance.originalEntityTypeId || entityInstance.type;
+          mapState.entities.forEach(savedEntity => {
+              // Obtenemos el ID de la definición maestra. originalEntityTypeId es la fuente de verdad.
+              const masterId = savedEntity.originalEntityTypeId || savedEntity.type;
               const masterDefinition = entityTypes[masterId];
 
-              // Si la entidad ya no existe en el juego o es decorativa, la saltamos.
-              if (!masterDefinition || masterDefinition.isDecorative) {
-                  return;
+              // Si la entidad ya no existe en el juego (fue eliminada), no la incluimos en el nuevo array.
+              if (!masterDefinition) {
+                  console.warn(`[Sanitize Entities] Entidad obsoleta con ID maestro '${masterId}' eliminada del guardado.`);
+                  return; // 'return' aquí funciona como un 'continue' en un forEach.
               }
 
-              let needsUpdate = false;
-              const propsToSync = ['hp', 'maxHp', 'attack', 'defense', 'exp', 'abilities', 'lootTable'];
+              // --- INICIO DE LA LÓGICA DE RECONSTRUCCIÓN ---
 
-              // Comparamos cada propiedad clave. Si es diferente, la actualizamos.
-              propsToSync.forEach(prop => {
-                  // Usamos JSON.stringify para comparar objetos complejos como 'abilities' y 'lootTable'.
-                  if (JSON.stringify(entityInstance[prop]) !== JSON.stringify(masterDefinition[prop])) {
-                      console.log(`[Sanitize Entities] Actualizando '${prop}' para la entidad '${entityInstance.name}' (ID: ${masterId}).`);
-                      entityInstance[prop] = masterDefinition[prop];
-                      needsUpdate = true;
-                  }
-              });
+              // 1. Creamos una nueva entidad desde cero usando la definición maestra actual.
+              //    Esto garantiza que tenga todas las propiedades nuevas y correctas (como 'type', 'npcId', etc.)
+              const newSanitizedEntity = JSON.parse(JSON.stringify(masterDefinition));
 
-              if (needsUpdate) {
-                  console.log(` -> La entidad '${entityInstance.name}' ha sido actualizada a su versión más reciente.`);
+              // 2. Transferimos las propiedades de ESTADO que deben persistir desde la entidad guardada.
+              //    Estas son las propiedades que son únicas para cada instancia en el mapa.
+              newSanitizedEntity.id = savedEntity.id; // El ID único de la instancia siempre se conserva.
+              newSanitizedEntity.x = savedEntity.x;
+              newSanitizedEntity.y = savedEntity.y;
+              newSanitizedEntity.originalEntityTypeId = masterId; // Nos aseguramos de que esta clave persista.
+
+              // Si la entidad tiene vida, conservamos su HP actual, pero no si es mayor que el nuevo máximo.
+              if (typeof savedEntity.hp === 'number' && typeof newSanitizedEntity.maxHp === 'number') {
+                  newSanitizedEntity.hp = Math.min(savedEntity.hp, newSanitizedEntity.maxHp);
               }
+
+              // Propiedades como 'discovered' también deben persistir.
+              if (typeof savedEntity.discovered === 'boolean') {
+                  newSanitizedEntity.discovered = savedEntity.discovered;
+              }
+
+              // Si en el futuro añades más propiedades de estado (ej: 'isHostile_temp'), las añadirías aquí.
+
+              // 3. Añadimos la entidad completamente reconstruida y saneada a nuestro nuevo array.
+              sanitizedEntities.push(newSanitizedEntity);
+
+              // --- FIN DE LA LÓGICA DE RECONSTRUCCIÓN ---
           });
 
-          console.log("[Sanitize Entities] Revisión de entidades completada.");
+          // Finalmente, reemplazamos el array de entidades antiguo por el completamente nuevo y saneado.
+          mapState.entities = sanitizedEntities;
+          
+          console.log("[Sanitize Entities] Reconstrucción de entidades completada.");
       }
       function findEscapeTile(player, enemy) {
         const playerX = player.x;
