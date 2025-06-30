@@ -3208,7 +3208,6 @@
               "mision_lobos_bosque_1", // Nueva misión ofrecida por Lin
               "mision_cultivador_hostil_1", // Nueva misión ofrecida por Lin
               "mision_componentes_alquimia_1",
-              "mision_eliminar_golem_1",
               "mision_recuperar_artefacto_1",
               // --- NUEVAS MISIONES ASIGNADAS ---
               // Rango: Discípulo Externo
@@ -3306,6 +3305,26 @@
       };
 
       const MISIONES_DATA = {
+
+        // ==========================================================
+        // ===            MISIONES DE HISTORIA PRINCIPAL          ===
+        // ==========================================================
+        mision_historia_1_demonio: {
+            titulo: "El General Demonio de la Pradera",
+            descripcion: "La Anciana Su te ha revelado que una poderosa presencia demoníaca se ha manifestado al sur de las praderas de la secta. Este 'General Demonio' es una amenaza directa y su derrota es crucial para la seguridad de todos. Encuéntralo y elimínalo.",
+            objetivo: {
+                tipo: "derrotar_npc_especifico",
+                npcId: "boss_dem", // ID del jefe que debe ser derrotado
+                npcEntrega: "anciana_su", // Reportar a la Anciana Su
+            },
+            recompensa: {
+                pcs: 300,
+                exp: 1500,
+                items: { "Núcleo Demoníaco Mayor": 1, "Piedras Espirituales": 150 },
+            },
+            // Esta misión no es ofrecida por un NPC, se activa por evento.
+            isStoryMission: true, 
+        },
         // === MISIONES: DISCÍPULO EXTERNO ===
 
         mision_ext_1: {
@@ -3436,7 +3455,9 @@
         },
         mision_feng_3_romper_sello: {
             titulo: "Rompiendo el Sello Ancestral",
-            descripcion: "Tu siguiente gran prueba. El Golem Geo en el Desierto Profundo es inmune a los ataques convencionales. Debes usar la 'Matriz del Vórtice Arcano' para destruir su barrera mágica y derrotarlo.",
+            
+            descripcion: "Tu siguiente gran prueba. El Golem Geo en el Desierto Profundo está protegido por un sello mágico que lo hace invulnerable. La 'Matriz del Vórtice Arcano' que te enseñé no funcionará contra la magia de la tierra. Necesitarás un poder diferente, uno que 'quiebre el caparazón' desde fuera. Investiga los diagramas que has encontrado en tus viajes y usa la formación correcta para destruir su barrera mágica antes de poder derrotarlo.",
+            
             objetivo: {
                 tipo: "derrotar_npc_especifico",
                 npcId: "boss_ancient_golem",
@@ -3445,7 +3466,7 @@
             recompensa: {
                 pcs: 1000,
                 exp: 8000,
-                learnPattern: "aegis_of_the_mountain" // Ahora la recompensa es el siguiente patrón
+                learnPattern: "aegis_of_the_mountain"
             },
             npcInicio: "maestro_feng"
         },
@@ -3602,26 +3623,7 @@
           requisitoRango: "Discípulo Interno",
           requisitoNivel: 10,
         },
-        mision_eliminar_golem_1: {
-          titulo: "La Amenaza Pétrea",
-          descripcion: "Un Golem Geo ha despertado al sur de la pradera. Su presencia es una amenaza para toda la secta. Destrúyelo y reporta tu éxito al Guía Lin.",
-          // CORREGIDO: La estructura del objeto 'objetivo' ahora es plana y correcta.
-          objetivo: {
-              tipo: "eliminar_enemigo",
-              enemigoTipo: "boss_ancient_golem",
-              cantidad: 1,
-              nombreDisplay: "Golem Geo",
-              npcEntrega: "guia_lin",
-          },
-          recompensa: {
-              pcs: 300,
-              exp: 800,
-              items: { "Piedras Espirituales": 50, "Corazón de Golem de Jade": 1 },
-          },
-          npcInicio: "guia_lin",
-          requisitoRango: "Discípulo Interno",
-          requisitoNivel: 11,
-      },
+        
 
         // === MISIONES: DISCÍPULO PRINCIPAL ===
         // (Se desbloquean al alcanzar este rango)
@@ -7550,6 +7552,7 @@
               quantity: [1, 1],
               chance: 0.8,
             },
+            { itemName: "Diagrama: Hexagrama Devastador", quantity: [1, 1], chance: 1.0 },
        
 
         
@@ -7571,7 +7574,7 @@
           maxHp: 800,
           isBoss: true,
           npcId: "boss_ancient_golem",
-          formationVulnerability: "arcane_vortex_array", 
+          formationVulnerability: "shattering_hexagram", 
           abilities: [
             {
               name: "Golpe Sísmico",
@@ -7600,10 +7603,10 @@
               chance: 0.3,
               extraData: { elementalType: "earth" },
             },
-            { itemName: "Diagrama: Hexagrama Devastador", quantity: [1, 1], chance: 1.0 }, // 
+            // 
           ],
           
-          fixedLocation: { x: 72, y: 51 },
+          fixedLocation: { x: 65, y: 51 },
         },
       };
       //------------------------   ITEMS ---------------------------------------------------
@@ -8422,17 +8425,28 @@
         const flags = player.worldState.storyFlags;
 
         switch (npcId) {
-        case "anciana_su":
+          case "anciana_su":
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Si el jugador acaba de conocerla, le da la misión principal.
             if (!flags.metAncianaSu) {
-                return "Joven discípulo... tu flujo de Qi es... peculiar. Me recuerda a las viejas leyendas. Sigue entrenando, estaré observando.";
+                // Marcar que ya la conoció para que este diálogo no se repita.
+                flags.metAncianaSu = true; 
+                
+                // Acepta la misión automáticamente en nombre del jugador.
+                acceptMission('mision_historia_1_demonio');
+
+                return "Joven discípulo... tu flujo de Qi es... peculiar. Me recuerda a las viejas leyendas. La energía en la región es inestable. Un 'General Demonio' ha aparecido al sur. Su presencia es una afrenta que debe ser eliminada. Considera esta tu primera gran prueba. Vuelve a verme cuando lo hayas derrotado.";
             }
+            // --- FIN DE LA MODIFICACIÓN ---
+
             if (flags.knowsAboutCalamity && !flags.knowsAboutSoberano) {
-                return "La Gran Calamidad fue una herida profunda para nuestra secta. Siento que sus ecos aún resuenan. Ten cuidado en tus misiones.";
+                return "La derrota del General Demonio es un gran logro, pero es solo el comienzo. La Gran Calamidad fue una herida profunda para nuestra secta. Siento que sus ecos aún resuenan. Ten cuidado en tus misiones.";
             }
             if (flags.knowsAboutSoberano) {
                 return "Así que el Maestro te ha contado... El peso sobre tus hombros es grande. Busca la verdad completa, el Santuario del Eco en el Valle del Dragón Caído podría tener respuestas.";
             }
             return "El conocimiento del pasado es la llave del futuro. Si tienes preguntas, los archivos siempre están abiertos.";
+
 
         case "maestro_jian":
             if (flags.knowsFullTruth) {
@@ -8440,6 +8454,10 @@
             }
             if (flags.knowsAboutSoberano) {
                 return `Ahora que conoces parte del secreto, debes entender la gravedad de la situación. El sello se debilita. Cada victoria tuya nos da más tiempo.`;
+            }
+            // --- NUEVO DIÁLOGO TRAS DERROTAR AL DEMONIO ---
+            if (player.secta.misionesCompletadas['mision_historia_1_demonio']) {
+                 return `He oído de tu victoria contra el General Demonio. Un logro notable que demuestra tu potencial. Sigue por este camino, y quizás seas tú quien restaure la gloria de nuestra secta.`;
             }
             return "El camino del cultivador es largo y arduo. Que el Viento Azure guíe tus pasos.";
     }
@@ -8904,12 +8922,25 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 
               // Jefes de Historia (su aparición es condicional)
               'boss_dem': !defeated.boss_dem,
-              'boss_ancient_golem': defeated.boss_dem && !defeated.boss_ancient_golem,
+            
               'avatar_del_dao_corrupto': activeMissions.includes('mision_maestro_1'),
 
               // Jefes de Desafío de Secta (condicionales a misión activa)
               // Se añaden dinámicamente abajo
           };
+          // 3. Revisamos TODAS las misiones activas para hacer aparecer a los jefes específicos.
+          player.secta.misionesActivas.forEach(misionActiva => {
+              const misionData = MISIONES_DATA[misionActiva.id];
+              if (misionData?.objetivo?.tipo === 'derrotar_npc_especifico' && misionData.objetivo.npcId) {
+                  const npcToSpawnId = misionData.objetivo.npcId;
+                  
+                  // Solo lo marcamos para aparecer si NO ha sido derrotado previamente.
+                  if (!defeated[npcToSpawnId]) {
+                       potentialFixedEntities[npcToSpawnId] = true;
+                       console.log(`[EnsureFixed] Misión activa '${misionActiva.id}' requiere que '${npcToSpawnId}' exista. Marcado para aparecer.`);
+                  }
+              }
+          });
           // 1. LÍDER RENEGADO KAI: Aparece solo si la misión para cazarlo está activa.
           const misionKaiActiva = player.secta.misionesActivas.some(m => m.id === 'mision_cazar_renegado_kai');
           if (misionKaiActiva && !player.secta.misionesCompletadas['mision_cazar_renegado_kai']) {
@@ -10802,7 +10833,28 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                 }
             }
         });
-
+        if (npcId === 'anciana_su') {
+            const misionDemonio = player.secta.misionesActivas.find(m => m.id === 'mision_historia_1_demonio');
+            
+            // Si la misión está activa y completada (progreso=1)
+            if (misionDemonio && misionDemonio.progreso === 1) {
+                // Usamos un modal de confirmación para que el jugador elija entregarla.
+                showConfirmationModal(
+                    `Reportar a ${npcData.nombre}`,
+                    `Has derrotado al General Demonio. ¿Deseas informar a la Anciana Su y reclamar tu recompensa?`,
+                    () => {
+                        // Al confirmar, se completa la misión.
+                        completeMission('mision_historia_1_demonio');
+                    }
+                );
+            } else {
+                // Si la misión no está lista o no está activa, mostramos el diálogo normal.
+                const dialogue = getStoryNpcDialogue(npcId);
+                showModal(`Hablando con ${npcData.nombre}`, dialogue);
+            }
+            // Detenemos la función aquí para no mostrar el menú genérico de misiones para ella.
+            return;
+        }
         if (!algunaMisionParaCompletar && !player.secta.misionesActivas.some(m => MISIONES_DATA[m.id]?.objetivo?.npcEntrega === npcId)) {
             modalContentHTML += "<p>No tienes misiones para entregarme o reportarme en este momento.</p>";
         } else if (!algunaMisionParaCompletar) {
@@ -11770,6 +11822,7 @@ function closeModal(callback = null) { // <-- Se añade '= null'
     showModal("Objeto Usado", message);
     updateUI();
     renderQuickSlotBar();
+    updatePlayerBarsOnMap();
     console.groupEnd();
 }
 
@@ -11988,8 +12041,30 @@ function closeModal(callback = null) { // <-- Se añade '= null'
             silencedTurns: 0,
             sealedTurns: 0,
         };
-        console.log("[startBattle] Comprobando y aplicando formaciones pendientes...");
+        // --- INICIO DE LA LÓGICA DE VULNERABILIDAD CORREGIDA ---
+        if (enemyDefinition.formationVulnerability && mapEntity.pendingFormationEffects) {
+            const requiredPatternId = enemyDefinition.formationVulnerability;
+            const matchingEffect = mapEntity.pendingFormationEffects.find(effect => effect.sourcePatternId === requiredPatternId);
+
+            if (matchingEffect) {
+                // ¡La formación correcta fue usada!
+                logBattle(`¡La ${FORMATION_PATTERNS[requiredPatternId].name} resuena con el enemigo!`);
+                logBattle("¡Su sello mágico se hace añicos!");
+                
+                // Reducimos drásticamente su defensa para hacerlo vulnerable
+                gameState.battle.enemy.defense = 5; // Un valor muy bajo.
+                showFloatingText(document.getElementById('enemySprite'), '¡DEFENSA ROTA!', 'debuff');
+
+            } else {
+                // Se usó una formación, pero no la correcta.
+                logBattle("La formación que trazaste no tiene efecto sobre la poderosa magia de este ser.");
+            }
+        }
+        // --- FIN DE LA LÓGICA DE VULNERABILIDAD CORREGIDA ---
+        console.log("[startBattle] Comprobando y aplicando formaciones pendientes (si no son de vulnerabilidad)...");
         checkAndApplyFormation(mapEntity);
+
+        
         // ================================================
 
         gameState.battle.playerTurn = true;
@@ -12007,7 +12082,8 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         console.log("Propiedades clave del enemigo en batalla:", {
             name: gameState.battle.enemy.name,
             npcId: gameState.battle.enemy.npcId,
-            originalEntityTypeId: gameState.battle.enemy.originalEntityTypeId
+            originalEntityTypeId: gameState.battle.enemy.originalEntityTypeId,
+            defense: gameState.battle.enemy.defense
         });
         console.groupEnd();
     // --- FIN DEL LOG -
@@ -13675,6 +13751,14 @@ function completeMission(misionId, npcIdEntregaManual = null) {
             "Poco después de tu ascenso, recibes una nota de la Anciana Su, la archivista de la secta. Te pide que la visites.<br><br><em>'Tu control sobre el Qi... es especial. Visítame en los archivos cuando puedas. Hay cosas que deberías saber sobre la Gran Calamidad que hirió a nuestra secta.'</em>");
         }, 2500); // Pequeño retraso para no solapar modales
     }
+    if (misionId === "mision_historia_1_demonio" && !player.worldState.storyFlags.knowsAboutCalamity) {
+        // Ahora, al derrotar al demonio, se activa la siguiente fase de la historia
+        flags.knowsAboutCalamity = true;
+        setTimeout(() => {
+            showModal("Una Invitación Inesperada", 
+            "Tu victoria contra el General Demonio ha llamado la atención de los altos mandos. Recibes una nota de la Anciana Su, la archivista de la secta, pidiéndote que la visites de nuevo.<br><br><em>'Tu control sobre el Qi... es especial. Visítame en los archivos. Hay cosas que deberías saber sobre la Gran Calamidad que hirió a nuestra secta.'</em>");
+        }, 2500); // Pequeño retraso para no solapar modales
+    }
     if (misionId === "mision_desafio_diacono_1" && !flags.knowsAboutSoberano) {
         flags.knowsAboutSoberano = true;
         setTimeout(() => {
@@ -15154,66 +15238,97 @@ function completeMission(misionId, npcIdEntregaManual = null) {
                 if (!loadedGameState.player || !loadedGameState.map || !loadedGameState.inventory) {
                     throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
                 }
-                sanitizeActiveMissions(loadedGameState.player);
-                sanitizeMapEntities(loadedGameState.map);
-                // --- INICIO DE LA LÓGICA DE COMPATIBILIDAD MEJORADA ---
 
-                const loadedPlayer = loadedGameState.player;
+                // --- INICIO DE LA LÓGICA DE SANEAMIENTO DE PARTIDA ---
+                console.groupCollapsed("[Saneamiento de Partida Guardada]");
 
-                // 1. Saneamiento Básico de propiedades del jugador
-                if (!loadedPlayer.abilityCooldowns) loadedPlayer.abilityCooldowns = {};
-                if (!loadedPlayer.equippedTechniques) loadedPlayer.equippedTechniques = [null, null, null, null, null];
+                const playerState = loadedGameState.player;
+                const mapState = loadedGameState.map;
 
-                // 2. Saneamiento profundo de las TÉCNICAS APRENDIDAS
-                const techniquesToSanitize = loadedPlayer.learnedTechniques || {};
-                const sanitizedTechniques = {}; 
-
-                for (const techId in techniquesToSanitize) {
-                    // Si la técnica ya no existe en la versión actual del juego, la ignoramos.
-                    if (techniqueData[techId]) {
-                        const savedTechData = techniquesToSanitize[techId];
-                        const masterTechData = techniqueData[techId];
-
-                        // Creamos una nueva copia saneada de la técnica del jugador.
-                        const sanitizedPlayerTech = { ...savedTechData };
-                        
-                        // Aseguramos que las propiedades básicas de cultivo existan
-                        if (typeof sanitizedPlayerTech.level === 'undefined') sanitizedPlayerTech.level = 0;
-                        if (typeof sanitizedPlayerTech.currentCultivationProgress === 'undefined') sanitizedPlayerTech.currentCultivationProgress = 0;
-                        if (typeof sanitizedPlayerTech.cultivationTimeToNextLevel === 'undefined') {
-                            sanitizedPlayerTech.cultivationTimeToNextLevel = masterTechData.cultivationSettings?.baseTimeToLevelUp || Infinity;
-                        }
-
-                        // ¡Este es el paso clave! Comparamos con la definición maestra.
-                        // Si en el futuro añades más propiedades a 'effect', esta lógica las cubrirá.
-                        if (masterTechData.effect) {
-                             // Si el objeto de efecto no existe en el guardado, lo creamos.
-                            if (!sanitizedPlayerTech.effect) {
-                                sanitizedPlayerTech.effect = {};
-                            }
-                            // Recorremos las propiedades del efecto maestro...
-                            for (const effectProp in masterTechData.effect) {
-                                // ...y si una propiedad no existe en el guardado, la añadimos.
-                                if (typeof sanitizedPlayerTech.effect[effectProp] === 'undefined') {
-                                    sanitizedPlayerTech.effect[effectProp] = masterTechData.effect[effectProp];
-                                    console.warn(`Partida antigua: Añadida propiedad faltante '${effectProp}' a la técnica '${techId}'.`);
-                                }
-                            }
-                        }
-                        sanitizedTechniques[techId] = sanitizedPlayerTech;
-                    } else {
-                        console.warn(`Técnica obsoleta '${techId}' eliminada del guardado.`);
+                // 1. SANEAMIENTO DEL JUGADOR: Asegurar que existan propiedades nuevas
+                // Esto previene errores de 'undefined' si el juego ha sido actualizado.
+                const defaultPlayer = gameState.player; // Usamos el estado inicial como plantilla
+                for (const key in defaultPlayer) {
+                    if (typeof playerState[key] === 'undefined') {
+                        playerState[key] = JSON.parse(JSON.stringify(defaultPlayer[key]));
+                        console.log(` -> Propiedad faltante añadida a 'player': ${key}`);
                     }
                 }
-                loadedPlayer.learnedTechniques = sanitizedTechniques;
+                // Saneamiento de sub-objetos
+                if (!playerState.worldState) playerState.worldState = { ...defaultPlayer.worldState };
+                playerState.worldState.storyFlags = { ...defaultPlayer.worldState.storyFlags, ...playerState.worldState.storyFlags };
+                playerState.worldState.subplotFlags = { ...defaultPlayer.worldState.subplotFlags, ...playerState.worldState.subplotFlags };
+                if (!playerState.secta) playerState.secta = { ...defaultPlayer.secta };
+                playerState.secta.misionesActivas = playerState.secta.misionesActivas || [];
+                playerState.secta.misionesCompletadas = playerState.secta.misionesCompletadas || {};
 
-                // 3. Asignamos los datos saneados al estado del juego
-                gameState.player = loadedPlayer;
-                gameState.inventory = JSON.parse(JSON.stringify(loadedGameState.inventory));
-                gameState.map.entities = loadedGameState.map.entities ? JSON.parse(JSON.stringify(loadedGameState.map.entities)) : [];
+
+                // 2. SANEAMIENTO PROFUNDO DE TÉCNICAS APRENDIDAS
+                const sanitizedTechniques = {};
+                for (const techId in playerState.learnedTechniques) {
+                    const masterTech = techniqueData[techId];
+                    if (masterTech) { // La técnica todavía existe en el juego
+                        const playerTech = playerState.learnedTechniques[techId];
+                        // Comprobar y actualizar las propiedades del efecto si han cambiado
+                        if (masterTech.effect && playerTech.effect) {
+                             for(const effectProp in masterTech.effect) {
+                                if (typeof playerTech.effect[effectProp] === 'undefined') {
+                                    playerTech.effect[effectProp] = masterTech.effect[effectProp];
+                                    console.log(` -> Propiedad de efecto '${effectProp}' actualizada para la técnica '${techId}'.`);
+                                }
+                             }
+                        }
+                        sanitizedTechniques[techId] = playerTech;
+                    } else {
+                        console.warn(` -> Técnica obsoleta '${techId}' eliminada del guardado.`);
+                    }
+                }
+                playerState.learnedTechniques = sanitizedTechniques;
+
+                // 3. SANEAMIENTO DE MISIONES ACTIVAS
+                const sanitizedMissions = playerState.secta.misionesActivas.filter(activeMission => {
+                    const masterMission = MISIONES_DATA[activeMission.id];
+                    if (!masterMission) {
+                        console.warn(` -> Misión activa obsoleta '${activeMission.id}' eliminada.`);
+                        return false;
+                    }
+                    // Compara el objetivo guardado con el maestro, si ha cambiado, lo actualiza.
+                    if (JSON.stringify(activeMission.objetivoOriginal) !== JSON.stringify(masterMission.objetivo)) {
+                        console.log(` -> Objetivo de la misión '${activeMission.id}' actualizado a la última versión.`);
+                        activeMission.objetivoOriginal = JSON.parse(JSON.stringify(masterMission.objetivo));
+                    }
+                    return true;
+                });
+                playerState.secta.misionesActivas = sanitizedMissions;
+
+
+                // 4. SANEAMIENTO DE ENTIDADES DEL MAPA (Rebalanceo de enemigos guardados)
+                if (mapState.entities) {
+                    mapState.entities.forEach(entity => {
+                        const masterId = entity.originalEntityTypeId || entity.type;
+                        const masterDef = entityTypes[masterId];
+                        if (masterDef && !masterDef.isDecorative) {
+                            // Actualiza stats clave para reflejar el balanceo actual
+                            entity.hp = masterDef.hp;
+                            entity.maxHp = masterDef.maxHp || masterDef.hp;
+                            entity.attack = masterDef.attack;
+                            entity.defense = masterDef.defense;
+                            entity.exp = masterDef.exp;
+                            entity.lootTable = masterDef.lootTable; // Actualiza el botín
+                            entity.abilities = masterDef.abilities; // Actualiza las habilidades
+                        }
+                    });
+                }
                 
-                // --- FIN DE LA LÓGICA DE COMPATIBILIDAD ---
+                console.groupEnd();
+                // --- FIN DE LA LÓGICA DE SANEAMIENTO ---
 
+
+                // Asignamos los datos saneados al estado del juego
+                gameState.player = playerState;
+                gameState.inventory = JSON.parse(JSON.stringify(loadedGameState.inventory));
+                gameState.map.entities = mapState.entities ? JSON.parse(JSON.stringify(mapState.entities)) : [];
+                
                 // Resetear estados transitorios
                 gameState.player.isCultivating = false;
                 if (gameState.cultivationInterval) {
@@ -15222,12 +15337,12 @@ function completeMission(misionId, npcIdEntregaManual = null) {
                 }
 
                 // Reconstruir el juego con los datos actualizados
-                generateMap(true);
-                recalculatePlayerStats(); // Es crucial recalcular stats DESPUÉS de sanear los datos
+                generateMap(false); // Usar false para no repoblar todo y mantener el estado del mapa cargado
+                recalculatePlayerStats(); 
                 renderQuickSlotBar();
                 updatePlayerPosition("loadGameFromFile_end");
 
-                showModal("Partida Cargada", "¡Partida restaurada con éxito! (Se aplicaron actualizaciones de compatibilidad)");
+                showModal("Partida Cargada", "¡Partida restaurada con éxito! (Se aplicaron actualizaciones de compatibilidad si fue necesario)");
 
             } catch (error) {
                 showModal("Error al Cargar", `Hubo un problema: ${error.message}`);
@@ -15243,6 +15358,8 @@ function completeMission(misionId, npcIdEntregaManual = null) {
         reader.readAsText(file);
     }
 
+      
+    
       function renderQuickSlotBar() {
         const bar = document.getElementById("quickSlotBar");
         if (!bar) return;
