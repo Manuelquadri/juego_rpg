@@ -15363,15 +15363,23 @@ function completeMission(misionId, npcIdEntregaManual = null) {
                     throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
                 }
 
-                // --- LLAMADA A LA LÓGICA DE SANEAMIENTO (Esto ya lo tienes y es correcto) ---
+                // La lógica de saneamiento es correcta y la mantenemos.
                 const sanitizedGameState = sanitizeSaveFile(loadedGameState);
 
-                // Asignamos los datos saneados y completos al estado del juego
-                gameState.player = sanitizedGameState.player;
-                gameState.inventory = sanitizedGameState.inventory;
-                gameState.map = sanitizedGameState.map; // Sobrescribimos el mapa completo, incluyendo el array de entidades
+                // --- INICIO DE LA MODIFICACIÓN CLAVE: COPIA PROFUNDA ---
+                // En lugar de asignar la referencia, creamos una copia profunda y aislada
+                // de los datos saneados para el estado actual del juego.
                 
-                // --- LÓGICA DE CARGA CORREGIDA ---
+                gameState.player = JSON.parse(JSON.stringify(sanitizedGameState.player));
+                gameState.inventory = JSON.parse(JSON.stringify(sanitizedGameState.inventory));
+                gameState.map = JSON.parse(JSON.stringify(sanitizedGameState.map));
+                
+                // Otras propiedades del nivel raíz de gameState si las hubiera
+                gameState.gameTime = sanitizedGameState.gameTime || 0;
+                // ...etc.
+
+                // --- FIN DE LA MODIFICACIÓN ---
+
                 // Resetear estados transitorios que no deben persistir
                 gameState.player.isCultivating = false;
                 if (gameState.cultivationInterval) {
@@ -15379,11 +15387,9 @@ function completeMission(misionId, npcIdEntregaManual = null) {
                     gameState.cultivationInterval = null;
                 }
                 
-                // NO llamamos a generateMap(). El estado del mapa ya está cargado.
-                // En su lugar, llamamos directamente a las funciones de actualización.
+                // Reconstruir el juego con los datos correctos y aislados.
                 recalculatePlayerStats(); 
                 renderQuickSlotBar();
-                // Esta es la llamada clave que renderizará el mapa con las entidades cargadas.
                 updatePlayerPosition("loadGameFromFile_end");
 
                 showModal("Partida Cargada", "¡Partida restaurada con éxito!");
