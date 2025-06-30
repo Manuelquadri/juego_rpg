@@ -8941,27 +8941,27 @@ function closeModal(callback = null) { // <-- Se añade '= null'
           const player = gameState.player;
           const defeated = player.worldState.defeatedBosses || {};
           const activeMissions = player.secta.misionesActivas.map(m => m.id);
-
-          // 1. Definir TODAS las entidades que deberían existir en el mapa en algún momento.
+          
+          // 1. Empezamos con la lista de entidades que casi siempre deben existir.
           const potentialFixedEntities = {
-              // NPCs y Locaciones Básicas (siempre deben intentar existir)
               'shop': true, 'tutorial_formation_mural': true, 'secta_entrada_principal': true, 'secta_entrada_principal_2': true, 'secta_entrada_principal_3': true, 'secta_entrada_principal_4': true,
               'npc_secta_guia': true, 'npc_secta_admin': true, 'npc_maestro_jian': true, 'npc_anciana_su': true,
               'transition_ruins_entrance': true, 'transition_ruins_exit': true, 'transition_valley_entrance': true, 'transition_valley_exit':true,
               'transition_fisura_entrance': true, 'transition_fisura_exit': true,
               'tp_sect_hub': true, 'tp_forest_shrine': true, 'tp_desert_oasis': true, 'tp_swamp_ruin': true, 'tp_desfiladero': true, 'tp_dragon_valley': true,
-              'mural_circulo_vital': true, 
-              //'lider_renegado_kai': true,
-
-              // Jefes de Historia (su aparición es condicional)
-              'boss_dem': !defeated.boss_dem,
-            
-              'avatar_del_dao_corrupto': activeMissions.includes('mision_maestro_1'),
-
-              // Jefes de Desafío de Secta (condicionales a misión activa)
-              // Se añaden dinámicamente abajo
+              'mural_circulo_vital': true,
           };
-          // 3. Revisamos TODAS las misiones activas para hacer aparecer a los jefes específicos.
+          
+          // 2. Lógica para NPCs de subtramas condicionales.
+          const tieneCompas = (gameState.inventory["Compás Espiritual Antiguo"] || 0) > 0;
+          const fengQuestIniciada = player.worldState.subplotFlags.fengQuestProgress > 0;
+          if (tieneCompas || fengQuestIniciada) {
+              potentialFixedEntities['npc_maestro_feng'] = true;
+          }
+
+          // --- INICIO DE LA MODIFICACIÓN: LÓGICA DE APARICIÓN UNIVERSAL PARA JEFES DE MISIÓN ---
+          // 3. Revisamos TODAS las misiones activas y forzamos la aparición de sus objetivos de tipo "derrotar_npc_especifico".
+          // Esto cubre los jefes de desafío de rango, el Golem de Feng, y cualquier otro jefe de misión.
           player.secta.misionesActivas.forEach(misionActiva => {
               const misionData = MISIONES_DATA[misionActiva.id];
               if (misionData?.objetivo?.tipo === 'derrotar_npc_especifico' && misionData.objetivo.npcId) {
@@ -8971,29 +8971,6 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                   if (!defeated[npcToSpawnId]) {
                        potentialFixedEntities[npcToSpawnId] = true;
                        console.log(`[EnsureFixed] Misión activa '${misionActiva.id}' requiere que '${npcToSpawnId}' exista. Marcado para aparecer.`);
-                  }
-              }
-          });
-          // 1. LÍDER RENEGADO KAI: Aparece solo si la misión para cazarlo está activa.
-          const misionKaiActiva = player.secta.misionesActivas.some(m => m.id === 'mision_cazar_renegado_kai');
-          if (misionKaiActiva && !player.secta.misionesCompletadas['mision_cazar_renegado_kai']) {
-              potentialFixedEntities['lider_renegado_kai'] = true;
-          }
-
-          // 2. MAESTRO FENG: Aparece solo si tienes el compás o ya lo has encontrado.
-          const tieneCompas = (gameState.inventory["Compás Espiritual Antiguo"] || 0) > 0;
-          const fengQuestIniciada = player.worldState.subplotFlags.fengQuestProgress > 0;
-          if (tieneCompas || fengQuestIniciada) {
-              potentialFixedEntities['npc_maestro_feng'] = true;
-          }
-
-          // Añadir jefes de desafío de secta si su misión está activa
-          activeMissions.forEach(misionId => {
-              const misionData = MISIONES_DATA[misionId];
-              if (misionData?.objetivo?.tipo === "derrotar_npc_especifico") {
-                  const npcId = misionData.objetivo.npcId;
-                  if (entityTypes[npcId]?.isSectChallengeRival) {
-                      potentialFixedEntities[npcId] = true; // Queremos que aparezca
                   }
               }
           });
