@@ -9038,51 +9038,44 @@ function closeModal(callback = null) { // <-- Se añade '= null'
       }
       //GENERAR MAPA!
       function generateMap(isFullReset = true) {
-        calculateAndSetTileSize();
-
-        if (isFullReset) {
-          // Limpiar entidades que no son fijas
-          gameState.map.entities = gameState.map.entities.filter(
-            (e) => e.isFixed && !e.isDecorative
-          ); // Quitamos también las decoraciones viejas
-
-          // Resetear contadores de spawn
-          gameState.map.terrainZones.forEach((zone) => {
-            if (zone.spawnSettings && zone.spawnSettings.targetEntities) {
-              zone.spawnSettings.targetEntities.forEach((target) => {
-                target.currentCount = 0;
-              });
-              zone.spawnSettings.respawnTimer = 0;
-              zone.spawnSettings.lastSpawnCheck = 0;
-            }
-          });
-
-          // Poblar cada zona con monstruos/recursos y luego con decoraciones
-          gameState.map.terrainZones.forEach((zone) => {
-            if (zone.spawnSettings) {
-              console.log(
-                `generateMap: Poblando spawns para la zona "${zone.name}".`
-              );
-              populateZoneWithObjects(zone, true);
-            }
-            // === LÓGICA MODIFICADA ===
-            if (zone.decorations) {
-              console.log(
-                `generateMap: Poblando decoraciones para la zona "${zone.name}".`
-              );
-              populateZoneWithDecorations(zone); // Llamamos a la nueva función
-            }
-            // === FIN DE LA MODIFICACIÓN ===
-          });
-
-          // Ya no necesitamos la función global y aleatoria de decoraciones.
-          // populateDecorativeElements(50); // <-- ELIMINA O COMENTA ESTA LÍNEA
-        } else {
-          gameState.map.entities = gameState.map.entities.filter(
-            (e) => e.isFixed || e.isDecorative || (!e.zoneOrigin && !e.isFixed)
-          );
+        // Si no es un reseteo completo, no hacemos NADA relacionado con la población de entidades.
+        // La carga de partida se encargará de proveer las entidades.
+        if (!isFullReset) {
+            console.log("[generateMap] Llamada con isFullReset=false. Saltando repoblación de entidades.");
+            updatePlayerPosition(); // Solo actualizamos la vista.
+            return;
         }
 
+        // --- La lógica a continuación solo se ejecuta para un JUEGO NUEVO o un reseteo forzado ---
+        console.log("[generateMap] Iniciando reseteo completo y repoblación del mapa.");
+        calculateAndSetTileSize();
+
+        // Limpiar todas las entidades que no sean de historia o fijas (NPCs, tiendas).
+        gameState.map.entities = gameState.map.entities.filter(
+          (e) => e.isFixed && !e.isDecorative
+        );
+
+        // Resetear contadores de spawn para todas las zonas.
+        gameState.map.terrainZones.forEach((zone) => {
+          if (zone.spawnSettings && zone.spawnSettings.targetEntities) {
+            zone.spawnSettings.targetEntities.forEach((target) => {
+              target.currentCount = 0;
+            });
+            zone.spawnSettings.respawnTimer = 0;
+            zone.spawnSettings.lastSpawnCheck = 0;
+          }
+        });
+
+        // Poblar cada zona con monstruos, recursos y decoraciones.
+        gameState.map.terrainZones.forEach((zone) => {
+          if (zone.decorations) {
+            populateZoneWithDecorations(zone);
+          }
+          if (zone.spawnSettings) {
+            populateZoneWithObjects(zone, true);
+          }
+        });
+        
         updatePlayerPosition();
         showTouchControls();
         ensureFixedEntities();
@@ -15370,116 +15363,36 @@ function completeMission(misionId, npcIdEntregaManual = null) {
                     throw new Error("Formato de guardado incorrecto o datos esenciales faltantes.");
                 }
 
-                // --- INICIO DE LA LÓGICA DE SANEAMIENTO DE PARTIDA ---
-                console.groupCollapsed("[Saneamiento de Partida Guardada]");
+                // --- LLAMADA A LA LÓGICA DE SANEAMIENTO (Esto ya lo tienes y es correcto) ---
+                const sanitizedGameState = sanitizeSaveFile(loadedGameState);
 
-                const playerState = loadedGameState.player;
-                const mapState = loadedGameState.map;
-
-                // 1. SANEAMIENTO DEL JUGADOR: Asegurar que existan propiedades nuevas
-                // Esto previene errores de 'undefined' si el juego ha sido actualizado.
-                const defaultPlayer = gameState.player; // Usamos el estado inicial como plantilla
-                for (const key in defaultPlayer) {
-                    if (typeof playerState[key] === 'undefined') {
-                        playerState[key] = JSON.parse(JSON.stringify(defaultPlayer[key]));
-                        console.log(` -> Propiedad faltante añadida a 'player': ${key}`);
-                    }
-                }
-                // Saneamiento de sub-objetos
-                if (!playerState.worldState) playerState.worldState = { ...defaultPlayer.worldState };
-                playerState.worldState.storyFlags = { ...defaultPlayer.worldState.storyFlags, ...playerState.worldState.storyFlags };
-                playerState.worldState.subplotFlags = { ...defaultPlayer.worldState.subplotFlags, ...playerState.worldState.subplotFlags };
-                if (!playerState.secta) playerState.secta = { ...defaultPlayer.secta };
-                playerState.secta.misionesActivas = playerState.secta.misionesActivas || [];
-                playerState.secta.misionesCompletadas = playerState.secta.misionesCompletadas || {};
-
-
-                // 2. SANEAMIENTO PROFUNDO DE TÉCNICAS APRENDIDAS
-                const sanitizedTechniques = {};
-                for (const techId in playerState.learnedTechniques) {
-                    const masterTech = techniqueData[techId];
-                    if (masterTech) { // La técnica todavía existe en el juego
-                        const playerTech = playerState.learnedTechniques[techId];
-                        // Comprobar y actualizar las propiedades del efecto si han cambiado
-                        if (masterTech.effect && playerTech.effect) {
-                             for(const effectProp in masterTech.effect) {
-                                if (typeof playerTech.effect[effectProp] === 'undefined') {
-                                    playerTech.effect[effectProp] = masterTech.effect[effectProp];
-                                    console.log(` -> Propiedad de efecto '${effectProp}' actualizada para la técnica '${techId}'.`);
-                                }
-                             }
-                        }
-                        sanitizedTechniques[techId] = playerTech;
-                    } else {
-                        console.warn(` -> Técnica obsoleta '${techId}' eliminada del guardado.`);
-                    }
-                }
-                playerState.learnedTechniques = sanitizedTechniques;
-
-                // 3. SANEAMIENTO DE MISIONES ACTIVAS
-                const sanitizedMissions = playerState.secta.misionesActivas.filter(activeMission => {
-                    const masterMission = MISIONES_DATA[activeMission.id];
-                    if (!masterMission) {
-                        console.warn(` -> Misión activa obsoleta '${activeMission.id}' eliminada.`);
-                        return false;
-                    }
-                    // Compara el objetivo guardado con el maestro, si ha cambiado, lo actualiza.
-                    if (JSON.stringify(activeMission.objetivoOriginal) !== JSON.stringify(masterMission.objetivo)) {
-                        console.log(` -> Objetivo de la misión '${activeMission.id}' actualizado a la última versión.`);
-                        activeMission.objetivoOriginal = JSON.parse(JSON.stringify(masterMission.objetivo));
-                    }
-                    return true;
-                });
-                playerState.secta.misionesActivas = sanitizedMissions;
-
-
-                // 4. SANEAMIENTO DE ENTIDADES DEL MAPA (Rebalanceo de enemigos guardados)
-                if (mapState.entities) {
-                    mapState.entities.forEach(entity => {
-                        const masterId = entity.originalEntityTypeId || entity.type;
-                        const masterDef = entityTypes[masterId];
-                        if (masterDef && !masterDef.isDecorative) {
-                            // Actualiza stats clave para reflejar el balanceo actual
-                            entity.hp = masterDef.hp;
-                            entity.maxHp = masterDef.maxHp || masterDef.hp;
-                            entity.attack = masterDef.attack;
-                            entity.defense = masterDef.defense;
-                            entity.exp = masterDef.exp;
-                            entity.lootTable = masterDef.lootTable; // Actualiza el botín
-                            entity.abilities = masterDef.abilities; // Actualiza las habilidades
-                        }
-                    });
-                }
+                // Asignamos los datos saneados y completos al estado del juego
+                gameState.player = sanitizedGameState.player;
+                gameState.inventory = sanitizedGameState.inventory;
+                gameState.map = sanitizedGameState.map; // Sobrescribimos el mapa completo, incluyendo el array de entidades
                 
-                console.groupEnd();
-                // --- FIN DE LA LÓGICA DE SANEAMIENTO ---
-
-
-                // Asignamos los datos saneados al estado del juego
-                gameState.player = playerState;
-                gameState.inventory = JSON.parse(JSON.stringify(loadedGameState.inventory));
-                gameState.map.entities = mapState.entities ? JSON.parse(JSON.stringify(mapState.entities)) : [];
-                
-                // Resetear estados transitorios
+                // --- LÓGICA DE CARGA CORREGIDA ---
+                // Resetear estados transitorios que no deben persistir
                 gameState.player.isCultivating = false;
                 if (gameState.cultivationInterval) {
                     clearInterval(gameState.cultivationInterval);
                     gameState.cultivationInterval = null;
                 }
-
-                // Reconstruir el juego con los datos actualizados
-                generateMap(false); // Usar false para no repoblar todo y mantener el estado del mapa cargado
+                
+                // NO llamamos a generateMap(). El estado del mapa ya está cargado.
+                // En su lugar, llamamos directamente a las funciones de actualización.
                 recalculatePlayerStats(); 
                 renderQuickSlotBar();
+                // Esta es la llamada clave que renderizará el mapa con las entidades cargadas.
                 updatePlayerPosition("loadGameFromFile_end");
 
-                showModal("Partida Cargada", "¡Partida restaurada con éxito! (Se aplicaron actualizaciones de compatibilidad si fue necesario)");
+                showModal("Partida Cargada", "¡Partida restaurada con éxito!");
 
             } catch (error) {
                 showModal("Error al Cargar", `Hubo un problema: ${error.message}`);
                 console.error("Error loading game:", error);
             } finally {
-                event.target.value = null; // Permite cargar el mismo archivo de nuevo
+                event.target.value = null; 
             }
         };
         reader.onerror = () => {
@@ -15487,7 +15400,7 @@ function completeMission(misionId, npcIdEntregaManual = null) {
             event.target.value = null;
         };
         reader.readAsText(file);
-    }
+      }
 
       
     
