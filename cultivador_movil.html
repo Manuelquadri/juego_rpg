@@ -17,7 +17,7 @@
 
       body {
         font-family: "Courier New", monospace;
-        background: linear-gradient(135deg, #2c1810, #8b4513);
+        background-color: #1a3d2e; 
         color: #f4e4bc;
         min-height: 100vh;
         display: flex;
@@ -100,6 +100,39 @@
       }
       .grid-overlay.active {
           display: block;
+      }
+      /* --- Estilos para los Indicadores de Misión sobre NPCs --- */
+      .quest-indicator {
+          position: absolute;
+          top: -50px; /* Posiciona el indicador por encima de la cabeza del NPC */
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 30px;
+          font-weight: bold;
+          text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+          pointer-events: none; /* Para que no interfiera con los clics */
+          z-index: 7; /* Por encima de la placa de nombre */
+          animation: bounce-indicator 1.5s infinite ease-in-out;
+      }
+
+      .indicator-available {
+          color: #f4d03f; /* Amarillo para misiones disponibles */
+      }
+
+      .indicator-progress {
+          color: #ffffff; /* Blanco para misiones en progreso/entrega */
+      }
+
+      @keyframes bounce-indicator {
+          0%, 20%, 50%, 80%, 100% {
+              transform: translateX(-50%) translateY(0);
+          }
+          40% {
+              transform: translateX(-50%) translateY(-10px);
+          }
+          60% {
+              transform: translateX(-50%) translateY(-5px);
+          }
       }
       /* --- Estilos para el Diagrama de Formación en el Modal de Técnicas --- */
       .technique-section-title {
@@ -1101,7 +1134,7 @@
 
         /* --- Ajustes al resto de la UI en modo horizontal --- */
         .stats-panel {
-            top: 10px;
+            top: 60px;
             left: 10px;
             padding: 6px;
             font-size: 0.75rem;
@@ -9462,7 +9495,7 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         let canMove = true;
         
 
-        // Lógica de colisiones y movimiento (esta parte es correcta)
+        // --- 1. Verificación de Límites del Mapa ---
         if (
           newX < 0 ||
           newX >= gameState.map.width ||
@@ -9471,36 +9504,38 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         ) {
           canMove = false;
         }
+        // --- 2. Verificación del Terreno (Montañas, Agua, etc.) ---
         if (canMove) {
           const targetTerrainId = getTerrainTypeAt(newX, newY);
           if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) {
             canMove = false;
           }
         }
+        // --- 3. Verificación de Entidades en la Casilla de Destino ---
         if (canMove) {
           const player = gameState.player; // Asegúrate de tener acceso al estado del jugador
           const entityAtNewPosition = gameState.map.entities.find(
             (e) => e.x === newX && e.y === newY
           );
           if (entityAtNewPosition) {
-            // AÑADIMOS LA CONDICIÓN !player.isChannelingRune
-            if (entityAtNewPosition && G_COMBAT_ENTITY_TYPES.includes(entityAtNewPosition.type) && !player.isChannelingRune) {
+            const entityIdentifier = entityAtNewPosition.originalEntityTypeId || entityAtNewPosition.type;
+            
+            // 3a. ¿Es un enemigo? Inicia batalla.
+            if (G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) && !player.isChannelingRune) {
               startBattle(entityAtNewPosition);
-              return;
+              // Detenemos completamente la función de movimiento, ya que entramos en batalla.
+              return; 
             }
-            player.x = newX;
-            player.y = newY;
-            updatePlayerPosition("normal_move");
-            const entityTypeToCheck =
-              entityAtNewPosition.originalEntityTypeId ||
-              entityAtNewPosition.type;
-            if (G_BLOCKING_ENTITY_TYPES.includes(entityTypeToCheck)) {
+            
+            // 3b. ¿Es una entidad bloqueante? Detiene el movimiento.
+            // Esta comprobación ahora se hace ANTES de mover al jugador.
+            if (G_BLOCKING_ENTITY_TYPES.includes(entityIdentifier)) {
               canMove = false;
             }
           }
         }
 
-        // Si el movimiento es válido, ejecutamos la lógica de zona
+        // --- 4. Si el movimiento sigue siendo válido, ACTUALIZAMOS el estado del jugador ---
         if (canMove) {
           
 
@@ -9741,16 +9776,29 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         }
         const currentContainerWidth = mapContainerElement.clientWidth;
         const currentContainerHeight = mapContainerElement.clientHeight;
+        // Obtenemos la transformación actual del mapa para saber dónde está su esquina superior-izquierda
+        const mapTransform = new DOMMatrixReadOnly(window.getComputedStyle(mapElement).transform);
+        const mapCurrentX = mapTransform.e;
+        const mapCurrentY = mapTransform.f;
+        
+        // Calculamos qué tile del mundo está en la esquina superior izquierda de la pantalla
+        const viewWorldXStart = Math.floor(-mapCurrentX / currentTileSize);
+        const viewWorldYStart = Math.floor(-mapCurrentY / currentTileSize);
+        // Calculamos cuántos tiles necesitamos para llenar la pantalla y AÑADIMOS UN MARGEN DE SEGURIDAD.
+        // Sumar 2 tiles al ancho y alto asegura que siempre haya un "marco" de tiles renderizados
+        // justo fuera de la vista, eliminando cualquier posible franja.
+        const tilesInViewX = Math.ceil(currentContainerWidth / currentTileSize) + 2;
+        const tilesInViewY = Math.ceil(currentContainerHeight / currentTileSize) + 2;
+        // Calculamos el final del área a renderizar
+        const viewWorldXEnd = viewWorldXStart + tilesInViewX;
+        const viewWorldYEnd = viewWorldYStart + tilesInViewY;
         const playerScreenX = currentContainerWidth / 2 - currentTileSize / 2;
         const playerScreenY = currentContainerHeight / 2 - currentTileSize / 2;
         const mapExpectedScrollX = -(gameState.player.x * currentTileSize) + playerScreenX;
         const mapExpectedScrollY = -(gameState.player.y * currentTileSize) + playerScreenY;
-        const viewWorldXStart = Math.floor(-mapExpectedScrollX / currentTileSize);
-        const viewWorldYStart = Math.floor(-mapExpectedScrollY / currentTileSize);
-        const tilesInViewX = Math.ceil(currentContainerWidth / currentTileSize) + 2;
-        const tilesInViewY = Math.ceil(currentContainerHeight / currentTileSize) + 2;
-        const viewWorldXEnd = viewWorldXStart + tilesInViewX;
-        const viewWorldYEnd = viewWorldYStart + tilesInViewY;
+       
+        
+      
 
         mapElement.innerHTML = ""; 
         
@@ -10025,7 +10073,21 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                         selectEnemyForRunePlacement(entity.id);
                     };
                 }
+
+               // ---  AÑADIR INDICADOR DE MISIÓN ---
+               const isNPC = !!entity.npcId && !isHostile; // Es un NPC si tiene npcId y no es un enemigo
+
+                if (isNPC) {
+                    const indicator = getNpcIndicator(entity.npcId);
+                    if (indicator) {
+                        const indicatorDiv = document.createElement("div");
+                        indicatorDiv.className = `quest-indicator ${indicator.class}`;
+                        indicatorDiv.textContent = indicator.type;
+                        entityContainer.appendChild(indicatorDiv); // Añadirlo al contenedor de la entidad
+                    }
+                }  
               const isImportantNPC = entity.npcId && !isHostile;
+              
 
               if (isHostile || isImportantNPC) {
                 const namePlate = document.createElement("div");
@@ -11060,6 +11122,77 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         updateInventoryUI();
         checkAndActivateRankChallengeMissions();
         closeModal();
+      }
+
+
+      function getNpcIndicator(npcId) {
+          const player = gameState.player;
+          const npcData = SECTA_DATA.npcs[npcId];
+          if (!npcData) return null;
+
+          // --- PRIORIDAD 1: ¿Se debe ENTREGAR una misión a este NPC? ---
+          const misionParaEntregar = player.secta.misionesActivas.find(misionActiva => {
+              const misionDef = MISIONES_DATA[misionActiva.id];
+              if (!misionDef || !misionDef.objetivo || misionDef.objetivo.npcEntrega !== npcId) {
+                  return false;
+              }
+              // Comprobar si el objetivo está realmente cumplido
+              const progreso = misionActiva.progreso || 0;
+              const objetivo = misionDef.objetivo;
+              switch (objetivo.tipo) {
+                  case "eliminar_enemigo":
+                  case "derrotar_npc_especifico":
+                  case "llegar_a_punto":
+                      return progreso >= (objetivo.cantidad || 1);
+                  case "entregar_item":
+                      return (gameState.inventory[objetivo.item] || 0) >= objetivo.cantidad;
+                  case "cazar_y_recuperar_item_de_loot":
+                      return (gameState.inventory[objetivo.itemPrueba] || 0) >= objetivo.cantidadItemPrueba;
+                  case "recolectar_multiples_items":
+                      return objetivo.items.every(itemReq => (gameState.inventory[itemReq.nombre] || 0) >= itemReq.cantidad);
+                  default:
+                      return false;
+              }
+          });
+          if (misionParaEntregar) {
+              return { type: '?', class: 'indicator-progress' }; // Interrogación blanca para entregar
+          }
+          
+          // --- PRIORIDAD 2: ¿Tiene este NPC una misión NUEVA para ofrecer? ---
+          if (npcData.misionesOfrecidas) {
+              const hayMisionNueva = npcData.misionesOfrecidas.some(misionId => {
+                  const mision = MISIONES_DATA[misionId];
+                  if (!mision || player.secta.misionesActivas.some(m => m.id === misionId) || player.secta.misionesCompletadas[misionId]) {
+                      return false; // Misión no existe, ya está activa o completada
+                  }
+                  // Comprobar requisitos de nivel y rango
+                  const nivelOk = (player.level >= (mision.requisitoNivel || 0));
+                  let rangoOk = true;
+                  if (mision.requisitoRango) {
+                      const playerRankIndex = SECTA_DATA.rangos.findIndex(r => r.nombre === player.secta.rango);
+                      const requiredRankIndex = SECTA_DATA.rangos.findIndex(r => r.nombre === mision.requisitoRango);
+                      if (playerRankIndex < requiredRankIndex) {
+                          rangoOk = false;
+                      }
+                  }
+                  return nivelOk && rangoOk;
+              });
+              if (hayMisionNueva) {
+                  return { type: '!', class: 'indicator-available' }; // Exclamación amarilla para nueva misión
+              }
+          }
+
+          // --- PRIORIDAD 3: ¿Tiene el NPC diálogo de HISTORIA principal importante? ---
+          const flags = player.worldState.storyFlags;
+          if (npcId === 'anciana_su' && player.secta.misionesCompletadas['mision_historia_1_demonio'] && !flags.knowsAboutCalamity) {
+              return { type: '?', class: 'indicator-progress' }; // Diálogo importante tras derrotar al demonio
+          }
+          if (npcId === 'maestro_jian' && flags.knowsAboutCalamity && !flags.knowsAboutSoberano) {
+              // Si sabes de la calamidad pero no del soberano, el maestro tiene algo que decirte
+              // (Aunque esta lógica está en el desafío de Diácono, la podemos reflejar aquí también)
+          }
+
+          return null; // Sin indicador
       }
 
       function acceptMission(misionId) {
@@ -14293,7 +14426,7 @@ function completeMission(misionId, npcIdEntregaManual = null) {
           populateBattleActionButtons();
       }
 
-      function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
+    function applyDamageToPlayer(damageAmount, sourceName = "Ataque") {
       const player = gameState.player;
       const playerSprite = document.querySelector('.character-sprite');
       let incomingDamage = damageAmount; 
