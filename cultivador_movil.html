@@ -15402,7 +15402,117 @@ function completeMission(misionId, npcIdEntregaManual = null) {
         reader.readAsText(file);
       }
 
-      
+      // =======================================================================
+      //                    SISTEMA DE SANEAMIENTO DE PARTIDAS
+      // =======================================================================
+
+      /**
+       * Función principal que orquesta el saneamiento de un archivo de guardado.
+       * @param {object} loadedState - El objeto gameState cargado del archivo JSON.
+       * @returns {object} El objeto gameState saneado y listo para usar.
+       */
+       function sanitizeSaveFile(loadedState) {
+          console.group("[Sanitize] Iniciando saneamiento de partida guardada...");
+
+          if (!loadedState.player) {
+              console.error("[Sanitize] FATAL: El archivo de guardado no tiene una propiedad 'player'. Abortando.");
+              console.groupEnd();
+              throw new Error("Archivo de guardado corrupto: falta el jugador.");
+          }
+          
+          // 1. Sanear el objeto del jugador (añadir propiedades faltantes)
+          loadedState.player = sanitizePlayerState(loadedState.player);
+
+          // 2. Sanear las técnicas aprendidas por el jugador
+          loadedState.player = sanitizeLearnedTechniques(loadedState.player);
+
+          // 3. Sanear las misiones activas (reutilizamos la función existente)
+          sanitizeActiveMissions(loadedState.player);
+
+          // 4. Sanear las entidades del mapa (reutilizamos la función existente)
+          if(loadedState.map) {
+            sanitizeMapEntities(loadedState.map);
+          }
+
+          console.log("[Sanitize] Saneamiento completado con éxito.");
+          console.groupEnd();
+
+          return loadedState;
+      }
+
+      /**
+       * Compara un objeto 'target' con un objeto 'defaults' y añade las propiedades
+       * que falten en 'target' de forma recursiva.
+       * @param {object} target - El objeto a sanear (ej. el player del archivo guardado).
+       * @param {object} defaults - El objeto con la estructura por defecto (ej. gameState.player inicial).
+       * @returns {object} El objeto 'target' saneado.
+       */
+      function mergeDefaults(target, defaults) {
+          if (!target) return JSON.parse(JSON.stringify(defaults));
+          for (const key in defaults) {
+              if (typeof target[key] === 'undefined') {
+                  // La propiedad no existe en el guardado, la añadimos.
+                  console.warn(`[Sanitize Player] Propiedad faltante añadida: 'player.${key}'`);
+                  target[key] = JSON.parse(JSON.stringify(defaults[key]));
+              } else if (typeof defaults[key] === 'object' && defaults[key] !== null && !Array.isArray(defaults[key])) {
+                  // Si ambas son objetos, llamamos recursivamente.
+                  target[key] = mergeDefaults(target[key], defaults[key]);
+              }
+          }
+          return target;
+      }
+
+      /**
+       * Se asegura de que el objeto del jugador tenga todas las propiedades necesarias.
+       * @param {object} loadedPlayer - El objeto del jugador del archivo de guardado.
+       * @returns {object} El objeto del jugador saneado.
+       */
+      function sanitizePlayerState(loadedPlayer) {
+          // Usamos una copia profunda del gameState inicial como plantilla de lo que debería existir.
+          const defaultPlayerState = JSON.parse(JSON.stringify(gameState.player));
+          return mergeDefaults(loadedPlayer, defaultPlayerState);
+      }
+
+      /**
+      * Revisa y actualiza las técnicas aprendidas por el jugador para que coincidan con las definiciones actuales.
+      * @param {object} loadedPlayer - El objeto del jugador, ya parcialmente saneado.
+      * @returns {object} El objeto del jugador con las técnicas saneadas.
+      */
+      function sanitizeLearnedTechniques(loadedPlayer) {
+          if (!loadedPlayer.learnedTechniques) {
+              loadedPlayer.learnedTechniques = {};
+              return loadedPlayer;
+          }
+
+          const sanitizedTechniques = {};
+          for (const techId in loadedPlayer.learnedTechniques) {
+              const masterTechDef = techniqueData[techId];
+              // Solo mantenemos las técnicas que todavía existen en la base de datos del juego.
+              if (masterTechDef) {
+                  const playerTech = loadedPlayer.learnedTechniques[techId];
+                  // Aseguramos que las propiedades básicas de cultivo existan.
+                  playerTech.level = playerTech.level || 1;
+                  playerTech.currentCultivationProgress = playerTech.currentCultivationProgress || 0;
+                  
+                  // Si el tiempo para el siguiente nivel no está definido, lo calculamos desde la base.
+                  if (typeof playerTech.cultivationTimeToNextLevel === 'undefined') {
+                      if (masterTechDef.cultivationSettings) {
+                           playerTech.cultivationTimeToNextLevel = playerTech.level < masterTechDef.maxLevel
+                              ? Math.floor(masterTechDef.cultivationSettings.baseTimeToLevelUp * Math.pow(masterTechDef.cultivationSettings.levelTimeMultiplier, playerTech.level -1))
+                              : Infinity;
+                      } else {
+                           playerTech.cultivationTimeToNextLevel = Infinity;
+                      }
+                  }
+                  
+                  sanitizedTechniques[techId] = playerTech;
+              } else {
+                  console.warn(`[Sanitize Techniques] Técnica obsoleta '${techId}' eliminada del guardado del jugador.`);
+              }
+          }
+          loadedPlayer.learnedTechniques = sanitizedTechniques;
+          return loadedPlayer;
+      }
     
       function renderQuickSlotBar() {
         const bar = document.getElementById("quickSlotBar");
