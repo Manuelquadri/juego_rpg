@@ -9452,77 +9452,68 @@ function closeModal(callback = null) { // <-- Se añade '= null'
       let lastPlayerMoveTime = 0; // Para controlar el tiempo de la animación
 
       function movePlayer(dx, dy) {
-        console.group(`[movePlayer] Intento de movimiento: dx=${dx}, dy=${dy}`);
+    // Los logs pueden ser útiles, los mantendremos por ahora pero colapsados.
+    console.groupCollapsed(`[movePlayer] Intento de movimiento: dx=${dx}, dy=${dy}`);
 
-        movePlayerCallCount++;
-        const callId = movePlayerCallCount;
+    movePlayerCallCount++;
+    const callId = movePlayerCallCount;
 
-        const now = Date.now();
-        if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
-            console.log("-> Bloqueado por COOLDOWN. Fin de la ejecución.");
-            console.groupEnd();
-            return;
+    const now = Date.now();
+    if (now - lastSuccessfulMoveTime < PLAYER_MOVE_COOLDOWN) {
+        console.log("-> Bloqueado por COOLDOWN.");
+        console.groupEnd();
+        return;
+    }
+
+    const player = gameState.player;
+    const newX = player.x + dx;
+    const newY = player.y + dy;
+    let canMove = true;
+    
+    console.log(`-> Destino: (${newX}, ${newY})`);
+    
+    // Verificaciones de Límites y Terreno (sin cambios)
+    if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) { canMove = false; }
+    if (canMove) {
+        const targetTerrainId = getTerrainTypeAt(newX, newY);
+        if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) { canMove = false; }
+    }
+    
+    if (canMove) {
+        const entitiesAtNewPosition = gameState.map.entities.filter(e => e.x === newX && e.y === newY);
+        let entityToBlock = null;
+
+        if (entitiesAtNewPosition.length > 0) {
+            // --- INICIO DE LA MODIFICACIÓN: LOS ENEMIGOS AHORA BLOQUEAN EL PASO ---
+            // Ahora buscamos cualquier entidad que deba detener al jugador,
+            // ya sea un enemigo o un obstáculo fijo.
+            entityToBlock = entitiesAtNewPosition.find(e => {
+                const entityIdentifier = e.originalEntityTypeId || e.type;
+                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || e.isBoss || e.isMiniBoss;
+                const isBlockingObject = G_BLOCKING_ENTITY_TYPES.includes(entityIdentifier);
+                return isCombatTarget || isBlockingObject;
+            });
+            // --- FIN DE LA MODIFICACIÓN ---
         }
 
-        const player = gameState.player;
-        const newX = player.x + dx;
-        const newY = player.y + dy;
-        let canMove = true;
-        
-        console.log(`-> Coordenadas de destino calculadas: (${newX}, ${newY})`);
-        
-        // Verificaciones de Límites y Terreno
-        if (newX < 0 || newX >= gameState.map.width || newY < 0 || newY >= gameState.map.height) { canMove = false; }
-        if (canMove) {
-            const targetTerrainId = getTerrainTypeAt(newX, newY);
-            if (G_TERRAIN_TYPES[targetTerrainId]?.walkable === false) { canMove = false; }
+        if (entityToBlock) {
+            // Si se encontró una entidad que bloquea (enemigo, NPC, tienda), detenemos el movimiento.
+            canMove = false;
+            console.log(`%c-> Decisión: Movimiento bloqueado por la entidad '${entityToBlock.name}'. canMove = false`, "color: orange;");
         }
+    }
+
+    // Si después de todas las comprobaciones, 'canMove' sigue siendo true, ejecutamos el movimiento.
+    if (canMove) {
+        console.log("%c-> Decisión FINAL: PERMITIR MOVIMIENTO.", "color: #33cc33; font-weight: bold;");
+
+        const oldZone = getPlayerCurrentZone();
+        const oldZoneName = oldZone ? oldZone.name : "Tierras Salvajes";
         
-        // Lógica de Búsqueda de Entidad Mejorada
-        if (canMove) {
-            const entitiesAtNewPosition = gameState.map.entities.filter(e => e.x === newX && e.y === newY);
-            let entityToInteractWith = null;
-
-            if (entitiesAtNewPosition.length > 0) {
-                entityToInteractWith = entitiesAtNewPosition.find(e => G_COMBAT_ENTITY_TYPES.includes(e.originalEntityTypeId || e.type) || e.isBoss || e.isMiniBoss);
-                if (!entityToInteractWith) {
-                    entityToInteractWith = entitiesAtNewPosition.find(e => G_BLOCKING_ENTITY_TYPES.includes(e.originalEntityTypeId || e.type));
-                }
-            }
-
-            if (entityToInteractWith) {
-                const entityIdentifier = entityToInteractWith.originalEntityTypeId || entityToInteractWith.type;
-                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entityToInteractWith.isBoss || entityToInteractWith.isMiniBoss;
-
-                if (isCombatTarget && !player.isChannelingRune) {
-                    console.log("%c-> Decisión FINAL: INICIAR BATALLA.", "color: #ff69b4; font-weight: bold;");
-                    console.groupEnd();
-                    startBattle(entityToInteractWith);
-                    return; 
-                }
-                
-                if (G_BLOCKING_ENTITY_TYPES.includes(entityIdentifier)) {
-                    canMove = false;
-                    console.log("%c-> Decisión: Entidad bloqueante. canMove = false", "color: orange;");
-                }
-            }
-        }
-
-        // --- INICIO DE LA MODIFICACIÓN: RESTAURACIÓN DEL BLOQUE DE MOVIMIENTO ---
-        // Si después de todas las comprobaciones, 'canMove' sigue siendo true,
-        // entonces y solo entonces, ejecutamos la lógica para mover al jugador.
-        if (canMove) {
-            console.log("%c-> Decisión FINAL: PERMITIR MOVIMIENTO. Actualizando estado...", "color: #33cc33; font-weight: bold;");
-
-            const oldZone = getPlayerCurrentZone();
-            const oldZoneName = oldZone ? oldZone.name : "Tierras Salvajes";
-            
-            // Actualizamos las coordenadas del jugador en el estado del juego.
-            player.x = newX;
-            player.y = newY;
-            
-            // Lógica de Misión "Llegar a Punto"
-            const misionesActivas = [...player.secta.misionesActivas];
+        player.x = newX;
+        player.y = newY;
+        
+        const misionesActivas = [...player.secta.misionesActivas];
             misionesActivas.forEach(misionActiva => {
                 const misionData = MISIONES_DATA[misionActiva.id];
                 if (misionData?.objetivo?.tipo === 'llegar_a_punto' && misionActiva.progreso !== 1) {
@@ -9535,26 +9526,23 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                     }
                 }
             });
-            
-            // Lógica de cambio de zona
-            const newZone = getPlayerCurrentZone();
-            const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
-            if (newZoneName !== oldZoneName) {
-              showZoneNotification(newZoneName);
-            }
-            player.currentZoneName = newZoneName;
-            
-            // Actualizamos la UI y la posición visual en la pantalla.
-            updatePlayerPosition(`movePlayer_success_call_${callId}`);
-            updateUI();
-            lastSuccessfulMoveTime = now;
-        } else {
-            console.log("%c-> Decisión FINAL: MOVIMIENTO BLOQUEADO. No se actualiza el estado.", "color: red; font-weight: bold;");
+        // Lógica de cambio de zona
+        const newZone = getPlayerCurrentZone();
+        const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
+        if (newZoneName !== oldZoneName) {
+          showZoneNotification(newZoneName);
         }
-        // --- FIN DE LA MODIFICACIÓN ---
-        
-        console.groupEnd();
-      }
+        player.currentZoneName = newZoneName;
+
+        updatePlayerPosition(`movePlayer_success_call_${callId}`);
+        updateUI();
+        lastSuccessfulMoveTime = now;
+    } else {
+        console.log("%c-> Decisión FINAL: MOVIMIENTO BLOQUEADO.", "color: red; font-weight: bold;");
+    }
+    
+    console.groupEnd();
+  }
       //FIN FUNCION MOVE PLAYER
       function placeRuneAt(x, y) {
         const player = gameState.player;
@@ -10131,6 +10119,34 @@ function closeModal(callback = null) { // <-- Se añade '= null'
             }
         }
     }
+    // 4. Renderizar el ÁREA DE PELIGRO para plantar runas si un enemigo está seleccionado
+    if (gameState.selectedEnemyId && isGridVisible) {
+            const selectedEnemy = gameState.map.entities.find(e => e.id === gameState.selectedEnemyId);
+
+            if (selectedEnemy) {
+                // Recorremos las 8 casillas adyacentes al enemigo
+                for (let dy = -1; dy <= 1; dy++) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        // Saltamos la casilla central (la del propio enemigo)
+                        if (dx === 0 && dy === 0) continue;
+
+                        const tileX = selectedEnemy.x + dx;
+                        const tileY = selectedEnemy.y + dy;
+                        
+                        // Solo dibujamos si la casilla está dentro del área visible del mapa
+                        if (tileX >= viewWorldXStart && tileX < viewWorldXEnd && tileY >= viewWorldYStart && tileY < viewWorldYEnd) {
+                            const dangerTile = document.createElement("div");
+                            dangerTile.className = "danger-zone-tile";
+                            dangerTile.style.left = `${tileX * currentTileSize}px`;
+                            dangerTile.style.top = `${tileY * currentTileSize}px`;
+                            dangerTile.style.width = `${currentTileSize}px`;
+                            dangerTile.style.height = `${currentTileSize}px`;
+                            mapElement.appendChild(dangerTile);
+                        }
+                    }
+                }
+            }
+        }
     // --- DIBUJAR RUNAS DE UTILIDAD (NO LIGADAS A ENEMIGOS) ---
     Object.keys(gameState.utilityRunes).forEach(runeKey => {
         const [x, y] = runeKey.split(',').map(Number);
@@ -10470,61 +10486,78 @@ function closeModal(callback = null) { // <-- Se añade '= null'
       }
 
       function interact() {
-        // Si estamos en modo de concentración, la interacción planta la runa.
         if (gameState.player.isChannelingRune) {
-            plantRune(); // plantRune() ya maneja la lógica de "segundo clic"
+            plantRune();
             return;
         }
-        if (gameState.player.isCultivating) {
-          showModal(
-            "Acción no permitida",
-            "Detén tu cultivo antes de interactuar."
-          );
-          return;
-        }
         if (gameState.player.isCultivating || gameState.battle.active) {
-        showModal("Acción no permitida", "No puedes interactuar ahora.");
-        return;
+            showModal("Acción no permitida", "No puedes interactuar ahora.");
+            return;
         }
 
         const playerX = gameState.player.x;
         const playerY = gameState.player.y;
+        
+        // El orden de los offsets ahora importa: priorizamos las casillas cardinales.
         const offsets = [
-          { dx: 0, dy: 0 },
-          { dx: 0, dy: -1 },
-          { dx: 1, dy: 0 },
-          { dx: 0, dy: 1 },
-          { dx: -1, dy: 0 },
+          { dx: 0, dy: -1 }, // Arriba
+          { dx: 1, dy: 0 },  // Derecha
+          { dx: 0, dy: 1 },  // Abajo
+          { dx: -1, dy: 0 }, // Izquierda
+          { dx: 0, dy: 0 },   // La propia casilla (para tiendas, etc.)
+          { dx: -1, dy: -1}, // Diagonales
+          { dx: 1, dy: -1 },
+          { dx: -1, dy: 1 },
+          { dx: 1, dy: 1 }
         ];
 
-        for (const offset of offsets) {
-          const targetX = playerX + offset.dx;
-          const targetY = playerY + offset.dy;
-          const entity = gameState.map.entities.find(
-            (e) => e.x === targetX && e.y === targetY
-          );
+        // --- INICIO DE LA LÓGICA CORREGIDA ---
 
-          if (entity) {
-            const entityIdentifier = entity.originalEntityTypeId || entity.type;
-            const isCombatEntity = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier);
-            if (isCombatEntity) {
-                // Si es un enemigo, SIEMPRE intentamos iniciar batalla.
-                console.log(`[interact] Entidad de combate encontrada: ${entity.name} (ID: ${entityIdentifier}). Iniciando batalla.`);
-                showModal("¡A la Batalla!", `Decides enfrentar a ${entity.name}.`, true);
-                setTimeout(() => {
-                    closeModal();
-                    startBattle(entity);
-                }, 1000);
-                return; // Salimos de la función para no procesar más interacciones.
+        // PASO 1: Buscar prioritariamente un objetivo de combate en todas las casillas adyacentes.
+        for (const offset of offsets) {
+            const targetX = playerX + offset.dx;
+            const targetY = playerY + offset.dy;
+            const entity = gameState.map.entities.find(e => e.x === targetX && e.y === targetY);
+
+            if (entity) {
+                const entityIdentifier = entity.originalEntityTypeId || entity.type;
+                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entity.isBoss || entity.isMiniBoss;
+
+                if (isCombatTarget) {
+                    console.log(`[Interact] Objetivo de combate '${entity.name}' encontrado en casilla adyacente. Iniciando batalla.`);
+                    showModal("¡A la Batalla!", `Decides enfrentar a ${entity.name}.`, true);
+                    setTimeout(() => {
+                        closeModal();
+                        startBattle(entity);
+                    }, 1000);
+                    return; // ¡Encontrado! Termina la función aquí.
+                }
             }
-            // Si no es un enemigo, continuamos con la lógica de interacción normal.
-            if (entity.interaction) {
-                handleEntityInteraction(entity);
-                return;
-            }
-         
-          }
         }
+
+        // PASO 2: Si no se encontró ningún enemigo, buscar otras interacciones (NPCs, tiendas, etc.).
+        for (const offset of offsets) {
+            const targetX = playerX + offset.dx;
+            const targetY = playerY + offset.dy;
+            // Usamos filter para encontrar TODAS las entidades en la casilla, por si hay superposición.
+            const entitiesInTile = gameState.map.entities.filter(e => e.x === targetX && e.y === targetY);
+            
+            // Buscamos la primera entidad que NO sea de combate pero SÍ tenga una interacción definida.
+            const interactableEntity = entitiesInTile.find(e => {
+                const entityIdentifier = e.originalEntityTypeId || e.type;
+                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || e.isBoss || e.isMiniBoss;
+                return !isCombatTarget && e.interaction;
+            });
+
+            if (interactableEntity) {
+                 console.log(`[Interact] Entidad interactuable '${interactableEntity.name}' encontrada. Manejando interacción.`);
+                 handleEntityInteraction(interactableEntity);
+                 return; // ¡Encontrado! Termina la función aquí.
+            }
+        }
+        
+        console.log("[Interact] No se encontró ninguna entidad interactuable en las casillas adyacentes.");
+        // --- FIN DE LA LÓGICA CORREGIDA ---
       }
 
       function handleEntityInteraction(entity) {
