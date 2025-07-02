@@ -2626,10 +2626,11 @@
                     currentCount: 0,
                   },
                   {
-                    entityTypeId: "boss_ancient_golem",
+                    entityTypeId: "guardian_terracota",
                     count: 25,
                     currentCount: 0,
                   },
+                  
                 ],
                 respawnTimer: 0,
                 respawnCooldown: 400,
@@ -2842,6 +2843,7 @@
 
       const G_COMBAT_ENTITY_TYPES = [
         "monster",
+        "guardian_terracota",
         "mission_boss",
         "esqueleto_podrido",
         "bandido_desfiladero",
@@ -3458,20 +3460,36 @@
           requisitoNivel: 8,
         },
         //MISIONES FORMACIONES
+        mision_feng_0_encontrar_maestro: {
+            titulo: "Un Eco en el Compás",
+            descripcion: "El compás gira violentamente y apunta hacia una zona escondida en los campos de la secta. La ubicación de una extraña anomalía ha sido marcada en tu percepción espiritual. Dirígete a las coordenadas x:2, y:23.",
+            objetivo: {
+                tipo: "llegar_a_punto",
+                x: 2,
+                y: 23,
+                nombreArea: "Anomalía Espiritual",
+                npcEntrega: "npc_maestro_feng" // Al llegar y hablar con él, la misión se completará.
+            },
+            recompensa: {
+                pcs: 0,
+                exp: 100
+            },
+            isStoryMission: true, // Indica que no la ofrece un NPC directamente, sino que se activa por evento.
+        },
         mision_feng_1_tutorial: {
             titulo: "El Arte de la Inscripción",
             descripcion: "El Maestro Feng quiere que demuestres tu aptitud. Te ha pedido que traces una simple formación de tres puntos en cualquier lugar del mapa para probar tu control.",
             objetivo: {
                 tipo: "trazar_patron",
                 patternId: "fengs_initiation_seal",
-                npcEntrega: "maestro_feng"
+                npcEntrega: "npc_maestro_feng"
             },
             recompensa: {
                 pcs: 100, exp: 1000,
                 learnPattern: "verdant_life_circle", // Recompensa: aprender el siguiente patrón
                 items: { "Tinta Rúnica": 20 }
             },
-            npcInicio: "maestro_feng"
+            npcInicio: "npc_maestro_feng"
         },
         mision_feng_2_prueba_vital: {
             titulo: "Una Prueba de Vitalidad",
@@ -3480,13 +3498,13 @@
                 tipo: "eliminar_enemigo",
                 enemigoTipo: "treant_anciano", // Un enemigo que ya tienes definido
                 cantidad: 1,
-                npcEntrega: "maestro_feng"
+                npcEntrega: "npc_maestro_feng"
             },
             recompensa: {
                 pcs: 300, exp: 2500,
                 learnPattern: "arcane_vortex_array" // Recompensa: aprender el siguiente
             },
-            npcInicio: "maestro_feng"
+            npcInicio: "npc_maestro_feng"
         },
         mision_feng_3_romper_sello: {
             titulo: "Rompiendo el Sello Ancestral",
@@ -3496,14 +3514,14 @@
             objetivo: {
                 tipo: "derrotar_npc_especifico",
                 npcId: "boss_ancient_golem",
-                npcEntrega: "maestro_feng"
+                npcEntrega: "npc_maestro_feng"
             },
             recompensa: {
                 pcs: 1000,
                 exp: 8000,
                 learnPattern: "aegis_of_the_mountain"
             },
-            npcInicio: "maestro_feng"
+            npcInicio: "npc_maestro_feng"
         },
         mision_feng_4_la_egida: {
             titulo: "La Prueba de la Montaña",
@@ -3512,14 +3530,14 @@
                 tipo: "eliminar_enemigo",
                 enemigoTipo: "djinn_arenas", // Un enemigo que golpea duro
                 cantidad: 1,
-                npcEntrega: "maestro_feng"
+                npcEntrega: "npc_maestro_feng"
             },
             recompensa: {
                 pcs: 2000,
                 exp: 10000,
                 items: { "Rollo: Matriz de Reversión del Cosmos (Trascendente)": 1 } // La recompensa final
             },
-            npcInicio: "maestro_feng"
+            npcInicio: "npc_maestro_feng"
         },
         // Asegúrate de que las misiones que quieres que se entreguen a un NPC tengan `npcEntrega` en su `objetivo`.
         mision_componentes_alquimia_1: {
@@ -3623,21 +3641,23 @@
           requisitoNivel: 8,
         },
         mision_cazar_renegado_kai: {
-            titulo: "El Renegado Erudito",
-            descripcion: "El Guía Lin está preocupado por Kai, un ex-discípulo talentoso que abandonó la secta en busca de 'conocimientos prohibidos'. Ha sido visto liderando a un grupo de renegados en el Bosque Esmeralda Profundo. Su influencia es una amenaza. Encuéntralo y pon fin a sus actividades.",
-            objetivo: {
-                tipo: "derrotar_npc_especifico",
-                npcId: "lider_renegado_kai",
-                npcEntrega: "guia_lin" // Se reporta al Guía Lin
-            },
-            recompensa: {
-                pcs: 250,
-                exp: 1500,
-                items: { "Píldora de Recuperación Menor": 3 }
-            },
-            npcInicio: "guia_lin", // El Guía Lin da la misión
-            requisitoRango: "Discípulo Interno" // ¡IMPORTANTE! Se desbloquea al ascender.
-        },
+          titulo: "El Renegado Erudito",
+          descripcion: "El Guía Lin está preocupado por Kai, un ex-discípulo talentoso que abandonó la secta en busca de 'conocimientos prohibidos'. Ha sido visto liderando a un grupo de renegados en el Bosque Esmeralda Profundo. Su influencia es una amenaza. Encuéntralo y pon fin a sus actividades.",
+          objetivo: {
+              tipo: "derrotar_npc_especifico",
+              // --- CAMBIO CLAVE ---
+              // Ahora usamos el ID de la entidad, que es el correcto para un jefe de misión
+              npcId: "lider_renegado_kai", 
+              npcEntrega: "guia_lin" 
+          },
+          recompensa: {
+              pcs: 250,
+              exp: 1500,
+              items: { "Píldora de Recuperación Menor": 3 }
+          },
+          npcInicio: "guia_lin", 
+          requisitoRango: "Discípulo Interno"
+      },
         mision_cazar_bestia_especifica_1: {
           titulo: "La Amenaza del Jabalí Colmilludo",
           descripcion:
@@ -5834,7 +5854,7 @@
           name: "Maestro Feng, el Cartógrafo",
           spriteUrl: "img/maestro_feng.png", // Necesitarás un sprite de un erudito anciano
           interaction: "talk_dynamic_npc", // Usaremos la función de diálogos dinámicos
-          npcId: "maestro_feng",
+          npcId: "npc_maestro_feng",
           fixedLocation: { x: 2, y: 23 }, // 
           discovered: false // El jugador debe descubrirlo primero
         },
@@ -6183,7 +6203,6 @@
             name: "Líder Cultor Renegado Kai",
             spriteUrl: "img/renegado_Kai.png",
             type: "mission_boss", // Un tipo específico en lugar de un override.
-            npcId: "lider_renegado_kai",
             typeOverride: "monster",
             hp: 500,
             level: 15,
@@ -7624,7 +7643,7 @@
           lootTable: [
             {
               itemName: "Piedras Espirituales",
-              quantity: [10, 15],
+              quantity: [44, 45],
               chance: 1.0,
             },
             {
@@ -7643,7 +7662,7 @@
             // 
           ],
           
-          fixedLocation: { x: 65, y: 51 },
+          fixedLocation: { x: 6, y: 22 },
         },
       };
       //------------------------   ITEMS ---------------------------------------------------
@@ -7657,56 +7676,45 @@
             canUse: () => false, // Es un objeto de lore, no se consume
         },
         "Compás Espiritual Antiguo": {
-          description: "Un artefacto delicado que vibra débilmente. Al usarlo, podría señalar una fuente de poder rúnico.",
-          effect: (playerState, gainExpFunc, itemName) => { // Añadimos los otros parámetros por consistencia
-              
-              let fengInstance = gameState.map.entities.find(e => e.npcId === 'maestro_feng');
+            description: "Un artefacto delicado que vibra débilmente. Al usarlo, señalará la fuente de una anomalía rúnica.",
+            canUse: (playerState) => {
+                // Solo se puede usar si la subtrama de Feng no ha comenzado.
+                return playerState.worldState.subplotFlags.fengQuestProgress === 0;
+            },
+            effect: (playerState, gainExpFunc, itemName) => {
+                console.groupCollapsed(`[useItem Effect v3] ==> Ejecutando efecto de: "${itemName}"`);
+                
+                // --- INICIO DE LA CORRECCIÓN DEFINITIVA ---
+                
+                // PASO 1: Aceptar la misión. ESTA ES LA ACCIÓN MÁS IMPORTANTE.
+                console.log(`[v3] Paso 1: Llamando a acceptMission con 'mision_feng_0_encontrar_maestro'.`);
+                acceptMission('mision_feng_0_encontrar_maestro');
+                
+                // PASO 2: Marcar el progreso de la subtrama.
+                playerState.worldState.subplotFlags.fengQuestProgress = 1;
+                console.log(`[v3] Paso 2: 'fengQuestProgress' establecido a 1.`);
+                
+                // PASO 3: Forzar sincronización del mundo y la UI.
+                console.log(`[v3] Paso 3: Llamando a ensureFixedEntities y refrescando la UI.`);
+                ensureFixedEntities();
+                renderMap();
+                updateUI();
+                updateSectUI();
+                
+                console.log(`[v3] Proceso de efecto del compás completado.`);
+                console.groupEnd();
 
-              // Si Feng no existe en el mapa, lo creamos y lo añadimos.
-              if (!fengInstance) {
-                  const fengDefinition = entityTypes['npc_maestro_feng'];
-                  if (fengDefinition && fengDefinition.fixedLocation) {
-                      fengInstance = {
-                          ...fengDefinition,
-                          x: fengDefinition.fixedLocation.x,
-                          y: fengDefinition.fixedLocation.y,
-                          id: `feng_instance_${Date.now()}`,
-                          originalEntityTypeId: 'npc_maestro_feng'
-                      };
-                      gameState.map.entities.push(fengInstance);
-                      console.log("[Compás] Maestro Feng no existía. Ha sido creado en el mapa.");
-                  } else {
-                      return "El compás vibra erráticamente, pero no apunta a ningún lugar. Parece que su objetivo no existe en este mundo (Error de datos).";
-                  }
-              }
-
-              // Ahora que estamos seguros de que fengInstance existe, lo descubrimos.
-              if (fengInstance.discovered) {
-                  return "El compás ya no reacciona. Ya conoces la ubicación a la que apunta.";
-              }
-
-              fengInstance.discovered = true;
-              renderMap(); // Volvemos a dibujar el mapa para que aparezca el icono de Feng
-              
-              // Una vez usado con éxito, se consume.
-              // La lógica para decrementar el ítem está en useItem, no es necesario hacerlo aquí.
-              // gameState.inventory[itemName]--; 
-
-              return "El compás gira violentamente y luego apunta hacia una zona escondida en los campos de la secta. La ubicación de una extraña anomalía ha sido marcada en tu percepción espiritual. Dirígete a las coordenadas x:2, y:23";
-          },
-          canUse: (playerState) => {
-              // La condición ahora es mucho más simple:
-              // Puedes usarlo si tienes el objeto y Feng aún no ha sido descubierto.
-              // El efecto se encargará de crearlo si no existe.
-              const fengInstance = gameState.map.entities.find(e => e.npcId === 'maestro_feng');
-              
-              // Se puede usar si:
-              // 1. Feng no existe en absoluto (fengInstance es undefined)
-              // O
-              // 2. Feng existe pero no ha sido descubierto.
-              return !fengInstance || !fengInstance.discovered;
-          }
-        },
+                // PASO 4: Devolver el mensaje de feedback para el jugador.
+                return "El compás gira violentamente y luego apunta hacia una zona escondida en los campos de la secta. La ubicación de una extraña anomalía ha sido marcada en tu percepción espiritual. Dirígete a las coordenadas x:2, y:23";
+                
+                // --- FIN DE LA CORRECCIÓN DEFINITIVA ---
+            }
+    },
+        
+        
+      
+        
+        
         "Herramientas de Agrimensura de Feng": {
             description: "Un conjunto de delicadas herramientas para medir la energía espiritual. Objeto de misión.",
             canUse: () => false,
@@ -7819,46 +7827,35 @@
           canUse: () => true,
         },
         "Compás Espiritual Antiguo": {
-          description: "Un artefacto delicado que vibra débilmente. Al usarlo, podría señalar una fuente de poder rúnico.",
-          canUse: (playerState) => {
-              const fengInstance = gameState.map.entities.find(e => e.npcId === 'maestro_feng');
-              // La condición para NO poder usarlo es si Feng ya existe Y ya está descubierto.
-              if (fengInstance && fengInstance.discovered) {
-                  return "El compás ya no reacciona. Ya conoces la ubicación a la que apunta.";
-              }
-              // Si no se cumple la condición anterior, sí se puede usar.
-              return true;
-          },
-          effect: (playerState, gainExpFunc, itemName) => {
-              console.log("[Compás Effect] Ejecutando efecto del compás...");
-              let fengInstance = gameState.map.entities.find(e => e.npcId === 'maestro_feng');
+            description: "Un artefacto delicado que vibra débilmente. Al usarlo, señalará la fuente de una anomalía rúnica.",
+            canUse: (playerState) => {
+                return playerState.worldState.subplotFlags.fengQuestProgress === 0;
+            },
+            effect: (playerState, gainExpFunc, itemName) => {
+                // He cambiado el nombre del log a v4 para que sea 100% seguro que es la nueva versión.
+                console.groupCollapsed(`[useItem Effect v4] ==> ¡SE ESTÁ EJECUTANDO LA VERSIÓN CORRECTA DEL EFECTO!`);
+                
+                // PASO 1: Aceptar la misión. Esta es la acción clave.
+                console.log(`[v4] Paso 1: Llamando a acceptMission...`);
+                acceptMission('mision_feng_0_encontrar_maestro');
+                
+                // PASO 2: Marcar el progreso de la subtrama.
+                playerState.worldState.subplotFlags.fengQuestProgress = 1;
+                console.log(`[v4] Paso 2: 'fengQuestProgress' establecido a 1.`);
+                
+                // PASO 3: Sincronizar el mundo y la UI.
+                console.log(`[v4] Paso 3: Sincronizando entidades y UI...`);
+                ensureFixedEntities();
+                renderMap();
+                updateUI();
+                updateSectUI();
+                
+                console.log(`[v4] Proceso del compás finalizado.`);
+                console.groupEnd();
 
-              // Si Feng no existe en el mapa, lo creamos.
-              if (!fengInstance) {
-                  const fengDefinition = entityTypes['npc_maestro_feng'];
-                  if (fengDefinition && fengDefinition.fixedLocation) {
-                      fengInstance = {
-                          ...fengDefinition,
-                          x: fengDefinition.fixedLocation.x,
-                          y: fengDefinition.fixedLocation.y,
-                          id: `feng_instance_${Date.now()}`,
-                          originalEntityTypeId: 'npc_maestro_feng',
-                          discovered: false // Nace sin ser descubierto
-                      };
-                      gameState.map.entities.push(fengInstance);
-                      console.log("[Compás Effect] Maestro Feng no existía. Ha sido creado en el mapa.");
-                  } else {
-                      return "El compás vibra erráticamente, pero no apunta a ningún lugar (Error de datos).";
-                  }
-              }
-
-              // Ahora que estamos seguros de que fengInstance existe, lo descubrimos.
-              fengInstance.discovered = true;
-              renderMap();
-              console.log("[Compás Effect] Maestro Feng marcado como 'discovered' y mapa renderizado.");
-              
-              return "El compás gira violentamente y luego apunta hacia una zona escondida en los campos de la secta. La ubicación de una extraña anomalía ha sido marcada en tu percepción espiritual. Dirígete a las coordenadas x:2, y:23.";
-          }
+                // PASO 4: Mensaje para el jugador.
+                return "El compás gira violentamente y luego apunta hacia una zona escondida en los campos de la secta. La ubicación de una extraña anomalía ha sido marcada en tu percepción espiritual. Dirígete a las coordenadas x:2, y:23";
+            }
         },
         "Manual de Formación Básica": {
           description: "Enseña principios de formaciones defensivas.",
@@ -8939,84 +8936,81 @@ function closeModal(callback = null) { // <-- Se añade '= null'
     updateGameOverlayVisibility();
 }
       //ENEMIGOS Y NPC FIJOS
-      function ensureFixedEntities() {
-          console.groupCollapsed(`[ensureFixedEntities] Ciclo de Verificación de Entidades Fijas`);
-          
-          const player = gameState.player;
-          const defeated = player.worldState.defeatedBosses || {};
-          const activeMissions = player.secta.misionesActivas.map(m => m.id);
+      // REEMPLAZA TU FUNCIÓN ensureFixedEntities COMPLETA CON ESTA VERSIÓN
+function ensureFixedEntities() {
+    console.groupCollapsed(`[ensureFixedEntities v3] Ciclo de Verificación y Sincronización`);
+    const player = gameState.player;
+    
+    const shouldExist = {};
+    const alwaysOnEntities = [
+        'shop', 'tutorial_formation_mural', 'secta_entrada_principal', 'secta_entrada_principal_2', 
+        'secta_entrada_principal_3', 'secta_entrada_principal_4', 'npc_secta_guia', 'npc_secta_admin', 
+        'npc_maestro_jian', 'npc_anciana_su', 'transition_ruins_entrance', 'transition_ruins_exit',
+        'transition_valley_entrance', 'transition_valley_exit', 'transition_fisura_entrance', 'transition_fisura_exit',
+        'tp_sect_hub', 'tp_forest_shrine', 'tp_desert_oasis', 'tp_swamp_ruin', 'tp_desfiladero', 'tp_dragon_valley',
+        'mural_circulo_vital',
+        //'boss_ancient_golem'
+    ];
+    alwaysOnEntities.forEach(id => shouldExist[id] = true);
+    
+    if (player.worldState.subplotFlags.fengQuestProgress > 0) {
+        shouldExist['npc_maestro_feng'] = true;
+    }
 
-          // 1. Empezamos con la lista de entidades que casi siempre deben existir.
-          const potentialFixedEntities = {
-              'shop': true, 'tutorial_formation_mural': true, 'secta_entrada_principal': true, 'secta_entrada_principal_2': true, 'secta_entrada_principal_3': true, 'secta_entrada_principal_4': true,
-              'npc_secta_guia': true, 'npc_secta_admin': true, 'npc_maestro_jian': true, 'npc_anciana_su': true,
-              'transition_ruins_entrance': true, 'transition_ruins_exit': true, 'transition_valley_entrance': true, 'transition_valley_exit':true,
-              'transition_fisura_entrance': true, 'transition_fisura_exit': true,
-              'tp_sect_hub': true, 'tp_forest_shrine': true, 'tp_desert_oasis': true, 'tp_swamp_ruin': true, 'tp_desfiladero': true, 'tp_dragon_valley': true,
-              'mural_circulo_vital': true,
-          };
-          
-          // 2. Lógica para NPCs de subtramas condicionales.
-          const tieneCompas = (gameState.inventory["Compás Espiritual Antiguo"] || 0) > 0;
-          const fengQuestIniciada = player.worldState.subplotFlags.fengQuestProgress > 0;
-          if (tieneCompas || fengQuestIniciada) {
-              potentialFixedEntities['npc_maestro_feng'] = true;
-          }
+    player.secta.misionesActivas.forEach(misionActiva => {
+        const misionData = MISIONES_DATA[misionActiva.id];
+        const objetivo = misionData?.objetivo;
 
-          // --- INICIO DE LA MODIFICACIÓN: LÓGICA DE APARICIÓN UNIVERSAL PARA JEFES DE MISIÓN ---
-          // 3. Revisamos TODAS las misiones activas y forzamos la aparición de sus objetivos de tipo "derrotar_npc_especifico".
-          // Esto cubre los jefes de desafío de rango, el Golem de Feng, y cualquier otro jefe de misión.
-          player.secta.misionesActivas.forEach(misionActiva => {
-              const misionData = MISIONES_DATA[misionActiva.id];
-              if (misionData?.objetivo?.tipo === 'derrotar_npc_especifico' && misionData.objetivo.npcId) {
-                  const npcToSpawnId = misionData.objetivo.npcId;
-                  
-                  // Solo lo marcamos para aparecer si NO ha sido derrotado previamente.
-                  if (!defeated[npcToSpawnId]) {
-                       potentialFixedEntities[npcToSpawnId] = true;
-                       console.log(`[EnsureFixed] Misión activa '${misionActiva.id}' requiere que '${npcToSpawnId}' exista. Marcado para aparecer.`);
-                  }
-              }
-          });
+        if (objetivo?.tipo === 'derrotar_npc_especifico' && objetivo.npcId) {
+            // --- ¡MODIFICACIÓN CLAVE! ---
+            // Solo debe existir si la misión está activa Y el jefe NO ha sido derrotado permanentemente.
+            if (!player.worldState.defeatedFixedEntities[objetivo.npcId]) {
+                shouldExist[objetivo.npcId] = true;
+                console.log(`[EnsureFixed v3] REQUISITO: '${objetivo.npcId}' debe existir por la misión '${misionActiva.id}'.`);
+            } else {
+                console.log(`[EnsureFixed v3] IGNORANDO: '${objetivo.npcId}' porque ya está marcado como derrotado permanentemente.`);
+            }
+        }
+    });
 
-          // 2. Iterar sobre la lista de entidades que POTENCIALMENTE deben existir.
-          for (const entityTypeId in potentialFixedEntities) {
-              // Si la condición de existencia es `false`, nos aseguramos de que no esté en el mapa.
-              if (!potentialFixedEntities[entityTypeId]) {
-                  gameState.map.entities = gameState.map.entities.filter(e => e.originalEntityTypeId !== entityTypeId && e.npcId !== entityTypeId);
-                  continue; // Pasar a la siguiente entidad potencial
-              }
+    for (const entityId in shouldExist) {
+        const definition = entityTypes[entityId];
+        if (!definition || !definition.fixedLocation) continue;
 
-              // Si la condición es `true`, nos aseguramos de que SÍ esté en el mapa.
-              const definition = entityTypes[entityTypeId];
-              if (!definition || !definition.fixedLocation) {
-                  console.warn(`[EnsureFixed] La entidad '${entityTypeId}' debe existir pero no tiene definición o fixedLocation.`);
-                  continue;
-              }
+        const alreadyExists = gameState.map.entities.some(
+            e => e.originalEntityTypeId === entityId || e.npcId === entityId
+        );
 
-              // Comprobar si ya existe una instancia de esta entidad
-              const existingEntityInstance = gameState.map.entities.find(e => e.originalEntityTypeId === entityTypeId || e.npcId === entityTypeId);
+        if (!alreadyExists) {
+            console.log(`%c[EnsureFixed v3] AÑADIENDO entidad faltante: ${entityId}`, 'color: #66ff66; font-weight: bold;');
+            const newEntity = {
+                ...definition,
+                ...definition.fixedLocation,
+                type: definition.typeOverride || entityId,
+                id: `${entityId}_fixed_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+                isFixed: true,
+                originalEntityTypeId: entityId
+            };
+            if (newEntity.hp && !newEntity.maxHp) newEntity.maxHp = newEntity.hp;
+            gameState.map.entities.push(newEntity);
+        }
+    }
 
-              if (!existingEntityInstance) {
-                  // No existe, así que la creamos.
-                  console.log(`%c[EnsureFixed] CREANDO nueva instancia de: ${entityTypeId}`, 'color: #66ff66; font-weight: bold;');
-                  const newEntity = {
-                      ...definition,
-                      x: definition.fixedLocation.x,
-                      y: definition.fixedLocation.y,
-                      type: definition.typeOverride || entityTypeId,
-                      id: `${entityTypeId}_fixed_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-                      isFixed: true,
-                      originalEntityTypeId: entityTypeId
-                  };
-                  if (newEntity.hp && !newEntity.maxHp) newEntity.maxHp = newEntity.hp;
-                  
-                  gameState.map.entities.push(newEntity);
-              }
-          }
-
-          console.groupEnd();
-      }
+    for (let i = gameState.map.entities.length - 1; i >= 0; i--) {
+        const entity = gameState.map.entities[i];
+        if (entity.isFixed && !entity.isDecorative) {
+            const entityId = entity.originalEntityTypeId || entity.npcId;
+            // --- ¡MODIFICACIÓN CLAVE! ---
+            // También comprobamos si ha sido derrotado permanentemente antes de eliminarlo.
+            if (entityId && !shouldExist[entityId] && !player.worldState.defeatedFixedEntities[entityId]) {
+                console.log(`%c[EnsureFixed v3] ELIMINANDO entidad sobrante: ${entityId}`, 'color: #ff9933;');
+                gameState.map.entities.splice(i, 1);
+            }
+        }
+    }
+    
+    console.groupEnd();
+}
       //GENERAR MAPA!
       function generateMap(isFullReset = true) {
         // Si no es un reseteo completo, no hacemos NADA relacionado con la población de entidades.
@@ -9453,7 +9447,7 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 
       function movePlayer(dx, dy) {
     // Los logs pueden ser útiles, los mantendremos por ahora pero colapsados.
-    console.groupCollapsed(`[movePlayer] Intento de movimiento: dx=${dx}, dy=${dy}`);
+   
 
     movePlayerCallCount++;
     const callId = movePlayerCallCount;
@@ -9514,18 +9508,20 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         player.y = newY;
         
         const misionesActivas = [...player.secta.misionesActivas];
-            misionesActivas.forEach(misionActiva => {
-                const misionData = MISIONES_DATA[misionActiva.id];
-                if (misionData?.objetivo?.tipo === 'llegar_a_punto' && misionActiva.progreso !== 1) {
-                    if (player.x === misionData.objetivo.x && player.y === misionData.objetivo.y) {
-                        misionActiva.progreso = 1;
-                        logBattle(`Has llegado a ${misionData.objetivo.nombreArea || 'la ubicación designada'}.`);
-                        const npcEntregaNombre = SECTA_DATA.npcs[misionData.objetivo.npcEntrega]?.nombre || "el NPC correspondiente";
-                        showModal("Objetivo Alcanzado", `Has llegado a: <strong>${misionData.objetivo.nombreArea}</strong>.<br><br>Ahora debes reportar tu hallazgo a <strong>${npcEntregaNombre}</strong>.`);
-                        renderMap(); 
-                    }
+        misionesActivas.forEach(misionActiva => {
+            const misionData = MISIONES_DATA[misionActiva.id];
+            if (misionData?.objetivo?.tipo === 'llegar_a_punto' && misionActiva.progreso !== 1) {
+                if (player.x === misionData.objetivo.x && player.y === misionData.objetivo.y) {
+                    misionActiva.progreso = 1; // Marcar como objetivo cumplido
+                    const npcEntregaNombre = SECTA_DATA.npcs[misionData.objetivo.npcEntrega]?.nombre || "el NPC correspondiente";
+                    showModal(
+                        "Objetivo Alcanzado", 
+                        `Has llegado a: <strong>${misionData.objetivo.nombreArea}</strong>.<br><br>Ahora debes hablar con <strong>${npcEntregaNombre}</strong> para continuar.`
+                    );
+                    renderMap(); // Redibuja el mapa para quitar el marcador de misión si lo hubiera
                 }
-            });
+            }
+        });
         // Lógica de cambio de zona
         const newZone = getPlayerCurrentZone();
         const newZoneName = newZone ? newZone.name : "Tierras Salvajes";
@@ -9552,39 +9548,84 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         player.mana -= techniqueData.formation_scribing_1.manaCost || 10;
         
         const runeKey = `${x},${y}`;
-        
         let targetEnemy = null;
+        
         if (gameState.selectedEnemyId) {
             targetEnemy = gameState.map.entities.find(e => e.id === gameState.selectedEnemyId);
         }
         
-        let patternFound = false;
-
+        // --- LÓGICA DE COMBATE ---
         if (targetEnemy) {
             if (!targetEnemy.formationRunes) targetEnemy.formationRunes = {};
             targetEnemy.formationRunes[runeKey] = 1;
-            gameState.utilityRunes = {};
+            gameState.utilityRunes = {}; // Limpia runas de utilidad si empezamos un patrón de combate
             
             const combatPattern = checkCombatPatterns(targetEnemy);
             if (combatPattern) {
-                patternFound = true;
                 if (!targetEnemy.pendingFormationEffects) targetEnemy.pendingFormationEffects = [];
                 targetEnemy.pendingFormationEffects.push(combatPattern.effect);
-                targetEnemy.formationRunes = {}; // Limpiar runas después de un éxito
-                showModal("¡Formación de Combate Completa!", `Has completado <strong>"${combatPattern.name}"</strong>.`);
+                targetEnemy.formationRunes = {}; // Limpiar runas de combate del enemigo tras un éxito
+                showModal("¡Formación de Combate Completa!", `Has completado <strong>"${combatPattern.name}"</strong>. Su efecto se activará al iniciar la batalla.`);
             } else {
                 showModal("Runa de Combate Inscrita", `Has trazado una runa para ${targetEnemy.name}.`);
             }
-        } else {
-            gameState.utilityRunes[runeKey] = 1;
-            checkUtilityPatterns();
+        
+        // --- LÓGICA DE UTILIDAD (CORREGIDA) ---
+      } else {
+        gameState.utilityRunes[runeKey] = 1;
+        const utilityPattern = checkUtilityPatterns();
+
+        if (utilityPattern) {
+            console.log(`[placeRuneAt v2] Patrón de utilidad encontrado: ${utilityPattern.name}`);
             
+            gameState.utilityRunes = {};
+            
+            switch (utilityPattern.effect.type) {
+                // --- INICIO DE LA CORRECCIÓN CLAVE ---
+                case 'utility_mission_trigger':
+                    // Buscamos en las misiones activas una que requiera trazar este patrón.
+                    const activeMission = player.secta.misionesActivas.find(m => 
+                        MISIONES_DATA[m.id]?.objetivo?.tipo === 'trazar_patron' && 
+                        MISIONES_DATA[m.id]?.objetivo?.patternId === utilityPattern.sourcePatternId
+                    );
+
+                    if (activeMission) {
+                        // ¡Encontramos la misión! Ahora actualizamos su progreso.
+                        activeMission.progreso = 1;
+                        console.log(`[placeRuneAt v2] ¡OBJETIVO DE MISIÓN CUMPLIDO! Misión: '${activeMission.id}', Progreso: ${activeMission.progreso}`);
+                        
+                        // Mostramos un modal específico para la misión cumplida.
+                        showModal(
+                            "¡Patrón Replicado!",
+                            `Has trazado con éxito el patrón <strong>${utilityPattern.name}</strong> para la misión. Vuelve con el Maestro Feng para reportar tu éxito.`
+                        );
+                        updateSectUI(); // Actualizamos la UI para que el diario refleje el cambio.
+                    } else {
+                        // Si se traza un patrón de misión pero no se tiene la misión, se informa.
+                        console.warn(`[placeRuneAt v2] Se trazó un patrón de misión, pero no se encontró la misión activa correspondiente.`);
+                        showModal("Patrón Reconocido", `Has trazado la formación "${utilityPattern.name}", pero no parece tener un efecto inmediato...`);
+                    }
+                    break;
+                    case 'utility_teleport':
+                        teleportPlayer(utilityPattern.effect.destinationId);
+                        showModal("¡Portal Abierto!", `La ${utilityPattern.name} se activa...`, true);
+                        setTimeout(() => closeModal(), 2000);
+                        break;
+                    default:
+                        showModal("¡Formación de Utilidad Completa!", `Has activado: <strong>${utilityPattern.name}</strong>.`);
+                        break;
+                }
+            } else {
+                // No se encontró ningún patrón, simplemente informamos que se plantó la runa
+                showModal("Runa de Utilidad Inscrita", `Has trazado una runa en el suelo. Continúa para formar un patrón.`);
+            }
         }
 
         updateUI();
-        renderMap(); // Renderizar para limpiar las runas si se completó un patrón
+        renderMap(); // Volvemos a dibujar para que las runas aparezcan o desaparezcan.
         renderQuickSlotBar();
     }
+
       function checkForAggressiveEnemies() {
         if (gameState.battle.active || isAnyModalOpen() || gameState.player.isChannelingRune) {
           return;
@@ -10486,17 +10527,24 @@ function closeModal(callback = null) { // <-- Se añade '= null'
       }
 
       function interact() {
-        if (gameState.player.isChannelingRune) {
-            plantRune();
-            return;
-        }
-        if (gameState.player.isCultivating || gameState.battle.active) {
-            showModal("Acción no permitida", "No puedes interactuar ahora.");
-            return;
-        }
+        console.groupCollapsed(`[Interact LOG] ==> Intento de Interacción`);
 
-        const playerX = gameState.player.x;
-        const playerY = gameState.player.y;
+          if (gameState.player.isChannelingRune) {
+              console.log("-> Acción: plantRune (jugador está canalizando).");
+              console.groupEnd();
+              plantRune();
+              return;
+          }
+          if (gameState.player.isCultivating || gameState.battle.active) {
+              console.log("-> Acción bloqueada (cultivando o en batalla).");
+              console.groupEnd();
+              showModal("Acción no permitida", "No puedes interactuar ahora.");
+              return;
+          }
+
+          const playerX = gameState.player.x;
+          const playerY = gameState.player.y;
+          console.log(`-> Posición del jugador: (${playerX}, ${playerY})`);
         
         // El orden de los offsets ahora importa: priorizamos las casillas cardinales.
         const offsets = [
@@ -10513,48 +10561,59 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 
         // --- INICIO DE LA LÓGICA CORREGIDA ---
 
-        // PASO 1: Buscar prioritariamente un objetivo de combate en todas las casillas adyacentes.
-        for (const offset of offsets) {
-            const targetX = playerX + offset.dx;
-            const targetY = playerY + offset.dy;
-            const entity = gameState.map.entities.find(e => e.x === targetX && e.y === targetY);
+        console.log("--- BÚSQUEDA DE COMBATE ---");
+          for (const offset of offsets) {
+              const targetX = playerX + offset.dx;
+              const targetY = playerY + offset.dy;
+              const entity = gameState.map.entities.find(e => e.x === targetX && e.y === targetY);
 
-            if (entity) {
-                const entityIdentifier = entity.originalEntityTypeId || entity.type;
-                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entity.isBoss || entity.isMiniBoss;
+              if (entity) {
+                  const entityIdentifier = entity.originalEntityTypeId || entity.type;
+                  console.log(`   - Revisando casilla ${offset.name} (${targetX},${targetY}): Encontrado '${entity.name}' (ID maestro: ${entityIdentifier})`);
+                  
+                  // Esta es la comprobación de si es un enemigo.
+                  const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || entity.isBoss || entity.isMiniBoss;
 
-                if (isCombatTarget) {
-                    console.log(`[Interact] Objetivo de combate '${entity.name}' encontrado en casilla adyacente. Iniciando batalla.`);
-                    showModal("¡A la Batalla!", `Decides enfrentar a ${entity.name}.`, true);
-                    setTimeout(() => {
-                        closeModal();
-                        startBattle(entity);
-                    }, 1000);
-                    return; // ¡Encontrado! Termina la función aquí.
-                }
-            }
-        }
+                  if (isCombatTarget) {
+                      console.log(`%c   -> ¡DECISIÓN: INICIAR COMBATE! La entidad '${entity.name}' es un objetivo de combate.`, 'color: #ff6666; font-weight: bold;');
+                      console.groupEnd();
+                      showModal("¡A la Batalla!", `Decides enfrentar a ${entity.name}.`, true);
+                      setTimeout(() => {
+                          closeModal();
+                          startBattle(entity);
+                      }, 1000);
+                      return; // ¡ACCIÓN TOMADA! Salimos de la función.
+                  } else {
+                      console.log(`   -> No es un objetivo de combate.`);
+                  }
+              }
+          }
+          // --- PASO 2: SI NO HAY COMBATE, BUSCAR OTRAS INTERACCIONES ---
+          console.log("--- BÚSQUEDA DE OTRAS INTERACCIONES ---");
+          for (const offset of offsets) {
+              const targetX = playerX + offset.dx;
+              const targetY = playerY + offset.dy;
+              const entitiesInTile = gameState.map.entities.filter(e => e.x === targetX && e.y === targetY);
 
+              if (entitiesInTile.length > 0) {
+                   console.log(`   - Revisando casilla ${offset.name} (${targetX},${targetY}): Se encontraron ${entitiesInTile.length} entidades.`);
+                  
+                   // Buscamos la primera entidad que tenga una interacción definida.
+                   const interactableEntity = entitiesInTile.find(e => e.interaction);
+
+                   if (interactableEntity) {
+                       console.log(`%c   -> ¡DECISIÓN: INTERACCIÓN GENERAL! La entidad '${interactableEntity.name}' tiene la propiedad 'interaction'.`, 'color: #66ccff; font-weight: bold;');
+                       console.groupEnd();
+                       handleEntityInteraction(interactableEntity);
+                       return; // ¡ACCIÓN TOMADA! Salimos de la función.
+                   }
+              }
+          }
+          
+          console.log("-> DECISIÓN FINAL: No se encontró ninguna entidad interactuable en las casillas adyacentes.");
+          console.groupEnd();
         // PASO 2: Si no se encontró ningún enemigo, buscar otras interacciones (NPCs, tiendas, etc.).
-        for (const offset of offsets) {
-            const targetX = playerX + offset.dx;
-            const targetY = playerY + offset.dy;
-            // Usamos filter para encontrar TODAS las entidades en la casilla, por si hay superposición.
-            const entitiesInTile = gameState.map.entities.filter(e => e.x === targetX && e.y === targetY);
-            
-            // Buscamos la primera entidad que NO sea de combate pero SÍ tenga una interacción definida.
-            const interactableEntity = entitiesInTile.find(e => {
-                const entityIdentifier = e.originalEntityTypeId || e.type;
-                const isCombatTarget = G_COMBAT_ENTITY_TYPES.includes(entityIdentifier) || e.isBoss || e.isMiniBoss;
-                return !isCombatTarget && e.interaction;
-            });
-
-            if (interactableEntity) {
-                 console.log(`[Interact] Entidad interactuable '${interactableEntity.name}' encontrada. Manejando interacción.`);
-                 handleEntityInteraction(interactableEntity);
-                 return; // ¡Encontrado! Termina la función aquí.
-            }
-        }
+     
         
         console.log("[Interact] No se encontró ninguna entidad interactuable en las casillas adyacentes.");
         // --- FIN DE LA LÓGICA CORREGIDA ---
@@ -10621,57 +10680,13 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                     showModal(`Hablando con ${entity.name}`, dialogue);
                 }
               return;
+              
               case "talk_dynamic_npc":
-                if (entity.npcId === 'maestro_feng') {
-                    const player = gameState.player;
-                    const subplots = player.worldState.subplotFlags;
-
-                    // --- PASO A: Comprobar si hay una misión para ENTREGAR ---
-                    const missionToComplete = player.secta.misionesActivas.find(m => {
-                        const data = MISIONES_DATA[m.id];
-                        return data?.objetivo?.npcEntrega === 'maestro_feng' && m.progreso >= (data.objetivo.cantidad || 1);
-                    });
-
-                    if (missionToComplete) {
-                        // Si hay una misión lista, la completamos.
-                        completeMission(missionToComplete.id, 'maestro_feng');
-                        return; // La interacción termina aquí. El jugador verá el modal de recompensa.
+                    if (entity.npcId) {
+                        interactWithSectNPC(entity.npcId); // Delegamos a la función principal, que ahora sabrá qué hacer.
                     }
+                    return;
 
-                    // --- PASO B: Si no hay nada que entregar, mostramos diálogo para ACEPTAR la siguiente misión ---
-                    const dialogue = getDynamicNpcDialogue(entity.npcId);
-                    let nextMissionId = null;
-
-                    // Determinamos qué misión debería aceptar el jugador AHORA, basado en su progreso.
-                    if (subplots.fengQuestProgress === 0) nextMissionId = 'mision_feng_1_tutorial';
-                    else if (subplots.fengQuestProgress === 2) nextMissionId = 'mision_feng_2_prueba_vital';
-                    else if (subplots.fengQuestProgress === 3) nextMissionId = 'mision_feng_3_romper_sello';
-                    else if (subplots.fengQuestProgress === 4) nextMissionId = 'mision_feng_4_la_egida';
-
-                    if (nextMissionId && !player.secta.misionesActivas.some(m => m.id === nextMissionId)) {
-                        // Si hay una misión para ofrecer, mostramos un diálogo con confirmación.
-                        showConfirmationModal(
-                            "Nueva Lección del Maestro Feng",
-                            dialogue,
-                            () => { // onConfirm
-                                acceptMission(nextMissionId);
-                                // Si es la primera misión, avanzamos el progreso aquí
-                                if (subplots.fengQuestProgress === 0) {
-                                    subplots.fengQuestProgress = 1;
-                                }
-                            }
-                        );
-                    } else {
-                        // Si no hay misión que ofrecer o ya está activa, solo mostramos el diálogo.
-                        showModal(`Hablando con ${entity.name}`, dialogue);
-                    }
-
-                } else if (entity.npcId) {
-                    // Lógica para otros NPCs dinámicos
-                    const dialogue = getDynamicNpcDialogue(entity.npcId);
-                    showModal(`Hablando con ${entity.name}`, dialogue);
-                }
-                return;
             case "read_formation_tutorial":
               openFormationTutorial();
               return;
@@ -10770,275 +10785,169 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 
       
 
-      function interactWithSectNPC(npcId) {
-        const npcData = SECTA_DATA.npcs[npcId];
-        const player = gameState.player;
-        if (!npcData) {
-            console.error(`[interactWithSectNPC] NPC Data no encontrada para npcId: ${npcId}`);
-            return;
+     
+function interactWithSectNPC(npcId) {
+
+    const npcData = SECTA_DATA.npcs[npcId] || entityTypes[npcId];
+    
+    
+    const player = gameState.player;
+    console.groupCollapsed(`[interactWithSectNPC v3] ==> Hablando con NPC: ${npcId}`);
+
+    // Si no encontramos datos del NPC en ninguna parte, salimos.
+    if (!npcData) {
+        console.error(`[v3] FATAL: No se encontraron datos para el NPC con ID '${npcId}' ni en SECTA_DATA ni en entityTypes.`);
+        console.groupEnd();
+        return;
+    }
+
+    if (npcId === 'npc_maestro_feng') {
+        const fengProgress = player.worldState.subplotFlags.fengQuestProgress;
+        console.log(`-> Es Maestro Feng. Progreso de subtrama actual: ${fengProgress}`);
+
+        // --- PASO 1: ¿HAY UNA MISIÓN LISTA PARA COMPLETAR? (Prioridad Absoluta) ---
+        const missionReadyToComplete = player.secta.misionesActivas.find(m => 
+            (MISIONES_DATA[m.id]?.objetivo?.npcEntrega === 'npc_maestro_feng' || MISIONES_DATA[m.id]?.npcInicio === 'npc_maestro_feng') && 
+            m.progreso >= 1
+        );
+
+        if (missionReadyToComplete) {
+            console.log(`%c-> CASO 1: Se encontró una misión lista para completar: ${missionReadyToComplete.id}. Llamando a completeMission...`, 'color: #33cc33');
+            console.groupEnd();
+            completeMission(missionReadyToComplete.id, 'npc_maestro_feng');
+            return; // ¡ACCIÓN TOMADA! Salimos de la función.
         }
-        // --- LÓGICA ESPECIAL PARA ANCIANA SU ---
-        // Manejamos a la Anciana Su por separado porque sus interacciones son principalmente de historia.
-        if (npcId === 'anciana_su') {
-            const misionDemonio = player.secta.misionesActivas.find(m => m.id === 'mision_historia_1_demonio');
+        
+        // --- PASO 2: SI NO, DETERMINAR QUÉ HACER BASADO EN EL PROGRESO ---
+        const dialogue = getDynamicNpcDialogue(npcId);
+        const fengMissionMap = {
+            1: 'mision_feng_1_tutorial',
+            2: 'mision_feng_2_prueba_vital',
+            3: 'mision_feng_3_romper_sello',
+            4: 'mision_feng_4_la_egida',
+        };
+        const expectedMissionId = fengMissionMap[fengProgress];
+        
+        if (expectedMissionId) {
+            const isMissionAlreadyActive = player.secta.misionesActivas.some(m => m.id === expectedMissionId);
             
-            // Si la misión del demonio está activa Y su objetivo está cumplido (progreso >= 1)
-            if (misionDemonio && (misionDemonio.progreso || 0) >= 1) {
-                // Le damos al jugador la opción de completar la misión.
-                showConfirmationModal(
-                    `Reportar a ${npcData.nombre}`,
-                    `Has derrotado al General Demonio. ¿Deseas informar a la Anciana Su y reclamar tu recompensa?`,
-                    () => {
-                        // Al confirmar, se llama a la función que otorga recompensas y limpia la misión.
-                        completeMission('mision_historia_1_demonio', 'anciana_su');
-                    }
-                );
+            if (isMissionAlreadyActive) {
+                // La misión que corresponde a este paso ya está en el diario, pero su objetivo no está cumplido.
+                console.log(`%c-> CASO 2: La misión esperada (${expectedMissionId}) ya está activa. Mostrando recordatorio.`, 'color: #ffcc00');
+                const missionData = MISIONES_DATA[expectedMissionId];
+                showModal(npcData.name, `Aún no has completado mi prueba. Recuerda tu tarea actual: <em>"${missionData.descripcion}"</em>`);
             } else {
-                // Si la misión no está lista para entregar, simplemente mostramos su diálogo de historia normal.
-                const dialogue = getStoryNpcDialogue(npcId);
-                showModal(`Hablando con ${npcData.nombre}`, dialogue);
+                // No tenemos la misión que corresponde a este paso. Hay que ofrecerla.
+                console.log(`%c-> CASO 3: La misión esperada (${expectedMissionId}) no está activa. Ofreciéndola ahora.`, 'color: #66ccff');
+                showConfirmationModal(
+                    `Un Desafío de ${npcData.name}`,
+                    dialogue,
+                    () => { acceptMission(expectedMissionId); }
+                );
             }
-            // Importante: detenemos la función aquí para no mostrar el menú genérico de misiones para ella.
-            return;
+        } else {
+            // --- PASO 3: SI NO HAY MISIÓN ESPERADA, ES UN DIÁLOGO GENÉRICO ---
+            console.log(`-> CASO 4: No hay misión asociada al progreso actual. Mostrando diálogo estándar.`);
+            showModal(npcData.name, dialogue);
         }
-       
+        
+        console.groupEnd();
+        return;
+    }
+    
+    // --- LÓGICA PARA NPCs ESTÁTICOS DE LA SECTA (SIN CAMBIOS) ---
+    console.log(`-> Es un NPC estándar de la secta.`);
+    let modalContentHTML = `<h3>${npcData.nombre} (${npcData.rol})</h3><p><em>"${npcData.dialogoInicial}"</em></p><hr>`;
+    const elementsToProcess = [];
 
-        let modalContentHTML = `<h3>${npcData.nombre} (${npcData.rol})</h3>`;
-        modalContentHTML += `<p><em>"${npcData.dialogoInicial}"</em></p><hr>`;
+    modalContentHTML += `<h4>Misiones para Entregar/Reportar:</h4>`;
+    const misionesParaCompletar = player.secta.misionesActivas.filter(m => {
+        const mData = MISIONES_DATA[m.id];
+        if (!mData || mData.objetivo?.npcEntrega !== npcId) return false;
+        
+        const objetivo = mData.objetivo;
+        switch (objetivo.tipo) {
+            case "eliminar_enemigo":
+            case "derrotar_npc_especifico":
+            case "llegar_a_punto":
+            case "trazar_patron":
+                return (m.progreso || 0) >= (objetivo.cantidad || 1);
+            case "entregar_item":
+                return (gameState.inventory[objetivo.item] || 0) >= objetivo.cantidad;
+            case "cazar_y_recuperar_item_de_loot":
+                return (gameState.inventory[objetivo.itemPrueba] || 0) >= objetivo.cantidadItemPrueba;
+            case "recolectar_multiples_items":
+                return objetivo.items.every(itemReq => (gameState.inventory[itemReq.nombre] || 0) >= itemReq.cantidad);
+            default: return false;
+        }
+    });
 
-        const elementsToProcess = [];
-
-        // --- SECCIÓN: MISIONES PARA COMPLETAR ---
-        modalContentHTML += `<h4>Misiones para Entregar/Reportar:</h4>`;
-        let algunaMisionParaCompletar = false;
-
-        player.secta.misionesActivas.forEach((misionActiva) => {
+    if (misionesParaCompletar.length > 0) {
+        misionesParaCompletar.forEach(misionActiva => {
             const misionDef = MISIONES_DATA[misionActiva.id];
-            if (!misionDef || !misionDef.objetivo || !misionActiva.objetivoOriginal) {
-                return;
+            const buttonId = `complete-mission-btn-${misionActiva.id}`;
+            modalContentHTML += `<div style="padding: 5px; border: 1px solid #55cc55; margin-bottom: 5px; background-color: rgba(85,204,85,0.1);">
+                                  <strong>${misionDef.titulo}</strong> ${getMissionProgressText(misionActiva)}<br>
+                                  <button id="${buttonId}">Completar Misión</button>
+                              </div>`;
+            elementsToProcess.push({
+                buttonId: buttonId,
+                action: () => {
+                    if (completeMission(misionActiva.id, npcId)) {
+                        setTimeout(() => interactWithSectNPC(npcId), 100);
+                    }
+                },
+            });
+        });
+    } else {
+        modalContentHTML += "<p>No tienes misiones listas para entregarme.</p>";
+    }
+    modalContentHTML += "<hr>";
+
+    modalContentHTML += `<h4>Misiones Disponibles:</h4>`;
+    let algunaMisionDisponible = false;
+    (npcData.misionesOfrecidas || []).forEach(misionId => {
+        const mision = MISIONES_DATA[misionId];
+        if (mision && !player.secta.misionesActivas.some(m => m.id === misionId) && !player.secta.misionesCompletadas[misionId]) {
+            const nivelOk = player.level >= (mision.requisitoNivel || 0);
+            const rankIndexPlayer = SECTA_DATA.rangos.findIndex(r => r.nombre === player.secta.rango);
+            const rankIndexReq = mision.requisitoRango ? SECTA_DATA.rangos.findIndex(r => r.nombre === mision.requisitoRango) : -1;
+            const rangoOk = rankIndexPlayer >= rankIndexReq;
+
+            if (nivelOk && rangoOk) {
+                algunaMisionDisponible = true;
+                const buttonId = `accept-mission-btn-${misionId}`;
+                modalContentHTML += `<div style="padding: 5px; border: 1px solid #555; margin-bottom: 5px;">
+                                          <strong>${mision.titulo}</strong><br><small>${mision.descripcion}</small><br>
+                                          <button id="${buttonId}">Aceptar</button>
+                                      </div>`;
+                elementsToProcess.push({
+                    buttonId: buttonId,
+                    action: () => {
+                        acceptMission(misionId);
+                        setTimeout(() => interactWithSectNPC(npcId), 100);
+                    },
+                });
             }
+        }
+    });
 
-            const objetivo = misionActiva.objetivoOriginal;
+    if (!algunaMisionDisponible) {
+        modalContentHTML += "<p>No tengo nuevas asignaciones para ti en este momento.</p>";
+    }
 
-            if (objetivo.npcEntrega === npcId) {
-                let listaParaEntregar = false;
-                let objetivoStatus = "";
-
-                switch (objetivo.tipo) {
-                    case "entregar_item":
-                        const playerHasItem = gameState.inventory[objetivo.item] || 0;
-                        if (playerHasItem >= objetivo.cantidad) {
-                            listaParaEntregar = true;
-                        }
-                        objetivoStatus = `(Necesitas ${objetivo.cantidad} ${objetivo.item})`;
-                        break;
-
-                    case "eliminar_enemigo":
-                        if ((misionActiva.progreso || 0) >= objetivo.cantidad) {
-                            listaParaEntregar = true;
-                        }
-                        objetivoStatus = `(Elimina ${objetivo.cantidad} ${objetivo.nombreDisplay})`;
-                        break;
-
-                    case "recolectar_multiples_items":
-                        let todosRecolectados = true;
-                        objetivo.items.forEach(itemReq => {
-                            if ((gameState.inventory[itemReq.nombre] || 0) < itemReq.cantidad) {
-                                todosRecolectados = false;
-                            }
-                        });
-                        if (todosRecolectados) {
-                            listaParaEntregar = true;
-                        }
-                        objetivoStatus = `(Recolecta los materiales requeridos)`;
-                        break;
-                    
-                    // --- INICIO DE LA LÓGICA AÑADIDA ---
-                    case "llegar_a_punto":
-                        // La misión está lista para entregar si el progreso es 1 (lo que significa que el jugador ha llegado al punto).
-                        if (misionActiva.progreso === 1) {
-                            listaParaEntregar = true;
-                            objetivoStatus = `(Has llegado a ${objetivo.nombreArea || 'la ubicación designada'})`;
-                        } else {
-                            objetivoStatus = `(Debes ir a ${objetivo.nombreArea || 'la ubicación designada'})`;
-                        }
-                        break;
-                    // --- FIN DE LA LÓGICA AÑADIDA ---
-
-                    case "derrotar_npc_especifico":
-                        if (misionActiva.progreso === 1) {
-                            listaParaEntregar = true;
-                        }
-                        const rivalName = entityTypes[objetivo.npcId]?.name || "el guardián";
-                        objetivoStatus = `(Debes derrotar a ${rivalName})`;
-                        break;
-                    
-                    case "cazar_y_recuperar_item_de_loot":
-                        const playerHasLootItem = (gameState.inventory[objetivo.itemPrueba] || 0) >= objetivo.cantidadItemPrueba;
-                        if (misionActiva.progreso === 1 && playerHasLootItem) {
-                            listaParaEntregar = true;
-                        }
-                        objetivoStatus = `(Caza a ${entityTypes[objetivo.enemigoTipo]?.name} para obtener ${objetivo.itemPrueba})`;
-                        break;
-
-                    default:
-                        console.warn(`[NPC Interaction] Unhandled objective type "${objetivo.tipo}" for mission "${misionDef.titulo}" completion check with NPC.`);
-                        objetivoStatus = `(Objetivo: ${objetivo.tipo} - estado no verificado aquí)`;
-                        break;
-                }
-
-                if (listaParaEntregar) {
-                    const buttonId = `complete-mission-btn-${misionActiva.id.replace(/\W/g, "_")}`;
-                    modalContentHTML += `<div style="padding: 5px; border: 1px solid #55cc55; margin-bottom: 5px; background-color: rgba(85,204,85,0.1);">
-                                              <strong>${misionDef.titulo}</strong> ${getMissionProgressText(misionActiva)}<br>
-                                              <button id="${buttonId}">Completar Misión</button>
-                                          </div>`;
-                    elementsToProcess.push({
-                        buttonId: buttonId,
-                        action: () => {
-                            if (completeMission(misionActiva.id, npcId)) {
-                                interactWithSectNPC(npcId);
-                            }
-                        },
-                    });
-                    algunaMisionParaCompletar = true;
-                } else {
-                    modalContentHTML += `<div style="padding: 5px; border: 1px solid #777; margin-bottom: 5px; background-color: rgba(100,100,100,0.1);">
-                                              <strong>${misionDef.titulo}</strong><br>
-                                              <small><em>${getMissionProgressText(misionActiva)}</em></small>
-                                          </div>`;
-                }
+    console.groupEnd();
+    showModal("Interacción con " + npcData.nombre, modalContentHTML);
+    const modalTextEl = document.getElementById("modalText");
+    if (modalTextEl) {
+        elementsToProcess.forEach(item => {
+            const buttonElement = modalTextEl.querySelector("#" + item.buttonId);
+            if (buttonElement) {
+                buttonElement.onclick = item.action;
             }
         });
-        if (npcId === 'anciana_su') {
-            const misionDemonio = player.secta.misionesActivas.find(m => m.id === 'mision_historia_1_demonio');
-            
-            // Si la misión está activa y completada (progreso=1)
-            if (misionDemonio && misionDemonio.progreso === 1) {
-                // Usamos un modal de confirmación para que el jugador elija entregarla.
-                showConfirmationModal(
-                    `Reportar a ${npcData.nombre}`,
-                    `Has derrotado al General Demonio. ¿Deseas informar a la Anciana Su y reclamar tu recompensa?`,
-                    () => {
-                        // Al confirmar, se completa la misión.
-                        completeMission('mision_historia_1_demonio');
-                    }
-                );
-            } else {
-                // Si la misión no está lista o no está activa, mostramos el diálogo normal.
-                const dialogue = getStoryNpcDialogue(npcId);
-                showModal(`Hablando con ${npcData.nombre}`, dialogue);
-            }
-            // Detenemos la función aquí para no mostrar el menú genérico de misiones para ella.
-            return;
-        }
-        if (!algunaMisionParaCompletar && !player.secta.misionesActivas.some(m => MISIONES_DATA[m.id]?.objetivo?.npcEntrega === npcId)) {
-            modalContentHTML += "<p>No tienes misiones para entregarme o reportarme en este momento.</p>";
-        } else if (!algunaMisionParaCompletar) {
-            modalContentHTML += "<p>Revisa los objetivos de tus misiones activas. Parece que aún no están listas para entregar/reportar.</p>";
-        }
-        modalContentHTML += "<hr>";
-
-        // El resto de la función para mostrar misiones disponibles y entregar recursos no necesita cambios.
-        // ... (El código restante de la función va aquí, sin modificaciones)
-        // --- SECCIÓN: MISIONES DISPONIBLES (CON FILTRO DE NIVEL Y RANGO) ---
-            if (npcData.misionesOfrecidas && npcData.misionesOfrecidas.length > 0) {
-              modalContentHTML += "<h4>Misiones Disponibles:</h4>";
-              modalContentHTML += `<div id="npc-dynamic-content-missions" style="max-height: 200px; overflow-y: auto; border: 1px solid #444; padding: 10px; margin-bottom:10px;">`;
-              let algunaMisionDisponibleMostrada = false;
-              npcData.misionesOfrecidas.forEach((misionId, index) => {
-                const mision = MISIONES_DATA[misionId];
-                if (
-                  mision &&
-                  !player.secta.misionesActivas.some((m) => m.id === misionId) &&
-                  !player.secta.misionesCompletadas[misionId]
-                ) {
-                  const nivelRequerido = mision.requisitoNivel || 0;
-                  const rangoRequeridoNombre = mision.requisitoRango;
-                  let cumpleRequisitos = true;
-
-                  if (player.level < nivelRequerido) {
-                    cumpleRequisitos = false;
-                  }
-                  if (rangoRequeridoNombre) {
-                    const indiceRangoJugador = SECTA_DATA.rangos.findIndex(
-                      (r) => r.nombre === player.secta.rango
-                    );
-                    const indiceRangoRequerido = SECTA_DATA.rangos.findIndex(
-                      (r) => r.nombre === rangoRequeridoNombre
-                    );
-                    if (indiceRangoJugador < indiceRangoRequerido) {
-                      cumpleRequisitos = false;
-                    }
-                  }
-
-                  if (cumpleRequisitos) {
-                    let recompensaTextoResumido = `Recompensa: ${
-                      mision.recompensa.pcs || 0
-                    } PCS, ${mision.recompensa.exp || 0} EXP`;
-                    if (mision.recompensa.items)
-                      recompensaTextoResumido += ", Objetos";
-                    if (mision.recompensa.nuevoRango)
-                      recompensaTextoResumido += `, Ascenso a ${mision.recompensa.nuevoRango}`;
-
-                    const buttonId = `accept-mission-btn-${misionId.replace(
-                      /\W/g,
-                      "_"
-                    )}-${index}`;
-                    const botonHTML = `<button id="${buttonId}">Aceptar Misión</button>`;
-
-                    modalContentHTML += `<div style="padding: 5px; border: 1px solid #555; margin-bottom: 5px;">
-                                                  <strong>${
-                                                    mision.titulo
-                                                  }</strong> (Req. Nv: ${
-                      nivelRequerido > 0 ? nivelRequerido : "Ninguno"
-                    }${
-                      rangoRequeridoNombre ? ", Rango: " + rangoRequeridoNombre : ""
-                    })<br><small>${mision.descripcion}</small><br>
-                                                  <small style="color: #aaa;"><em>${recompensaTextoResumido}</em></small><br>
-                                                  ${botonHTML}
-                                              </div>`;
-                    elementsToProcess.push({
-                      buttonId: buttonId,
-                      missionIdToAccept: misionId,
-                    });
-                    algunaMisionDisponibleMostrada = true;
-                  }
-                }
-              });
-              if (!algunaMisionDisponibleMostrada)
-                modalContentHTML +=
-                  "<p>No hay nuevas misiones para ti en este momento que cumplan tus requisitos.</p>";
-              modalContentHTML += `</div>`;
-              modalContentHTML += "<hr>";
-            } else {
-              modalContentHTML +=
-                "<p>No tengo misiones para ti en este momento.</p><hr>";
-            }
-
-        
-        
-        showModal("Interacción con " + npcData.nombre, modalContentHTML);
-
-        const modalTextEl = document.getElementById("modalText");
-        if (modalTextEl) {
-            elementsToProcess.forEach((item) => {
-                const buttonElement = modalTextEl.querySelector("#" + item.buttonId);
-                if (buttonElement) {
-                    if (item.missionIdToAccept) {
-                        buttonElement.addEventListener("click", () => {
-                            acceptMission(item.missionIdToAccept);
-                            interactWithSectNPC(npcId);
-                        });
-                    } else if (item.action) {
-                        buttonElement.addEventListener("click", item.action);
-                    }
-                } else {
-                    console.warn("[NPC Interaction] Could not find button with ID:", item.buttonId);
-                }
-            });
-        }
     }
+}
           
 
       function sanitizeActiveMissions(player) {
@@ -11211,40 +11120,42 @@ function closeModal(callback = null) { // <-- Se añade '= null'
       }
 
       function acceptMission(misionId) {
+        console.groupCollapsed(`[acceptMission v2] ==> Intentando aceptar misión: ${misionId}`);
         const misionData = MISIONES_DATA[misionId];
         const player = gameState.player;
+        
         if (!misionData || !misionData.objetivo) {
+            console.error(`[v2] ERROR: No se encontraron datos para la misión '${misionId}'.`);
+            console.groupEnd();
             showModal("Error de Misión", "Datos de misión no encontrados o corruptos.");
             return;
         }
+
         if (player.secta.misionesActivas.some((m) => m.id === misionId) || player.secta.misionesCompletadas[misionId]) {
+            console.warn(`[v2] ADVERTENCIA: La misión '${misionId}' ya está activa o completada.`);
+            console.groupEnd();
             showModal("Error de Misión", "Ya has aceptado o completado esta misión.");
             return;
         }
 
-        // Creamos el objeto de la misión activa
         const nuevaMisionActiva = {
             id: misionId,
             progreso: 0,
             objetivoOriginal: JSON.parse(JSON.stringify(misionData.objetivo)),
         };
-
-        // --- LOG DE INICIO DE MISIÓN ---
-        console.group(`[LOG INICIO MISIÓN] Misión Aceptada: ${misionId}`);
-        console.log("Datos guardados en el estado del jugador:", nuevaMisionActiva);
-        console.groupEnd();
-        // --- FIN DEL LOG ---
-
+        
+        console.log(`[v2] Misiones activas ANTES de añadir:`, player.secta.misionesActivas.length);
         player.secta.misionesActivas.push(nuevaMisionActiva);
-        // Lógica especial para la misión de tutorial de Feng.
+        console.log(`[v2] Misión '${misionId}' añadida. Misiones activas DESPUÉS:`, player.secta.misionesActivas.length);
+        
         if (misionId === 'mision_feng_1_tutorial') {
-            const patternIdToDiscover = misionData.objetivo.patternId;
-            // Marcamos el patrón como "descubierto" en el estado del jugador.
-            if (patternIdToDiscover && !player.discoveredFormationPatterns[patternIdToDiscover]) {
-                player.discoveredFormationPatterns[patternIdToDiscover] = true;
-                console.log(`[acceptMission] Patrón de misión '${patternIdToDiscover}' desbloqueado para el jugador.`);
+            const patternId = misionData.objetivo.patternId;
+            if (patternId && !player.discoveredFormationPatterns[patternId]) {
+                player.discoveredFormationPatterns[patternId] = true;
+                console.log(`[acceptMission] Patrón de misión '${patternId}' desbloqueado.`);
             }
         }
+
         showModal("Misión Aceptada", `Has aceptado: ${misionData.titulo}`);
         updateSectUI();
 
@@ -11252,6 +11163,8 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         if (npcInteractionModal.style.display === "flex") {
             closeModal();
         }
+        console.groupEnd();
+        // --- FIN DE CORRECCIÓN Y LOGS ---
     }
 
       function removeEntity(entityToRemove) {
@@ -11904,75 +11817,70 @@ function closeModal(callback = null) { // <-- Se añade '= null'
   }
 
   function useItem(itemName) {
-    console.group(`[useItem] Intento de usar: "${itemName}"`);
+        console.groupCollapsed(`[useItem v3] ==> Intento de usar el objeto: "${itemName}"`);
 
-    // --- Verificaciones iniciales ---
-    if (gameState.battle.active) {
-        showModal("Acción no permitida", "No puedes usar objetos del inventario de esta forma durante un combate.");
-        console.warn("Acción bloqueada: en combate.");
-        console.groupEnd();
-        return;
-    }
-    if (!gameState.inventory[itemName] || gameState.inventory[itemName] <= 0) {
-        showModal("Inventario Vacío", `No tienes ${itemName}.`);
-        console.groupEnd();
-        return;
-    }
-
-    const itemInfo = itemData[itemName];
-    if (!itemInfo) {
-        showModal("Error", `El objeto "${itemName}" no tiene una definición en itemData.`);
-        console.error("Fallo: El objeto no tiene una definición.");
-        console.groupEnd();
-        return;
-    }
-
-    // --- NUEVA LÓGICA DE VALIDACIÓN ---
-    // La función 'canUse' ahora puede devolver 'true' o un string con el motivo del fallo.
-    if (itemInfo.canUse) {
-        const canUseResult = itemInfo.canUse(gameState.player);
-        if (canUseResult !== true) {
-            // Si 'canUse' devuelve un string, lo mostramos directamente.
-            // Si devuelve false, usamos un mensaje genérico.
-            const reason = typeof canUseResult === 'string' ? canUseResult : "No puedes usar esto ahora.";
-            showModal("No se puede usar", reason);
-            console.warn(`'canUse' para "${itemName}" ha fallado. Motivo: ${reason}`);
+        if (gameState.battle.active) {
+            console.warn("-> Bloqueado: en combate.");
             console.groupEnd();
+            showModal("Acción no permitida", "No puedes usar objetos del inventario de esta forma durante un combate.");
             return;
         }
-    }
-    
-    // Si la validación pasa, ejecutamos el efecto.
-    if (!itemInfo.effect) {
-        showModal("Sin efecto", `El objeto "${itemName}" no tiene un efecto utilizable.`);
-        console.error("Fallo: El objeto no tiene una función de efecto.");
-        console.groupEnd();
-        return;
-    }
 
-    console.log("Ejecutando efecto del objeto...");
-    const message = itemInfo.effect(gameState.player, gainExperience, itemName);
-    console.log(`Efecto ejecutado. Mensaje de retorno: "${message}"`);
-
-    // Solo decrementar si el efecto fue exitoso.
-    if (message && !message.toLowerCase().includes("error") && !message.toLowerCase().includes("ya conoces")) {
-        gameState.inventory[itemName]--;
-        if (gameState.inventory[itemName] <= 0) {
-           // Opcional: limpiar la barra rápida si se agota el último objeto asignado.
-           for(let i = 0; i < gameState.player.quickSlots.length; i++){
-               if(gameState.player.quickSlots[i] === itemName){
-                   gameState.player.quickSlots[i] = null;
-               }
-           }
+        if (!gameState.inventory[itemName] || gameState.inventory[itemName] <= 0) {
+            console.warn(`-> Bloqueado: no tienes "${itemName}".`);
+            console.groupEnd();
+            showModal("Inventario Vacío", `No tienes ${itemName}.`);
+            return;
         }
-    }
 
-    showModal("Objeto Usado", message);
-    updateUI();
-    renderQuickSlotBar();
-    updatePlayerBarsOnMap();
-    console.groupEnd();
-}
+        const itemInfo = itemData[itemName];
+        console.log(`-> Definición para "${itemName}" encontrada en itemData.`);
+
+        if (!itemInfo) {
+            console.error(`-> FATAL: No hay definición para "${itemName}" en itemData.`);
+            console.groupEnd();
+            showModal("Error", `El objeto "${itemName}" no tiene una definición en la base de datos.`);
+            return;
+        }
+
+        if (itemInfo.canUse && !itemInfo.canUse(gameState.player)) {
+            console.warn(`-> Condición 'canUse' para "${itemName}" falló.`);
+            console.groupEnd();
+            showModal("No se puede usar", `No puedes usar ${itemName} ahora.`);
+            return;
+        }
+        
+        if (!itemInfo.effect || typeof itemInfo.effect !== 'function') {
+            console.error(`-> FATAL: El objeto "${itemName}" no tiene una función de efecto válida.`);
+            console.groupEnd();
+            showModal("Sin efecto", `El objeto "${itemName}" no tiene un efecto utilizable.`);
+            return;
+        }
+
+        console.log("-> Condiciones cumplidas. LLAMANDO a la función 'effect' del objeto...");
+        // --- LLAMADA DIRECTA Y EXPLÍCITA AL EFECTO ---
+        const message = itemInfo.effect(gameState.player, gainExperience, itemName);
+        console.log(`-> La función 'effect' se ejecutó y devolvió el mensaje: "${message}"`);
+
+        if (message && !message.toLowerCase().includes("error")) {
+            gameState.inventory[itemName]--;
+            if (gameState.inventory[itemName] <= 0) {
+               for(let i = 0; i < gameState.player.quickSlots.length; i++){
+                   if(gameState.player.quickSlots[i] === itemName){
+                       gameState.player.quickSlots[i] = null;
+                   }
+               }
+            }
+        }
+
+        showModal("Objeto Usado", message);
+        updateUI();
+        renderQuickSlotBar();
+        updatePlayerBarsOnMap();
+        console.log("-> UI actualizada. Proceso finalizado.");
+        console.groupEnd();
+      }
+
 
       function gainExperience(amount) {
         if (amount <= 0) return;
@@ -12119,130 +12027,96 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         // Ya no es necesario llamar a updateUI() desde aquí, la función que llama a recalculate se encargará.
     }
 
-      function startBattle(mapEntity) {
-        updateStatsPanelVisibility();
-        updateGameOverlayVisibility();
-        battleLogHistory = [];
-        const toggleBtn = document.getElementById("toggleMapControlsBtn");
-        if (toggleBtn) {
-            toggleBtn.classList.add("hidden-during-battle");
-        }
-        const player = gameState.player;
+    function startBattle(mapEntity) {
+    updateStatsPanelVisibility();
+    updateGameOverlayVisibility();
+    battleLogHistory = [];
+    
+    const toggleBtn = document.getElementById("toggleMapControlsBtn");
+    if (toggleBtn) {
+        toggleBtn.classList.add("hidden-during-battle");
+    }
 
-        if (player.isChannelingRune) {
+    const player = gameState.player;
+    if (player.isChannelingRune) {
         player.isChannelingRune = false;
         document.getElementById('player').classList.remove('channeling');
     }
-        if (player.isCultivating) stopCultivation();
-        hideTouchControls();
-        document.getElementById('quickSlotBar').classList.add('hidden');
-        player.isMoving = false;
-        if (player.animationTimer) clearInterval(player.animationTimer);
-        if (player.idleTimeout) clearTimeout(player.idleTimeout);
-        player.currentFrame = 0;
-        updatePlayerSpriteVisual();
+    if (player.isCultivating) stopCultivation();
+    
+    hideTouchControls();
+    document.getElementById('quickSlotBar').classList.add('hidden');
+    
+    player.isMoving = false;
+    if (player.animationTimer) clearInterval(player.animationTimer);
+    if (player.idleTimeout) clearTimeout(player.idleTimeout);
+    player.currentFrame = 0;
+    updatePlayerSpriteVisual();
 
-        // Obtenemos la definición ORIGINAL y COMPLETA del enemigo.
-        const enemyDefinition = entityTypes[mapEntity.originalEntityTypeId] || entityTypes[mapEntity.type];
-        // --- LÓGICA DE VULNERABILIDAD A FORMACIONES ---
-        if (enemyDefinition.formationVulnerability && mapEntity.pendingFormationEffects) {
-            const requiredPatternId = enemyDefinition.formationVulnerability;
-            const matchingEffect = mapEntity.pendingFormationEffects.find(effect => effect.sourcePatternId === requiredPatternId);
+    // --- INICIO DE LA LÓGICA CORREGIDA ---
 
-            if (matchingEffect) {
-                // ¡La formación correcta fue usada!
-                logBattle(`¡La ${FORMATION_PATTERNS[requiredPatternId].name} resuena con el enemigo!`);
-                logBattle("¡Su escudo mágico se hace añicos!");
-                
-                // Reducimos drásticamente su defensa para hacerlo vulnerable
-                gameState.battle.enemy.defense = 10;
-            } else {
-                // Se usó una formación, pero no la correcta.
-                logBattle("La formación que trazaste no tiene efecto sobre la poderosa magia de este ser.");
-            }
-        }
-        if (!enemyDefinition) {
-            console.error(`¡CRÍTICO! No se encontró la definición para el enemigo:`, mapEntity);
-            showModal("Error de Batalla", "No se pudieron cargar los datos del enemigo.");
-            return;
-        }
-
-        // Construimos el objeto del enemigo de forma segura.
-        gameState.battle.active = true;
-        gameState.battle.enemy = {
-            ...enemyDefinition,         // 1. Copiamos el "molde" completo (con spriteUrl, abilities, etc.).
-            ...mapEntity,               // 2. Sobreescribimos con el estado actual (como el hp).
-            entityRef: mapEntity,       // 3. Guardamos la referencia a la entidad del mapa.
-            // 4. Reseteamos los estados de combate.
-            frozenTurns: 0,
-            stunnedTurns: 0,
-            burningTurns: 0,
-            burnDamage: 0,
-            poisonedTurns: 0,
-            poisonDamage: 0,
-            defenseReductionTurns: 0,
-            defenseReductionAmount: 0,
-            attackReductionTurns: 0,
-            attackReductionAmount: 0,
-            rootedTurns: 0,
-            rootDamage: 0,
-            silencedTurns: 0,
-            sealedTurns: 0,
-        };
-        // --- INICIO DE LA LÓGICA DE VULNERABILIDAD CORREGIDA ---
-        if (enemyDefinition.formationVulnerability && mapEntity.pendingFormationEffects) {
-            const requiredPatternId = enemyDefinition.formationVulnerability;
-            const matchingEffect = mapEntity.pendingFormationEffects.find(effect => effect.sourcePatternId === requiredPatternId);
-
-            if (matchingEffect) {
-                // ¡La formación correcta fue usada!
-                logBattle(`¡La ${FORMATION_PATTERNS[requiredPatternId].name} resuena con el enemigo!`);
-                logBattle("¡Su sello mágico se hace añicos!");
-                
-                // Reducimos drásticamente su defensa para hacerlo vulnerable
-                gameState.battle.enemy.defense = 5; // Un valor muy bajo.
-                showFloatingText(document.getElementById('enemySprite'), '¡DEFENSA ROTA!', 'debuff');
-
-            } else {
-                // Se usó una formación, pero no la correcta.
-                logBattle("La formación que trazaste no tiene efecto sobre la poderosa magia de este ser.");
-            }
-        }
-        // --- FIN DE LA LÓGICA DE VULNERABILIDAD CORREGIDA ---
-        console.log("[startBattle] Comprobando y aplicando formaciones pendientes (si no son de vulnerabilidad)...");
-        checkAndApplyFormation(mapEntity);
-
-        
-        // ================================================
-
-        gameState.battle.playerTurn = true;
-        document.getElementById("battleScreen").style.display = "flex";
-        
-        
-        if (!gameState.battle.enemy.maxHp) {
-            gameState.battle.enemy.maxHp = gameState.battle.enemy.hp;
-        }
-        
-        gameState.battle.playerTurn = true;
-        document.getElementById("battleScreen").style.display = "flex";
-        // --- LOG DE INICIO DE BATALLA ---
-        console.group(`[LOG INICIO BATALLA] Enfrentando a: ${gameState.battle.enemy.name}`);
-        console.log("Propiedades clave del enemigo en batalla:", {
-            name: gameState.battle.enemy.name,
-            npcId: gameState.battle.enemy.npcId,
-            originalEntityTypeId: gameState.battle.enemy.originalEntityTypeId,
-            defense: gameState.battle.enemy.defense
-        });
-        console.groupEnd();
-    // --- FIN DEL LOG -
-        // Ahora estas funciones recibirán un objeto enemigo COMPLETO y correcto.
-        populateBattleActionButtons();
-        updateBattleUI(); 
-        updateGameOverlayVisibility();
-        logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
-        updateTopNavVisibility();
-        updatePlayerBarsOnMap();
+    // PASO 1: Obtener la definición maestra del enemigo.
+    const enemyDefinition = entityTypes[mapEntity.originalEntityTypeId] || entityTypes[mapEntity.type];
+    if (!enemyDefinition) {
+        console.error(`¡CRÍTICO! No se encontró la definición para el enemigo:`, mapEntity);
+        showModal("Error de Batalla", "No se pudieron cargar los datos del enemigo.");
+        return;
     }
+    
+    // PASO 2: Crear el objeto del enemigo en el estado de batalla INMEDIATAMENTE.
+    // Esto asegura que `gameState.battle.enemy` nunca sea null a partir de este punto.
+    gameState.battle.active = true;
+    gameState.battle.enemy = {
+        ...enemyDefinition,
+        ...mapEntity,
+        entityRef: mapEntity,
+        // Reseteo de estados de combate
+        frozenTurns: 0, stunnedTurns: 0, burningTurns: 0, burnDamage: 0,
+        poisonedTurns: 0, poisonDamage: 0, defenseReductionTurns: 0,
+        defenseReductionAmount: 0, attackReductionTurns: 0, attackReductionAmount: 0,
+        rootedTurns: 0, rootDamage: 0, silencedTurns: 0, sealedTurns: 0,
+    };
+    
+    // PASO 3: AHORA que el enemigo de batalla existe, aplicamos las modificaciones de las formaciones.
+    if (enemyDefinition.formationVulnerability && mapEntity.pendingFormationEffects) {
+        const requiredPatternId = enemyDefinition.formationVulnerability;
+        const matchingEffect = mapEntity.pendingFormationEffects.find(effect => effect.sourcePatternId === requiredPatternId);
+
+        if (matchingEffect) {
+            logBattle(`¡La ${FORMATION_PATTERNS[requiredPatternId].name} resuena con el enemigo!`);
+            logBattle("¡Su sello mágico se hace añicos!");
+            
+            // ¡AHORA ESTA LÍNEA FUNCIONARÁ SIN ERRORES!
+            gameState.battle.enemy.defense = 5; // Un valor muy bajo.
+            showFloatingText(document.getElementById('enemySprite'), '¡DEFENSA ROTA!', 'debuff');
+        } else {
+            logBattle("La formación que trazaste no tiene efecto sobre la poderosa magia de este ser.");
+        }
+    }
+
+    // PASO 4: Aplicar otros efectos de formación pendientes (curación, etc.)
+    checkAndApplyFormation(mapEntity);
+
+    // PASO 5: Actualizar la UI y finalizar la preparación de la batalla.
+    document.getElementById("battleScreen").style.display = "flex";
+    if (!gameState.battle.enemy.maxHp) {
+        gameState.battle.enemy.maxHp = gameState.battle.enemy.hp;
+    }
+    gameState.battle.playerTurn = true;
+    
+    console.groupCollapsed(`[startBattle v2] ==> Enfrentando a: ${gameState.battle.enemy.name}`);
+    console.log("Objeto enemigo final en gameState.battle.enemy:", JSON.parse(JSON.stringify(gameState.battle.enemy)));
+    console.groupEnd();
+    
+    populateBattleActionButtons();
+    updateBattleUI(); 
+    updateGameOverlayVisibility();
+    logBattle(`¡Un ${gameState.battle.enemy.name} te enfrenta!`);
+    updateTopNavVisibility();
+    updatePlayerBarsOnMap();
+    
+    // --- FIN DE LA LÓGICA CORREGIDA ---
+}
     function boostCultivationWithAllStones() {
         const player = gameState.player;
         const mode = player.cultivationMode;
@@ -12617,51 +12491,39 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 }
       
 
- function checkUtilityPatterns() {
-    // 1. Verificaciones iniciales de seguridad
+function checkUtilityPatterns() {
     if (typeof FORMATION_PATTERNS === 'undefined' || FORMATION_PATTERNS === null) {
-        console.error("Error crítico: FORMATION_PATTERNS no está definido al llamar a checkUtilityPatterns.");
+        console.error("Error crítico: FORMATION_PATTERNS no está definido.");
         return null;
     }
 
     const placedRunes = gameState.utilityRunes || {};
     const placedKeys = Object.keys(placedRunes);
-    const player = gameState.player;
-
     if (placedKeys.length === 0) {
-        return null; // No hay runas que comprobar.
+        return null;
     }
 
-    // 2. Iterar sobre todos los patrones de formación posibles
     for (const patternKey in FORMATION_PATTERNS) {
         const formation = FORMATION_PATTERNS[patternKey];
 
-        // 3. Filtrar para procesar solo patrones de utilidad
         if (!formation || !formation.effect || !formation.effect.type.startsWith('utility_')) {
             continue;
         }
 
         const patternMatrix = formation.pattern;
-        
-        // 4. Lógica de comprobación de coincidencia
-        // Probamos el patrón anclándolo a cada una de las runas que el jugador ha colocado.
+
         for (const playerRuneKey of placedKeys) {
             const [playerRuneX, playerRuneY] = playerRuneKey.split(',').map(Number);
 
-            // Intentamos hacer coincidir el patrón desde cada una de sus propias runas.
             for (let anchorR = 0; anchorR < patternMatrix.length; anchorR++) {
-                for (let anchorC = 0; anchorC < patternMatrix[anchorR].length; anchorC++) {
-                    
-                    if (patternMatrix[anchorR][anchorC] !== 1) {
-                        continue;
-                    }
+                // El error estaba en la siguiente línea.
+                for (let anchorC = 0; anchorC < patternMatrix[anchorR].length; anchorC++) { // <-- CORREGIDO: 'c' ahora es 'anchorC'
+                    if (patternMatrix[anchorR][anchorC] !== 1) continue;
 
-                    // Calculamos dónde debería estar el origen del patrón (0,0) en el mapa mundial
                     const offsetX = playerRuneX - anchorC;
                     const offsetY = playerRuneY - anchorR;
                     
                     const requiredRunesForMatch = [];
-                    // Construimos la lista de coordenadas que este patrón requiere
                     for (let r = 0; r < patternMatrix.length; r++) {
                         for (let c = 0; c < patternMatrix[r].length; c++) {
                             if (patternMatrix[r][c] === 1) {
@@ -12677,44 +12539,15 @@ function closeModal(callback = null) { // <-- Se añade '= null'
                     const isMatch = requiredRunesForMatch.every(key => placedKeys.includes(key));
 
                     if (isMatch) {
-                        console.log(`¡Coincidencia de patrón de utilidad encontrada: ${formation.name}!`);
-
-                        // 5. Lógica de Misión y Efectos
-                        const activeMission = player.secta.misionesActivas.find(m => MISIONES_DATA[m.id]?.objetivo?.tipo === 'trazar_patron');
-                        
-                        if (activeMission && MISIONES_DATA[activeMission.id].objetivo.patternId === patternKey) {
-                            // ¡Es el patrón de la misión!
-                            activeMission.progreso = 1; // Actualizamos el estado de la misión.
-                            console.log(`[checkUtilityPatterns] Objetivo de misión '${activeMission.id}' cumplido. Progreso establecido en 1.`);
-                            
-                            // Mostramos el modal y le pasamos la función de limpieza como callback.
-                            showModal(
-                                "¡Patrón Replicado!",
-                                `Has trazado con éxito el patrón <strong>${formation.name}</strong> para la misión. Vuelve con el Maestro Feng.`,
-                                false, // No es no-interactivo
-                                () => { // Función que se ejecuta al cerrar el modal
-                                    gameState.utilityRunes = {}; // Limpia las runas del estado
-                                    renderMap(); // Redibuja el mapa para que desaparezcan
-                                    console.log("[Callback Modal] Runas de utilidad limpiadas y mapa renderizado.");
-                                }
-                            );
-                        } else if (formation.effect.type === 'utility_teleport') {
-                            // Lógica para otros patrones de utilidad, como teletransporte
-                            teleportPlayer(formation.effect.destinationId);
-                            showModal("¡Portal Abierto!", `La ${formation.name} se activa...`, true);
-                            setTimeout(() => closeModal( () => { gameState.utilityRunes = {}; renderMap(); } ), 2000);
-                        }
-                        
-                        // Devolvemos la formación encontrada para detener más comprobaciones.
+                        console.log(`[checkUtilityPatterns] ¡Coincidencia encontrada!: ${formation.name}`);
                         return { ...formation, sourcePatternId: patternKey };
                     }
                 }
             }
         }
     }
-
-    // 6. Si no se encontró ninguna coincidencia después de todas las comprobaciones.
-    return null;
+    
+    return null; // No se encontró ninguna coincidencia
 }
       function battleAction(action) {
       
@@ -13528,54 +13361,20 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 
 // REEMPLAZA tu función handleEnemyDefeat completa con esta versión definitiva
 
-      function handleEnemyDefeat() {
-    // 1. Obtenemos el objeto de batalla, que puede estar incompleto.
+function handleEnemyDefeat() {
     const battleEnemy = gameState.battle.enemy;
     const player = gameState.player;
+    const enemyDefinition = entityTypes[battleEnemy.originalEntityTypeId] || {};
+    const enemy = { ...enemyDefinition, ...battleEnemy };
 
-    
-    // No confiamos ciegamente en battleEnemy. Usamos su ID para buscar la definición maestra.
-    const enemyDefinition = entityTypes[battleEnemy.originalEntityTypeId] || entityTypes[battleEnemy.npcId] || {};
-    
-    // Creamos un objeto "completo" del enemigo, combinando la definición maestra con el estado actual de la batalla.
-    // Esto GARANTIZA que 'npcId' y todas las demás propiedades maestras estén presentes.
-    const enemy = {
-        ...enemyDefinition,
-        ...battleEnemy
-    };
-    // --- ACTIVADOR DE SUBTRAMA: MAESTRO DE FORMACIONES ---
-    // Esta lógica se activará cuando derrotes a Kai, dándote el compás.
-    if (enemy.originalEntityTypeId === 'lider_renegado_kai') {
-        setTimeout(() => {
-            showModal("Artefacto Recuperado", "Entre las pertenencias del líder renegado, encuentras un extraño compás que parece resonar con la energía del mundo. Quizás pueda señalar algo... o a alguien.");
-        }, 1500);
-    }
-    const subplots = gameState.player.worldState.subplotFlags;
-    // --- ACTIVADOR DE SUBTRAMA: EL RIVAL ---
-    // Si derrotas al primer jefe de la historia y la rivalidad no ha comenzado...
-    if (enemy.npcId === 'boss_dem' && subplots.rivalryProgress === 0) {
-        subplots.rivalryProgress = 0.5; // Un estado intermedio para "a punto de aparecer"
-        
-        setTimeout(() => {
-            showModal("Una Sombra Observa", "Mientras recoges tu botín, sientes una mirada intensa. Una figura solitaria te observa desde la distancia antes de desaparecer. No parecía amistosa...");
-            
-            // Hacemos aparecer al NPC del rival cerca de la entrada de la secta
-            const rivalNpc = entityTypes['npc_rival_xiao'];
-            gameState.map.entities.push({
-                ...rivalNpc,
-                x: 18, // Coordenadas de ejemplo
-                y: 16,
-                id: `rival_instance_${Date.now()}`,
-                originalEntityTypeId: 'npc_rival_xiao'
-            });
-            renderMap();
-
-        }, 2000);
-    }
+    console.groupCollapsed(`[handleEnemyDefeat v2] ==> Procesando derrota de: ${enemy.name}`);
     logBattle(`¡Has derrotado al ${enemy.name}!`);
     gainExperience(enemy.exp);
 
-    // Ahora, el resto de la función usará el objeto 'enemy' completo y correcto.
+    // --- INICIO DE LA CORRECCIÓN CLAVE ---
+
+    // PASO 1: Marcar la misión como completada INMEDIATAMENTE.
+    // Esto es crucial para que ensureFixedEntities no lo vuelva a crear.
     const misionesActivasDelJugador = [...player.secta.misionesActivas];
     misionesActivasDelJugador.forEach((misionActiva) => {
         const misionData = MISIONES_DATA[misionActiva.id];
@@ -13583,12 +13382,13 @@ function closeModal(callback = null) { // <-- Se añade '= null'
 
         const objetivo = misionData.objetivo;
 
-        if (objetivo.tipo === "derrotar_npc_especifico" && enemy.npcId === objetivo.npcId) {
-            misionActiva.progreso = 1;
-            console.log(`[handleEnemyDefeat] Misión '${misionActiva.id}' actualizada: Progreso = 1.`);
-            logBattle(`¡Has completado el objetivo de derrotar a ${enemy.name}!`);
+        if (objetivo.tipo === "derrotar_npc_especifico" && enemy.originalEntityTypeId === objetivo.npcId) {
+            console.log(`[handleEnemyDefeat v2] Objetivo de misión 'derrotar_npc_especifico' para '${misionActiva.id}' CUMPLIDO.`);
+            misionActiva.progreso = 1; // Marcamos que el objetivo está listo para la entrega.
+            // NO lo movemos a 'completadas' aquí, eso se hace en completeMission().
         }
         
+        // El resto de la lógica de progreso de misión no cambia.
         if (objetivo.tipo === "eliminar_enemigo" && enemy.originalEntityTypeId === objetivo.enemigoTipo) {
              misionActiva.progreso = (misionActiva.progreso || 0) + 1;
              logBattle(`Progreso '${misionData.titulo}': ${misionActiva.progreso}/${objetivo.cantidad}`);
@@ -13600,7 +13400,7 @@ function closeModal(callback = null) { // <-- Se añade '= null'
         }
     });
 
-    // La lógica de botín y fin de batalla 
+    // PASO 2: Procesar el botín.
     let lootObtenidoTexto = "Botín Obtenido: ";
     let algoObtenido = false;
     if (enemy.lootTable) {
@@ -13613,30 +13413,45 @@ function closeModal(callback = null) { // <-- Se añade '= null'
             }
         });
     }
+
     if (!algoObtenido) lootObtenidoTexto += "Nada.";
     else lootObtenidoTexto = lootObtenidoTexto.slice(0, -2) + ".";
     
-    if (enemy.isBoss && enemy.originalEntityTypeId) {
-        player.worldState.defeatedBosses[enemy.originalEntityTypeId] = true;
-        console.log(`%c[handleEnemyDefeat] JEFE DERROTADO: ${enemy.originalEntityTypeId} añadido a defeatedBosses.`, 'color: #ff9900; font-weight: bold;');
-    
+    // PASO 3: Marcar al jefe como derrotado permanentemente en el estado del mundo.
+    if (enemy.isBoss || enemy.isMiniBoss) {
+        if (enemy.originalEntityTypeId) {
+            player.worldState.defeatedFixedEntities[enemy.originalEntityTypeId] = true;
+            console.log(`[handleEnemyDefeat v2] Entidad fija '${enemy.originalEntityTypeId}' marcada como derrotada permanentemente.`);
+        }
     }
-    console.log("[handleEnemyDefeat] Llamando a ensureFixedEntities() y renderMap() INMEDIATAMENTE después de la derrota.");
-    ensureFixedEntities();
-    // El objeto original de batalla (battleEnemy) tiene la referencia al mapa.
+    
+    // PASO 4: Eliminar la entidad del mapa.
     if (battleEnemy.entityRef) {
         removeEntity(battleEnemy.entityRef);
-    } else {
-        // Fallback por si la referencia se pierde, busca por ID en el mapa.
-        const entityOnMap = gameState.map.entities.find(e => e.id === battleEnemy.id);
-        if(entityOnMap) removeEntity(entityOnMap);
     }
     
+    // PASO 5: Forzar una llamada a ensureFixedEntities AHORA, mientras la batalla
+    // todavía está técnicamente "activa" (antes de endBattle).
+    // Como ya marcamos al jefe como derrotado, no debería volver a crearlo.
+    console.log(`[handleEnemyDefeat v2] Llamando a ensureFixedEntities para verificar el estado POST-derrota.`);
+    ensureFixedEntities(); 
+    
+    // PASO 6: Lógica post-derrota y finalización de la batalla.
+    if (enemy.originalEntityTypeId === 'lider_renegado_kai') {
+        setTimeout(() => {
+            showModal("Artefacto Recuperado", "Entre las pertenencias del líder renegado, encuentras un extraño compás que parece resonar con la energía del mundo. Quizás pueda señalar algo... o a alguien.");
+        }, 1500); // Retraso para que el modal de victoria no lo tape.
+    }
+
     setTimeout(() => {
-        endBattle(true);
-        showModal("¡Victoria!", `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nRevisa tu diario de misiones para ver el progreso.`);
+        endBattle(true); // Termina la batalla.
+        // Ahora, el jugador debe ir con el Guía Lin para COMPLETAR la misión y recibir las recompensas de PCS y EXP.
+        showModal("¡Victoria!", `Has ganado el combate.\n\n${lootObtenidoTexto}\n\nAhora debes reportar tu éxito al Guía Lin para recibir tu recompensa final.`);
         updateSectUI();
     }, 500);
+    
+    console.groupEnd();
+    // --- FIN DE LA CORRECCIÓN CLAVE ---
 }
       
       function dev_resetMission(missionId) {
@@ -13835,17 +13650,22 @@ function completeMission(misionId, npcIdEntregaManual = null) {
     }
     showModal("¡Misión Completada!", `Completaste: ${misionDataOriginal.titulo}.\n${recompensaFinalTexto}`);
 
-    updateInventoryUI();
-    updateSectUI();
-    updateUI();
+    
 
     // --- PASO 6: LÓGICA POST-MISIÓN (SUBTRAMAS Y EVENTOS) ---
+    console.log(`[completeMission v3] Comprobando si la misión '${misionId}' afecta a una subtrama...`);
     
     // Avance de la subtrama de Feng
-    if (misionDataOriginal.npcInicio === 'maestro_feng') {
+    if (misionDataOriginal.npcInicio === 'npc_maestro_feng' || misionDataOriginal.objetivo.npcEntrega === 'npc_maestro_feng') {
+        const currentProgress = player.worldState.subplotFlags.fengQuestProgress;
         player.worldState.subplotFlags.fengQuestProgress++;
-        console.log(`[completeMission] Progreso de la trama de Feng avanzado a: ${player.worldState.subplotFlags.fengQuestProgress}`);
-        // La lógica para aceptar la siguiente misión está en handleEntityInteraction, lo que es correcto.
+        console.log(`%c[SUBTRAMA FENG] Progreso avanzado de ${currentProgress} a ${player.worldState.subplotFlags.fengQuestProgress}.`, 'color: #9933ff; font-weight: bold;');
+        
+        // Al completar la misión, inmediatamente intentamos interactuar de nuevo con Feng
+        // para que ofrezca la siguiente misión, creando un flujo continuo.
+        setTimeout(() => {
+            interactWithSectNPC('npc_maestro_feng');
+        }, 1500); // Pequeño retraso para que el jugador lea el modal de "misión completada".
     }
 
     // Activador de subtrama del Alquimista
@@ -13927,7 +13747,9 @@ function completeMission(misionId, npcIdEntregaManual = null) {
     }
 
     checkAndActivateRankChallengeMissions(); // Comprobar si se desbloquea un nuevo desafío.
-
+    updateInventoryUI();
+    updateSectUI();
+    updateUI();
     return true; // Devolvemos 'true' para indicar que la misión se completó con éxito.
 }
 
@@ -16600,77 +16422,63 @@ function openItemAssignmentModal(slotIndex) {
       }
 
       function getDynamicNpcDialogue(npcId) {
-    const player = gameState.player;
-    const subplots = player.worldState.subplotFlags;
+        const player = gameState.player;
+        const subplots = player.worldState.subplotFlags;
 
-    switch (npcId) {
-        case "rival_xiao":
-            switch (subplots.rivalryProgress) {
-                case 0:
-                    return "Así que tú eres el nuevo 'prodigio' del que todos hablan. No me impresionas. Aléjate de mi camino.";
-                case 1:
-                    return `¡Tú! Me humillaste una vez, pero he entrenado. ¡Prepárate para sentir mi verdadero poder!`;
-                case 2:
-                    return `Imposible... ¿Cómo puedes seguir superándome? Esto no ha terminado. Encontraré un poder que no podrás igualar.`;
-                default:
-                    return "Hmmph.";
-            }
+        switch (npcId) {
+            case "rival_xiao":
+                switch (subplots.rivalryProgress) {
+                    case 0:
+                        return "Así que tú eres el nuevo 'prodigio' del que todos hablan. No me impresionas. Aléjate de mi camino.";
+                    case 1:
+                        return `¡Tú! Me humillaste una vez, pero he entrenado. ¡Prepárate para sentir mi verdadero poder!`;
+                    case 2:
+                        return `Imposible... ¿Cómo puedes seguir superándome? Esto no ha terminado. Encontraré un poder que no podrás igualar.`;
+                    default:
+                        return "Hmmph.";
+                }
 
-        case "alquimista_mo":
-            switch (subplots.alchemistTrust) {
-                case 0:
-                    return "Lárgate. No tengo tiempo para los mocosos de la Secta del Viento Azure. A menos que... me traigas algo que me interese.";
-                case 1:
-                    return "¡Las Flores de Fuego Espectral! No creí que las encontrarías. Tienes agallas. Quizás no eres como los demás. Necesito un favor más...";
-                case 2:
-                    return "Has demostrado tu valía. Escucha, la alquimia que practico... no es ortodoxa. Puede darte un poder inmenso, pero a un gran coste. ¿Estás dispuesto a caminar por la senda prohibida del Elixir de Sangre?";
-                default:
-                    return "El caldero burbujea... ¿qué necesitas?";
-            }
-            case "maestro_feng":
-            switch (subplots.fengQuestProgress) {
-                case 0: // Primer encuentro
-                    return "Asombroso... El Compás te ha traído hasta mí. Para probar tu valía, te enseñaré tu primera formación: el 'Sello de Iniciación'. He inscrito el diagrama en tu mente... o bueno, en tu panel de Técnicas. Acepta mi prueba si te atreves.";
-                case 1: // Ha aceptado la misión 1, pero no la ha completado.
-                    return "Aún no has completado mi prueba. Recuerda, el diagrama del Sello de Iniciación está en tu panel de Técnicas. Estúdialo y replícalo.";
-                case 2: // Acaba de completar la misión 1, listo para recibir la 2.
-                    return "¡Excelente! Sentí la pulsación de tu Sello. Tienes talento. Como prometí, tu siguiente lección es el 'Círculo de Vida Frondoso'. Regenerará tu vitalidad. Ahora, ve al Bosque Profundo, busca a un Treant Anciano y derrótalo. Usa el Círculo para probar tu nueva habilidad. ¿Aceptas este nuevo desafío?";
-                    case 3: 
-                        // Verificamos si la misión ya está activa para no añadirla dos veces.
-                        if (!player.secta.misionesActivas.some(m => m.id === 'mision_feng_3_romper_sello')) {
-                           // Añadimos la misión al diario del jugador.
-                           acceptMission('mision_feng_3_romper_sello');
-                           console.log("[Maestro Feng] Misión 'mision_feng_3_romper_sello' aceptada automáticamente.");
-                           // Forzamos una comprobación para que el Golem aparezca inmediatamente.
-                           ensureFixedEntities();
-                           renderMap();
+            case "alquimista_mo":
+                switch (subplots.alchemistTrust) {
+                    case 0:
+                        return "Lárgate. No tengo tiempo para los mocosos de la Secta del Viento Azure. A menos que... me traigas algo que me interese.";
+                    case 1:
+                        return "¡Las Flores de Fuego Espectral! No creí que las encontrarías. Tienes agallas. Quizás no eres como los demás. Necesito un favor más...";
+                    case 2:
+                        return "Has demostrado tu valía. Escucha, la alquimia que practico... no es ortodoxa. Puede darte un poder inmenso, pero a un gran coste. ¿Estás dispuesto a caminar por la senda prohibida del Elixir de Sangre?";
+                    default:
+                        return "El caldero burbujea... ¿qué necesitas?";
+                }
+                case "npc_maestro_feng":
+                    switch (subplots.fengQuestProgress) {
+                        case 1: // El jugador ha llegado, pero aún no ha hablado con él para completar la misión.
+                            return "Asombroso... El Compás te ha traído hasta mí. Tu aptitud para sentir las líneas de Qi es innata. Soy Feng, un estudioso de las artes olvidadas. Habla conmigo de nuevo para confirmar que entiendes tu tarea y comenzar tu entrenamiento.";
+                        case 2: // Acaba de completar la primera misión, listo para recibir la segunda.
+                            return "¡Excelente! Has demostrado tu control básico. Como prometí, te enseñaré el 'Círculo de Vida Frondoso', una formación que regenerará tu vitalidad. Pero el conocimiento sin práctica es inútil. ¿Aceptas tu siguiente desafío? Deberás probar esta nueva formación contra un poderoso Treant Anciano en el Bosque Profundo.";
+                        case 3: // Completó la segunda, listo para la tercera.
+                            return "¡Derrotaste al Treant! Tu dominio de las formaciones de apoyo es innegable. Ahora, una prueba de intelecto y poder. El Golem Geo del desierto está protegido por un sello mágico que lo hace casi invulnerable. La formación que te enseñaré, la 'Matriz del Vórtice Arcano', no puede romper ese sello. Enbárcate en aventuras y encuentra una formación que pueda debilitarlo! ";
+                        case 4: // Completó la tercera, listo para la cuarta.
+                            return "¡Rompiste el sello del Golem! Tu mente es tan afilada como tu espada. Pero un verdadero maestro equilibra ataque y defensa. Te he enseñado la 'Égida de la Montaña Inamovible', una formidable formación defensiva. Para dominarla, enfréntate a un furioso Djinn de las Arenas. Su ofensiva implacable pondrá a prueba tu nueva defensa hasta el límite. ¿Aceptas tu prueba final de equilibrio?";
+                        case 5: // Todas las misiones completas.
+                            return "Has superado todas mis pruebas y has dominado el equilibrio entre ataque, defensa y utilidad. Ya no hay más que pueda enseñarte. Eres, por derecho propio, un Maestro de Formaciones. Usa tu conocimiento con sabiduría.";
+                        default:
+                            return "El camino de las formaciones es un estudio de por vida. Medita en lo que has aprendido.";
+                    }
+                    
+                    case "renegada_li":
+                        switch (subplots.renegadeContact) {
+                            case 0:
+                                return "Otro perro faldero de la secta. No te acerques. No sabes nada de la verdad.";
+                            case 1:
+                                return "Así que tú también encontraste el diario. ¿Empiezas a dudar de las mentiras que te cuenta tu 'Maestro'? El 'Soberano' no fue un monstruo. Fue un mártir.";
+                            case 2:
+                                return "Te daré una opción. Ayúdame a encontrar los artefactos para romper el sello y liberar a nuestro patriarca, o sigue siendo un peón en su juego. La elección es tuya.";
+                            default:
+                                return "El tiempo se acaba. ¿Has tomado una decisión?";
                         }
-                        // Devolvemos el diálogo que el jugador debe ver.
-                        return "Has superado la prueba del Treant. Impresionante. Estás listo para una lección avanzada: la 'Matriz del Vórtice Arcano'. Esta formación puede destrozar defensas mágicas. Tu siguiente desafío te espera en el Desierto Profundo. Un Golem Ancestral ha despertado. Solo la Matriz del Vórtice Arcano puede romper su escudo. ¿Irás?";
-                    // --- FIN DE LA MODIFICACIÓN ---
-                    case 4: // Acaba de completar la misión 3, listo para recibir la 4.
-                    return "¡Derrotaste al Golem! Tu dominio de las formaciones ofensivas es innegable. Pero un verdadero maestro equilibra ataque y defensa. Te he enseñado la 'Égida de la Montaña Inamovible'. Para dominarla, enfréntate a un Djinn de las Arenas. Su furia pondrá a prueba tu nueva defensa hasta el límite. ¿Estás listo para tu prueba final de equilibrio?";
-                case 5: // Todas las misiones completas.
-                    return "Has superado todas mis pruebas y has dominado el equilibrio entre ataque, defensa y utilidad. Ya no hay más que pueda enseñarte. Eres, por derecho propio, un Maestro de Formaciones. Usa tu conocimiento con sabiduría.";
-                default:
-                    return "El camino de las formaciones es un estudio de por vida.";
+                }
+                return "...";
             }
-            return "...";
-        
-        case "renegada_li":
-             switch (subplots.renegadeContact) {
-                case 0:
-                    return "Otro perro faldero de la secta. No te acerques. No sabes nada de la verdad.";
-                case 1:
-                    return "Así que tú también encontraste el diario. ¿Empiezas a dudar de las mentiras que te cuenta tu 'Maestro'? El 'Soberano' no fue un monstruo. Fue un mártir.";
-                case 2:
-                    return "Te daré una opción. Ayúdame a encontrar los artefactos para romper el sello y liberar a nuestro patriarca, o sigue siendo un peón en su juego. La elección es tuya.";
-                default:
-                    return "El tiempo se acaba. ¿Has tomado una decisión?";
-            }
-    }
-    return "...";
-}
 
       function acceptMissionFromSectHall(misionId) {
         acceptMission(misionId);
@@ -17033,7 +16841,7 @@ function dev_forceFengQuestStep(step) {
             // Simula haber usado el compás y hablado con Feng por primera vez.
             subplots.fengQuestProgress = 1;
             const fengNpc = entityTypes['npc_maestro_feng'];
-            if (!gameState.map.entities.some(e => e.npcId === 'maestro_feng')) {
+            if (!gameState.map.entities.some(e => e.npcId === 'npc_maestro_feng')) {
                  gameState.map.entities.push({
                     ...fengNpc,
                     ...fengNpc.fixedLocation,
@@ -17041,7 +16849,7 @@ function dev_forceFengQuestStep(step) {
                     originalEntityTypeId: 'npc_maestro_feng'
                 });
             }
-            gameState.map.entities.find(e => e.npcId === 'maestro_feng').discovered = true;
+            gameState.map.entities.find(e => e.npcId === 'npc_maestro_feng').discovered = true;
             acceptMission('mision_feng_1_tutorial');
             renderMap();
             
@@ -17127,7 +16935,7 @@ function dev_resetFengQuest() {
     });
 
     // Ocultar a Feng de nuevo en el mapa
-    const fengInstance = gameState.map.entities.find(e => e.npcId === 'maestro_feng');
+    const fengInstance = gameState.map.entities.find(e => e.npcId === 'npc_maestro_feng');
     if (fengInstance) {
         fengInstance.discovered = false;
     }
